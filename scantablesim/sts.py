@@ -13,7 +13,8 @@
 # agent, that is supposed to find out
 # the best action sequence, to scan the table in a minimum amount of time
 
-class ScanTableAction(object):
+# class ScanTableAction(object):
+class ScanTableAction:
   """An action for the virtual camera"""
 
   MOVE_LEFT_BY_1    = 1
@@ -24,16 +25,18 @@ class ScanTableAction(object):
   MOVE_RIGHT_BY_10  = 6
   SCAN_TABLE        = 7
 
-  def __init__(self, arg):
-    super(ScanTableACtion, self).__init__()
-    self.arg = arg
-    
 
 class ScanTableSimulation(object):
   """Main class for the simulation"""
-  def __init__(self, arg):
+  CELL_UNKNOWN = 0
+  CELL_DISCOVERED = 1
+
+  def __init__(self):
     super(ScanTableSimulation, self).__init__()
-    self.arg = arg
+    self.cell_x = 50 # make fifty cells in the x direction
+                     # maybe everything will be extended with 2 dimensions
+    self.table_cells = [0 for i in range(0,self.cell_x)]
+    self.camera_index = 0
 
   def action(self,action):
     """Execute an action with the virtual camera"""
@@ -50,3 +53,7 @@ class ScanTableSimulation(object):
   def cells_discovered_percentage(self):
     """cells_discovered / cells_total"""
     return self.cells_discovered / self.cells_total
+
+  def cell_map(self):
+    """Get the data structure behind the table cells"""
+    return self.table_cells

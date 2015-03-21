@@ -17,12 +17,13 @@
 from Tkinter import *
 from thread import start_new_thread
 import time
-import sts
+from sts import ScanTableSimulation, ScanTableAction
+# import sts
 
 # Tkinter doesn't like to be run
 # in thread, so we have to move our magic 
 # to a worker thread ...
-def worker_thread(gui):
+def worker_thread(gui,sts):
     print "Started worker"
     while 1:
       print "Sleeping Worker"
@@ -53,9 +54,11 @@ class GUI:
 
 
 root = Tk()
+sts = ScanTableSimulation()
+print len(sts.cell_map() )
 
 gui = GUI(root)
-start_new_thread(worker_thread,(gui,))
+start_new_thread(worker_thread,(gui,sts,))
 
 root.mainloop()
 root.destroy() 
