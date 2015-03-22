@@ -13,7 +13,7 @@
 # agent, that is supposed to find out
 # the best action sequence, to scan the table in a minimum amount of time
 
-# class ScanTableAction(object):
+import time
 class ScanTableAction:
   """An action for the virtual camera"""
 
@@ -43,7 +43,21 @@ class ScanTableSimulation(object):
                               # A value of 2 means, that it can see the pixel 
                               # at self.camera_index and 2 pixels left plus 2 pixel right from it
     self.simulate_delay_in_action = False
-    self.action_delay_time = 0
+    self.action_delay_time = 1 # delay 1 sec by default, if enabled
+    self.last_executed_action = -1
+    self.observer = None 
+
+  def set_observer(self,observer):
+    """Set an observer. Most likely the GUI in our case"""
+    self.observer = observer
+    pass
+
+  def update_observer(self):
+    """Call the update method on the observer"""
+    if self.observer is not None:
+      self.observer.update()
+
+    pass
 
   def set_simulate_delay_in_action(self, b):
     self.simulate_delay_in_action = b
@@ -68,9 +82,25 @@ class ScanTableSimulation(object):
 
     # Discover to the right
     for i in range(self.camera_index+1, self.camera_index + 1 + self.camera_fov_width):
-      print "update" + str(i)
       self.update_if_idx_valid(i,self.CELL_DISCOVERED)
 
+  def last_action(self):
+    """Get the last ScanTableAction, that has been passed to self.action"""
+    if self.last_executed_action == ScanTableAction.MOVE_LEFT_BY_1:
+      return "ML1"
+    if self.last_executed_action == ScanTableAction.MOVE_LEFT_BY_5:
+      return "ML5"
+    if self.last_executed_action == ScanTableAction.MOVE_LEFT_BY_10:
+      return "ML10"
+    if self.last_executed_action == ScanTableAction.MOVE_RIGHT_BY_1:
+      return "MR1"
+    if self.last_executed_action == ScanTableAction.MOVE_RIGHT_BY_5:
+      return "MR5"
+    if self.last_executed_action == ScanTableAction.MOVE_RIGHT_BY_10:
+      return "MR10"
+    if self.last_executed_action == ScanTableAction.SCAN_TABLE:
+      return "ST"
+    return "ERR"
 
   def action(self,action):
     """Execute an action with the virtual camera"""
@@ -94,8 +124,10 @@ class ScanTableSimulation(object):
     elif action == ScanTableAction.MOVE_RIGHT_BY_10:
       if self.camera_index < self.cell_x-10:
         self.camera_index += 10
+    self.last_executed_action = action
     if self.simulate_delay_in_action:
       time.sleep(self.action_delay_time)
+    self.update_observer()
     pass
 
   def cells_total(self):

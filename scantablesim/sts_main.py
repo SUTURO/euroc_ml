@@ -27,10 +27,11 @@ def worker_thread(gui,sts):
     print "Started worker"
     while 1:
       print "Sleeping Worker"
-      time.sleep(1)
+      # time.sleep(1)
       sts.action(ScanTableAction.MOVE_RIGHT_BY_5)
+      # time.sleep(1)
       sts.action(ScanTableAction.SCAN_TABLE)
-      gui.update()
+      # gui.update()
       # gui.cell_canvas.itemconfig(gui.rect[0],fill="yellow") 
       
 
@@ -53,8 +54,10 @@ class GUI:
         self.hi_there.pack(side=LEFT)
         self.total_cell_label = Label(frame, text=str( sts.cells_total() )+" cells total" )
         self.discovered_cell_label = Label(frame, text=str( sts.cells_discovered() )+" cells discovered")
+        self.last_action = Label(frame, text="Action: "+sts.last_action())
         self.total_cell_label.pack()
         self.discovered_cell_label.pack()
+        self.last_action.pack()
         self.init_cells()
 
 
@@ -73,14 +76,23 @@ class GUI:
     def update(self):
       self.update_cells()
       self.total_cell_label.config(text = str( sts.cells_total() )+" cells total" )
-      print sts.cells_discovered()
       self.discovered_cell_label.config(text = str( sts.cells_discovered() )+" cells discovered")
+      self.last_action.config(text="Action: "+sts.last_action())
+      self.total_cell_label.pack()
+      self.discovered_cell_label.pack()
+      self.last_action.pack()
+
 
     def update_cells(self):
         """update the table cells in the gui according cell_map() from ScanTableSimulation"""
         x = self.sts.cell_x
         for i in range(0,x):
-          fill_color = self.get_fill_color_for_cell(self.table_cells[i])
+          if self.sts.camera_index == i:
+            fill_color = "black"
+          else:
+            fill_color = self.get_fill_color_for_cell(self.table_cells[i])
+            #fill_color = self.get_fill_color_for_cell(self.table_cells[i])
+
           self.cell_canvas.itemconfig(gui.rect[i],fill=fill_color) 
         pass
 
@@ -98,17 +110,23 @@ class GUI:
         self.table_cells = self.sts.cell_map()
 
         for i in range(0,x):
-          fill_color = self.get_fill_color_for_cell(self.table_cells[i])
-  
+          if self.sts.camera_index == i:
+            fill_color = "black"
+          else:
+            fill_color = self.get_fill_color_for_cell(self.table_cells[i])
+
           self.rect.append(self.cell_canvas.create_rectangle((i*cell_width)+ i*margin, 0, (i*cell_width)+i*margin+cell_width, 25, fill=fill_color))
 
 
 
 root = Tk()
 sts = ScanTableSimulation()
-print len(sts.cell_map() )
 
 gui = GUI(root,sts)
+sts.set_observer(gui)
+# Simulate delay in the action of our robot
+sts.set_simulate_delay_in_action(True)
+sts.set_action_delay_time_in_s(1)
 start_new_thread(worker_thread,(gui,sts,))
 
 root.mainloop()
