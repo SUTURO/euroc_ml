@@ -1,1 +1,6 @@
 test
+
+sudo apt-get install python-pip liblapack-dev python-scipy # gfortran
+sudo pip install Theano
+
+http://rl-glue-ext.googlecode.com/files/rl-glue_3.04-1_amd64.deb
