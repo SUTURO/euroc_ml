@@ -94,11 +94,13 @@ class ScanTableTask(Task):
         if reward>0:
           # rewards = 1 # normalize reward
           print "Reward granted at step("+str(self.step)+"):" + str(reward)
-        #   self.last_reward_step = self.step
+          self.last_reward_step = self.step
         # else:
-        #   if (self.step - self.last_reward_step) > 5: # n Actions without any reward? punish the agent
-        #     print "Punishment for gammeling"
-        #     reward = -1
+        #   if current_cells_discovered <45: # Punish only if the agent hasn't discovered almost the complete map 
+        #     print (self.step - self.last_reward_step)
+        #     if (self.step - self.last_reward_step) > 5: # n Actions without any reward? punish the agent
+        #       print "Punishment for gammeling"
+        #       reward = -50
         # 
         # retrieve last reward, and save current given reward
         cur_reward = self.lastreward
@@ -106,7 +108,7 @@ class ScanTableTask(Task):
         self.last_cells_discovered = current_cells_discovered
 
         self.step += 1
-    
+        # return reward 
         return cur_reward
 
     @property

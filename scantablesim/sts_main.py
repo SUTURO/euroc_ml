@@ -20,7 +20,7 @@ from pybrain.rl.explorers import EpsilonGreedyExplorer
 def worker_thread(gui,sts):
     print "Started worker"
     # qlearningStateEqualsScore(gui,sts,50)
-    qlearningStateEqualsScoreAndCamera(gui,sts,50)
+    qlearningStateEqualsScoreAndCamera(gui,sts,150)
 
 root = Tk()
 sts = ScanTableSimulation()

@@ -3,7 +3,7 @@ from qlearningenvtask import ScanTableEnv, ScanTableTask, ScanTableEnvCameraScor
 
 from pybrain.rl.learners.valuebased import ActionValueTable
 from pybrain.rl.agents import LearningAgent
-from pybrain.rl.learners import Q
+from pybrain.rl.learners import Q, SARSA
 from pybrain.rl.experiments import Experiment
 from pybrain.rl.explorers import EpsilonGreedyExplorer
 import time
@@ -35,6 +35,7 @@ def qlearningStateEqualsScore(gui,sts,interactions):
       agent.reset()
       env.reset()
       task.step = 0
+      task.last_reward_step = 0
       time.sleep(0.5)
       
       
@@ -44,10 +45,11 @@ def qlearningStateEqualsScoreAndCamera(gui,sts,interactions):
     
     sts.set_simulate_delay_in_action(False)
     # define Q-learning agent
-    # learner = Q(0.5, 0)
-    learner = Q()
+    # learner = Q(0.5, 0.5)
+    # learner = Q()
+    learner = SARSA()
     # learner._setExplorer(EpsilonGreedyExplorer(0.0)) # the smaller the parameter, the less random the actions will be
-    # learner._setExplorer(EpsilonGreedyExplorer(0.8))
+    # learner._setExplorer(EpsilonGreedyExplorer(0.3,0.9))
     agent = LearningAgent(av_table, learner)
     
     # define the environment
@@ -68,6 +70,7 @@ def qlearningStateEqualsScoreAndCamera(gui,sts,interactions):
       agent.reset()
       env.reset()
       task.step = 0
+      task.last_reward_step = 0
       iteration += 1
       # time.sleep(0.5)
       
