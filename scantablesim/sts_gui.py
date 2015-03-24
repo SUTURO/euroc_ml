@@ -61,7 +61,7 @@ class GUI:
 
     def update_cells(self):
         """update the table cells in the gui according cell_map() from ScanTableSimulation"""
-        print "Updating cells in GUI"
+        # print "Updating cells in GUI"
         x = self.sts.cell_x
         self.table_cells = self.sts.cell_map()
         for i in range(0,x):
@@ -69,10 +69,9 @@ class GUI:
             fill_color = "black"
           else:
             fill_color = self.get_fill_color_for_cell(self.table_cells[i])
-          sys.stdout.write(fill_color)
 
           self.cell_canvas.itemconfig(self.rect[i],fill=fill_color) 
-        print " "
+        # print " "
         pass
 
     def init_cells(self):

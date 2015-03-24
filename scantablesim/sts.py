@@ -59,11 +59,11 @@ class ScanTableSimulation(object):
 
   def reset_cells_and_camera(self):
     """docstring for reset_cells_and_camera"""
-    print "-------------Resetting STS---------------"
+    # print "-------------Resetting STS---------------"
     # self.table_cells[0] = self.CELL_UNKNOWN
     self.table_cells = [self.CELL_UNKNOWN for i in range(0,self.cell_x)]
-    for a in self.table_cells:
-      print(a)
+    # for a in self.table_cells:
+    #   print(a)
     self.camera_index = 0 # Where is the camera looking at?
     self.state_update = True
     pass

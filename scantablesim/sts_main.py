@@ -62,6 +62,7 @@ class ScanTableTask(Task):
         self.sts = sts
         # we will store the last reward given, remember that "r" in the Q learning formula is the one from the last interaction, not the one given for the current interaction!
         self.lastreward = 0
+        self.last_cells_discovered = 0
 
     def performAction(self, action):
         """ A filtered mapping towards performAction of the underlying environment. """                
@@ -74,17 +75,18 @@ class ScanTableTask(Task):
     
     def getReward(self):
         """ Compute and return the current reward (i.e. corresponding to the last action performed) """
-        # reward = raw_input("Enter reward: ")
         current_cells_discovered = self.sts.cells_discovered()
         # Only give rewards for increasing discovery rates
-        reward = current_cells_discovered - self.lastreward
+        reward = current_cells_discovered - self.last_cells_discovered
 
         if reward>0:
+          # rewards = 1 # normalize reward
           print "Reward granted:" + str(reward)
         
         # retrieve last reward, and save current given reward
         cur_reward = self.lastreward
         self.lastreward = reward
+        self.last_cells_discovered = current_cells_discovered
     
         return cur_reward
 
@@ -131,6 +133,7 @@ def worker_thread(gui,sts):
     while True:
       experiment.doInteractions(50)
       agent.learn()
+      print "---- Final score of this iteration: " + str(sts.cells_discovered()) + "----"
       print "Calling reset"
       agent.reset()
       env.reset()
