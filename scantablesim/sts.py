@@ -17,13 +17,13 @@ import time
 class ScanTableAction:
   """An action for the virtual camera"""
 
-  MOVE_LEFT_BY_1    = 1
-  MOVE_LEFT_BY_5    = 2
-  MOVE_LEFT_BY_10   = 3
-  MOVE_RIGHT_BY_1   = 4
-  MOVE_RIGHT_BY_5   = 5
-  MOVE_RIGHT_BY_10  = 6
-  SCAN_TABLE        = 7
+  MOVE_LEFT_BY_1    = 0
+  MOVE_LEFT_BY_5    = 1
+  MOVE_LEFT_BY_10   = 2
+  MOVE_RIGHT_BY_1   = 3
+  MOVE_RIGHT_BY_5   = 4
+  MOVE_RIGHT_BY_10  = 5
+  SCAN_TABLE        = 6
 
 
 class ScanTableSimulation(object):
@@ -46,6 +46,12 @@ class ScanTableSimulation(object):
     self.action_delay_time = 1 # delay 1 sec by default, if enabled
     self.last_executed_action = -1
     self.observer = None 
+
+	def reset_cells_and_camera(self):
+		"""docstring for reset_cells_and_camera"""
+    self.table_cells = [self.CELL_UNKNOWN for i in range(0,self.cell_x)]
+    self.camera_index = 0 # Where is the camera looking at?
+		pass
 
   def set_observer(self,observer):
     """Set an observer. Most likely the GUI in our case"""
