@@ -38,6 +38,24 @@ class ScanTableEnv(Environment):
         print "Reset in environment"
         self.sts.reset_cells_and_camera()
 
+class ScanTableEnvCameraScoreState(ScanTableEnv):
+  """This environment is pretty similar to ScanTableEnv, but it has more dimensions and different sensor values"""
+  def __init__(self, sts):
+    super(ScanTableEnvCameraScoreState, self).__init__(sts)
+    self.sts = sts
+
+    # the number of sensor values the environment produces
+    # This will be the current score to start
+    # TODO: Incorporate the camera_index into the state
+    outdim = 2550 # e.g. this is sts.cell_totals * max_camera_idx
+    
+    def __init__(self, sts):
+      self.sts = sts
+
+    def getSensors(self):
+        return [float(self.sts.cells_discovered() ), float(self.sts.camera_index),]
+    
+
 from scipy import clip, asarray
 
 from pybrain.rl.environments.task import Task
@@ -55,6 +73,8 @@ class ScanTableTask(Task):
         # we will store the last reward given, remember that "r" in the Q learning formula is the one from the last interaction, not the one given for the current interaction!
         self.lastreward = 0
         self.last_cells_discovered = 0
+        self.step = 0
+        self.last_reward_step = 0
 
     def performAction(self, action):
         """ A filtered mapping towards performAction of the underlying environment. """                
@@ -73,12 +93,19 @@ class ScanTableTask(Task):
 
         if reward>0:
           # rewards = 1 # normalize reward
-          print "Reward granted:" + str(reward)
-        
+          print "Reward granted at step("+str(self.step)+"):" + str(reward)
+        #   self.last_reward_step = self.step
+        # else:
+        #   if (self.step - self.last_reward_step) > 5: # n Actions without any reward? punish the agent
+        #     print "Punishment for gammeling"
+        #     reward = -1
+        # 
         # retrieve last reward, and save current given reward
         cur_reward = self.lastreward
         self.lastreward = reward
         self.last_cells_discovered = current_cells_discovered
+
+        self.step += 1
     
         return cur_reward
 

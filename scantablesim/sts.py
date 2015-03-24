@@ -14,6 +14,7 @@
 # the best action sequence, to scan the table in a minimum amount of time
 
 import time
+import sys
 class ScanTableAction:
   """An action for the virtual camera"""
 
@@ -142,7 +143,7 @@ class ScanTableSimulation(object):
 
   def action(self,action):
     """Execute an action with the virtual camera"""
-    print "Executing " + self.map_action_id_to_str(action) + "at camera="+str(self.camera_index)
+    sys.stdout.write( self.map_action_id_to_str(action) + "("+str(self.camera_index)+") ")
 
     if action == ScanTableAction.SCAN_TABLE:
       self.scan_table()
