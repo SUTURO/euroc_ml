@@ -4,7 +4,7 @@ from thread import start_new_thread
 import time
 from sts import ScanTableSimulation, ScanTableAction
 from sts_gui import GUI
-from qlearningenvtask import ScanTableEnv, ScanTableTask
+from qlearning_exec import *
 
 from pybrain.rl.learners.valuebased import ActionValueTable
 from pybrain.rl.agents import LearningAgent
@@ -19,33 +19,34 @@ from pybrain.rl.explorers import EpsilonGreedyExplorer
 # !!! PLACE YOUR MACHINE LEARNING STUFF HERE !!!!
 def worker_thread(gui,sts):
     print "Started worker"
-    av_table = ActionValueTable(51, 7)
-    av_table.initialize(0.)
-    
-    # define Q-learning agent
-    # learner = Q(0.5, 0.5)
-    learner = Q()
-    # learner._setExplorer(EpsilonGreedyExplorer(0.0))
-    agent = LearningAgent(av_table, learner)
-    
-    # define the environment
-    env = ScanTableEnv(sts)
-    
-    # define the task
-    task = ScanTableTask(env,sts)
-    
-    # finally, define experiment
-    experiment = Experiment(task, agent)
-    
-    # ready to go, start the process
-    while True:
-      experiment.doInteractions(50)
-      agent.learn()
-      print "---- Final score of this iteration: " + str(sts.cells_discovered()) + "----"
-      print "Calling reset"
-      agent.reset()
-      env.reset()
-      time.sleep(1)
+    qlearningStateEqualsScore(gui,sts,50)
+    # av_table = ActionValueTable(51, 7)
+    # av_table.initialize(0.)
+    # 
+    # # define Q-learning agent
+    # # learner = Q(0.5, 0.5)
+    # learner = Q()
+    # # learner._setExplorer(EpsilonGreedyExplorer(0.0))
+    # agent = LearningAgent(av_table, learner)
+    # 
+    # # define the environment
+    # env = ScanTableEnv(sts)
+    # 
+    # # define the task
+    # task = ScanTableTask(env,sts)
+    # 
+    # # finally, define experiment
+    # experiment = Experiment(task, agent)
+    # 
+    # # ready to go, start the process
+    # while True:
+    #   experiment.doInteractions(50)
+    #   agent.learn()
+    #   print "---- Final score of this iteration: " + str(sts.cells_discovered()) + "----"
+    #   print "Calling reset"
+    #   agent.reset()
+    #   env.reset()
+    #   time.sleep(1)
 
     # while 1:
     #   print "Sleeping Worker"
