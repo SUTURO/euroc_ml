@@ -46,12 +46,27 @@ class ScanTableSimulation(object):
     self.action_delay_time = 1 # delay 1 sec by default, if enabled
     self.last_executed_action = -1
     self.observer = None 
+    self.reset_update_flag()
 
-	def reset_cells_and_camera(self):
-		"""docstring for reset_cells_and_camera"""
+  def update_occured(self):
+    """Returns True, if the cells has been updated lately or the camera index changed and reset_update_flag() has not been called since then. Right now, this flag will be set everytime an action will be executed"""
+    return self.state_update
+
+  def reset_update_flag(self):
+    """Reset the flag indicating cell changes to False"""
+    self.state_update = False
+    pass
+
+  def reset_cells_and_camera(self):
+    """docstring for reset_cells_and_camera"""
+    print "-------------Resetting STS---------------"
+    # self.table_cells[0] = self.CELL_UNKNOWN
     self.table_cells = [self.CELL_UNKNOWN for i in range(0,self.cell_x)]
+    for a in self.table_cells:
+      print(a)
     self.camera_index = 0 # Where is the camera looking at?
-		pass
+    self.state_update = True
+    pass
 
   def set_observer(self,observer):
     """Set an observer. Most likely the GUI in our case"""
@@ -90,6 +105,23 @@ class ScanTableSimulation(object):
     for i in range(self.camera_index+1, self.camera_index + 1 + self.camera_fov_width):
       self.update_if_idx_valid(i,self.CELL_DISCOVERED)
 
+  def map_action_id_to_str(self,aid):
+    if aid == ScanTableAction.MOVE_LEFT_BY_1:
+      return "ML1"
+    if aid == ScanTableAction.MOVE_LEFT_BY_5:
+      return "ML5"
+    if aid == ScanTableAction.MOVE_LEFT_BY_10:
+      return "ML10"
+    if aid == ScanTableAction.MOVE_RIGHT_BY_1:
+      return "MR1"
+    if aid == ScanTableAction.MOVE_RIGHT_BY_5:
+      return "MR5"
+    if aid == ScanTableAction.MOVE_RIGHT_BY_10:
+      return "MR10"
+    if aid == ScanTableAction.SCAN_TABLE:
+      return "ST"
+    return "ERR"
+
   def last_action(self):
     """Get the last ScanTableAction, that has been passed to self.action"""
     if self.last_executed_action == ScanTableAction.MOVE_LEFT_BY_1:
@@ -110,6 +142,8 @@ class ScanTableSimulation(object):
 
   def action(self,action):
     """Execute an action with the virtual camera"""
+    print "Executing " + self.map_action_id_to_str(action) + "at camera="+str(self.camera_index)
+
     if action == ScanTableAction.SCAN_TABLE:
       self.scan_table()
     elif action == ScanTableAction.MOVE_LEFT_BY_1:
@@ -130,10 +164,12 @@ class ScanTableSimulation(object):
     elif action == ScanTableAction.MOVE_RIGHT_BY_10:
       if self.camera_index < self.cell_x-10:
         self.camera_index += 10
+
+    self.state_update = True
     self.last_executed_action = action
     if self.simulate_delay_in_action:
       time.sleep(self.action_delay_time)
-    self.update_observer()
+    # self.update_observer()
     pass
 
   def cells_total(self):

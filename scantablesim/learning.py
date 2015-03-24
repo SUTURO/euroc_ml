@@ -23,7 +23,7 @@ class ScanTableEnv(Environment):
       self.sts = sts
 
     def getSensors(self):
-        return [float(sts.cells_discovered() ),]
+        return [float(self.sts.cells_discovered() ),]
                     
     def performAction(self, action):
         # """ perform an action on the world that changes it's internal state (maybe stochastically).

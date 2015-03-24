@@ -1,5 +1,6 @@
 from Tkinter import *
 from sts import ScanTableSimulation, ScanTableAction
+import sys
 
 class GUI:
     CANVAS_WIDTH = 600
@@ -25,7 +26,7 @@ class GUI:
         self.discovered_cell_label.pack()
         self.last_action.pack()
         self.init_cells()
-
+        self.update_timer()
 
     def say_hi(self):
         print "hi there, everyone!"
@@ -39,6 +40,15 @@ class GUI:
           fill_color = "green"
         return fill_color
 
+    def update_timer(self):
+      """update_timer will be called every 100 millseconds and update the GUI if something changed in self.sts"""
+      if self.sts.update_occured():
+        self.update()
+        self.sts.reset_update_flag()
+
+      self.frame.after(100,self.update_timer)
+      pass
+
     def update(self):
       self.update_cells()
       self.total_cell_label.config(text = str( self.sts.cells_total() )+" cells total" )
@@ -51,15 +61,18 @@ class GUI:
 
     def update_cells(self):
         """update the table cells in the gui according cell_map() from ScanTableSimulation"""
+        print "Updating cells in GUI"
         x = self.sts.cell_x
+        self.table_cells = self.sts.cell_map()
         for i in range(0,x):
           if self.sts.camera_index == i:
             fill_color = "black"
           else:
             fill_color = self.get_fill_color_for_cell(self.table_cells[i])
-            #fill_color = self.get_fill_color_for_cell(self.table_cells[i])
+          sys.stdout.write(fill_color)
 
           self.cell_canvas.itemconfig(self.rect[i],fill=fill_color) 
+        print " "
         pass
 
     def init_cells(self):
