@@ -7,11 +7,6 @@ from pybrain.rl.learners import Q
 from pybrain.rl.experiments import Experiment
 from pybrain.rl.explorers import EpsilonGreedyExplorer
 
-# Tkinter doesn't like to be run
-# in thread, so we have to move our magic 
-# to a worker thread ...
-#
-# !!! PLACE YOUR MACHINE LEARNING STUFF HERE !!!!
 def qlearningStateEqualsScore(gui,sts,interactions):
     av_table = ActionValueTable(51, 7)
     av_table.initialize(0.)
