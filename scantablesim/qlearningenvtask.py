@@ -40,14 +40,15 @@ class ScanTableEnv(Environment):
 
 class ScanTableEnvCameraScoreState(ScanTableEnv):
   """This environment is pretty similar to ScanTableEnv, but it has more dimensions and different sensor values"""
+  # the number of sensor values the environment produces
+  # This will be the current score to start
+  # TODO: Incorporate the camera_index into the state
+  outdim = 2550 # e.g. this is sts.cell_totals * max_camera_idx
+
   def __init__(self, sts):
     super(ScanTableEnvCameraScoreState, self).__init__(sts)
     self.sts = sts
 
-    # the number of sensor values the environment produces
-    # This will be the current score to start
-    # TODO: Incorporate the camera_index into the state
-    outdim = 2550 # e.g. this is sts.cell_totals * max_camera_idx
     
     def __init__(self, sts):
       self.sts = sts
@@ -92,9 +93,11 @@ class ScanTableTask(Task):
         reward = current_cells_discovered - self.last_cells_discovered
 
         if reward>0:
-          # rewards = 1 # normalize reward
+          reward = 1.0 # normalize reward
           print "Reward granted at step("+str(self.step)+"):" + str(reward)
           self.last_reward_step = self.step
+        else:
+          reward = 0.0
         # else:
         #   if current_cells_discovered <45: # Punish only if the agent hasn't discovered almost the complete map 
         #     print (self.step - self.last_reward_step)

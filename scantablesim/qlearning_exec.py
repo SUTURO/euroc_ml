@@ -10,7 +10,7 @@ import time
 
 def qlearningStateEqualsScore(gui,sts,interactions):
     av_table = ActionValueTable(51, 7)
-    av_table.initialize(0.)
+    av_table.initialize(1.)
     
     # define Q-learning agent
     # learner = Q(0.5, 0.5)
@@ -26,28 +26,30 @@ def qlearningStateEqualsScore(gui,sts,interactions):
     
     # finally, define experiment
     experiment = Experiment(task, agent)
-    
+   
+    iteration = 0
     # ready to go, start the process
     while True:
       experiment.doInteractions(interactions)
       agent.learn()
-      print "---- Final score of this iteration: " + str(sts.cells_discovered()) + "----"
+      print "---- Final score of this iteration("+str(iteration)+"): " + str(sts.cells_discovered()) + "----"
       agent.reset()
       env.reset()
       task.step = 0
       task.last_reward_step = 0
-      time.sleep(0.5)
+      iteration+=1
+      # time.sleep(0.5)
       
       
 def qlearningStateEqualsScoreAndCamera(gui,sts,interactions):
     av_table = ActionValueTable(2550, 7)
-    av_table.initialize(0.)
+    av_table.initialize(1.)
     
     sts.set_simulate_delay_in_action(False)
     # define Q-learning agent
     # learner = Q(0.5, 0.5)
-    # learner = Q()
-    learner = SARSA()
+    learner = Q()
+    # learner = SARSA()
     # learner._setExplorer(EpsilonGreedyExplorer(0.0)) # the smaller the parameter, the less random the actions will be
     # learner._setExplorer(EpsilonGreedyExplorer(0.3,0.9))
     agent = LearningAgent(av_table, learner)
