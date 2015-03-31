@@ -40,21 +40,7 @@ class ScanTableEnv(Environment):
         self.sts.reset_cells_and_camera()
 
 class ScanTableEnvCameraScoreState(ScanTableEnv):
-<<<<<<< HEAD
-  """This environment is pretty similar to ScanTableEnv, but it has more dimensions and different sensor values"""
-  # the number of sensor values the environment produces
-  # This will be the current score to start
-  # TODO: Incorporate the camera_index into the state
-  outdim = 2550 # e.g. this is sts.cell_totals * max_camera_idx
-
-  def __init__(self, sts):
-    super(ScanTableEnvCameraScoreState, self).__init__(sts)
-    self.sts = sts
-
-    
-=======
     """This environment is pretty similar to ScanTableEnv, but it has more dimensions and different sensor values"""
->>>>>>> magic
     def __init__(self, sts):
         super(ScanTableEnvCameraScoreState, self).__init__(sts)
         self.sts = sts
@@ -89,6 +75,7 @@ class ScanTableTask(Task):
         self.step = 0
         self.last_reward_step = 0
         self.fails = 0
+        self.done = False
         print environment.outdim
 
     def performAction(self, action):
@@ -108,24 +95,11 @@ class ScanTableTask(Task):
         reward = current_cells_discovered / 50
         # print self.last_cells_discovered
         if reward>0:
-<<<<<<< HEAD
           reward = 1.0 # normalize reward
           print "Reward granted at step("+str(self.step)+"):" + str(reward)
           self.last_reward_step = self.step
         else:
           reward = 0.0
-=======
-            # rewards = 1 # normalize reward
-            # print "Reward granted at step("+str(self.step)+"):" + str(reward)
-            self.last_reward_step = self.step
-            self.fails = 0
-        else:
-            self.fails += 0.01
-        if reward < 0.9:
-            reward = -(self.fails)
-        else:
-            print "done after ", str(self.step)," steps"
->>>>>>> magic
         # else:
         #   if current_cells_discovered <45: # Punish only if the agent hasn't discovered almost the complete map 
         #     print (self.step - self.last_reward_step)
@@ -149,6 +123,7 @@ class ScanTableTask(Task):
         self.step = 0
         self.last_reward_step = 0
         self.fails = 0
+        self.done = False
 
     @property
     def indim(self):
@@ -157,4 +132,48 @@ class ScanTableTask(Task):
     @property
     def outdim(self):
         return self.env.outdim
+
+class SimonTask(ScanTableTask):
+
+    def getReward(self):
+        """ Compute and return the current reward (i.e. corresponding to the last action performed) """
+        current_cells_discovered = self.sts.cells_discovered()
+        # Only give rewards for increasing discovery rates
+        # reward = (current_cells_discovered - self.last_cells_discovered)/50
+        reward = (current_cells_discovered / 50.0)
+        # print str(reward)
+        # print self.last_cells_discovered
+        # if reward == 0:
+        #     # rewards = 1 # normalize reward
+        #     # print "Reward granted at step("+str(self.step)+"):" + str(reward)
+        #     self.last_reward_step = self.step
+        #     self.fails += 0.01
+        #     reward -= (self.fails)
+        # else:
+        #     self.fails = 0
+        if reward < 0.99:
+            # reward -= (self.fails)
+            pass
+        else:
+            if not self.done :
+                print "done after ", str(self.step)," steps"
+            self.done = True
+            # reward = 1.0
+        # else:
+        #   if current_cells_discovered <45: # Punish only if the agent hasn't discovered almost the complete map
+        #     print (self.step - self.last_reward_step)
+        #     if (self.step - self.last_reward_step) > 5: # n Actions without any reward? punish the agent
+        #       print "Punishment for gammeling"
+        #       reward = -50
+        #
+        # retrieve last reward, and save current given reward
+        cur_reward = self.lastreward
+        self.lastreward = reward
+        self.last_cells_discovered = current_cells_discovered
+
+        self.step += 1
+        # return reward
+        sys.stdout.write(str(cur_reward) + ":")
+        return cur_reward
+
 
