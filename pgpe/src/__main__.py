@@ -3,7 +3,7 @@ from Tkinter import *
 from thread import start_new_thread
 from pybrain.rl.agents import LearningAgent
 from pybrain.rl.experiments.experiment import Experiment
-from pybrain.rl.learners import ActionValueNetwork, Q, ActionValueTable
+from pybrain.rl.learners import Q, ActionValueTable
 import actions
 from environment import ScanTableEnv
 from gui import GUI
@@ -37,7 +37,7 @@ def worker_thread(env):
     iteration = 0
     # ready to go, start the process
     while True:
-      experiment.doInteractions(500)
+      experiment.doInteractions(250)
       agent.learn()
       print("---- Final score of this iteration (%s): %s ----" %(iteration, env.discovered_cells))
       agent.reset()
@@ -49,15 +49,16 @@ def worker_thread(env):
 root = Tk()
 
 # define the environment
-env = ScanTableEnv(actions=[actions.ScanTableAction,
-                            actions.MoveRightAction,
-                            actions.MoveLeftAction,
-                            actions.MoveUpAction,
-                            actions.MoveDownAction],
-                   rows=5,
+num_rows = 5
+num_cols = 50
+a = [actions.MoveToAction(x, y) for x in range(num_rows) for y in range(num_cols)]
+a.append(actions.ScanTableAction())
+
+env = ScanTableEnv(actions=a,
+                   rows=num_rows,
+                   cols=num_cols,
                    action_delay_time=0.0)
 gui = GUI(root, env)
-
 # Execute a new thread to do stuff beside the GUI
 # This should hold your magic machine learning code
 start_new_thread(worker_thread,(env,))

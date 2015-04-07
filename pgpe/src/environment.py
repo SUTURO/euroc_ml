@@ -22,6 +22,7 @@ class ScanTableEnv(Environment):
         self.__camera_fov_height = camera_fov_height
         self.__last_action = None
         self.__action_delay_time = action_delay_time
+        self.__total_reward = 0
 
         self.reset_cells_and_camera()
 
@@ -47,15 +48,17 @@ class ScanTableEnv(Environment):
         # """
         # print "Action performed: ", action
         """Execute an action with the virtual camera"""
-        action = self.__actions[int(action[0])]()
+        action = self.__actions[int(action[0])]
         self.__last_action = action
-        print("%s\t%s" % (action, self.__camera_index))
         reward = action.perform(self)
+        self.__total_reward += reward
+        print("%s\t%s => %s" % (action, self.__camera_index, self.__total_reward))
         time.sleep(self.__action_delay_time)
         return reward
 
     def reset(self):
         """Reinit the world"""
+        self.__total_reward = 0
         self.reset_cells_and_camera()
 
     def __update_if_idx_valid(self, x, y, value):
@@ -121,3 +124,7 @@ class ScanTableEnv(Environment):
     @property
     def number_of_actions(self):
         return len(self.__actions)
+
+    @property
+    def total_reward(self):
+        return self.__total_reward

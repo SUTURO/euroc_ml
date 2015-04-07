@@ -32,10 +32,14 @@ class MoveToAction(ActionBase):
         idx = numpy.asarray(environment.camera_index, dtype=int)
         environment.move_to(self.x, self.y)
         new_idx = numpy.asarray(environment.camera_index, dtype=int)
+        max_idx = numpy.asarray(environment.cell_map.shape, dtype=int)
+        max_norm = numpy.linalg.norm(max_idx)
+
         if (idx == new_idx).all():
             return -1
         else:
-            return 1 - (1 / float((environment.total_cells + 1))) * numpy.linalg.norm(new_idx - idx)
+            return (1 / max_norm * numpy.linalg.norm(new_idx - idx)) * -1
+
     def __str__(self):
         return "Move To %s / %s" % (self.x, self.y)
 

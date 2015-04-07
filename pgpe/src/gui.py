@@ -20,6 +20,7 @@ class GUI:
         self.hi_there.pack(side=LEFT)
         self.total_cell_label = Label(frame, text="%s cells total" % env.total_cells)
         self.discovered_cell_label = Label(frame, text="%s cells discovered" % env.discovered_cells)
+        self.total_reward_label = Label(frame, text="Reward: %s" % env.total_reward)
         self.last_action = Label(frame, text="Action: %s" % env.last_action)
         self.total_cell_label.pack()
         self.discovered_cell_label.pack()
@@ -49,8 +50,10 @@ class GUI:
         self.total_cell_label.config(text="%s cells total" % self.env.total_cells)
         self.discovered_cell_label.config(text="%s cells discovered" % self.env.discovered_cells)
         self.last_action.config(text="Action: %s" % self.env.last_action)
+        self.total_reward_label.config(text="Reward: %s" % self.env.total_reward)
         self.total_cell_label.pack()
         self.discovered_cell_label.pack()
+        self.total_reward_label.pack()
         self.last_action.pack()
 
     def update_cells(self):
