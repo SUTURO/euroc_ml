@@ -50,7 +50,7 @@ class MoveStepsAction(MoveToAction):
         x, y = environment.camera_index
         self.x += x
         self.y += y
-        super(MoveStepsAction, self).perform(environment)
+        return super(MoveStepsAction, self).perform(environment)
 
 
 class MoveLeftAction(MoveStepsAction):
