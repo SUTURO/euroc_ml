@@ -41,7 +41,7 @@ num_rows = 20
 num_cols = 20
 env = ScanTableEnv(rows=num_rows,
                    cols=num_cols,
-                   action_delay_time=0.01)
+                   action_delay_time=0.0)
 
 
 gui = GUI(root, env)

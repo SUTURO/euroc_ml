@@ -40,7 +40,7 @@ class ScanTableEnv(Environment):
         # print(a)
 #        self.__camera_index = (numpy.random.randint(0, self.__rows, size=1)[0],
 #                               numpy.random.randint(0, self.__cols, size=1)[0]) # Where is the camera looking at?
-        self.__camera_index = (randint(0, self.__rows), randint(0, self.__cols))
+        self.__camera_index = (randint(0, self.__rows -1), randint(0, self.__cols -1))
         self.__state_update = True
 
     def getSensors(self):
