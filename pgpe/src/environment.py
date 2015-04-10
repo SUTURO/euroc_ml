@@ -7,24 +7,29 @@ from pybrain.rl.environments.environment import Environment
 # by an agent that acts in it.
 # In this context, the tablesimulation respresents the world and therefore 
 # the environment
+from random import randint
+import actions
 import time
 
 
 class ScanTableEnv(Environment):
 
-    def __init__(self, actions, rows=1, cols=50, camera_fov_width=2, camera_fov_height=1, action_delay_time=0.0):
+    __actions = [actions.MoveRightAction,
+                 actions.MoveLeftAction,
+                 actions.MoveUpAction,
+                 actions.MoveDownAction,
+                 actions.ScanTableAction]
+
+    def __init__(self, rows=1, cols=50, camera_fov_width=2, camera_fov_height=1, action_delay_time=0.0):
         self.__rows = rows
         self.__cols = cols
-        self.__actions = actions
         self.__camera_fov_width = camera_fov_width  # How many pixels can the camera see to the left and right?
                                                     # A value of 2 means, that it can see the pixel
                                                     # at self.camera_index and 2 pixels left plus 2 pixel right from it
         self.__camera_fov_height = camera_fov_height
-        self.__last_action = None
         self.__action_delay_time = action_delay_time
-        self.__total_reward = 0
-
         self.reset_cells_and_camera()
+
 
     def reset_cells_and_camera(self):
         """docstring for reset_cells_and_camera"""
@@ -35,11 +40,57 @@ class ScanTableEnv(Environment):
         # print(a)
 #        self.__camera_index = (numpy.random.randint(0, self.__rows, size=1)[0],
 #                               numpy.random.randint(0, self.__cols, size=1)[0]) # Where is the camera looking at?
-        self.__camera_index = (0, 0)
+        self.__camera_index = (randint(0, self.__rows), randint(0, self.__cols))
         self.__state_update = True
 
     def getSensors(self):
-        return [self.discovered_cells]
+        """
+        Give 9 different states according to where the cam is located:
+        0 = top left
+        1 = top middle
+        2 = top right
+        3 = middle left
+        4 = middle middle
+        5 = middle right
+        6 = bottom left
+        7 = bottom middle
+        8 = bottom right
+
+        :return: The state of the cam
+        """
+        def top():
+            return self.__camera_index[0] - self.__camera_fov_height <= 0
+        def bottom():
+            return self.__camera_index[0] + self.__camera_fov_height >= self.cell_map.shape[0]
+        def left():
+            return self.__camera_index[1] - self.__camera_fov_width <= 0
+        def right():
+            return self.__camera_index[1] - self.__camera_fov_width >= self.cell_map.shape[1]
+
+        state = None
+
+        if top() and left():
+            state = 0
+        elif top() and not left() and not right():
+            state = 1
+        elif top() and right():
+            state = 2
+        elif not top() and not bottom() and left():
+            state = 3
+        elif not top() and not bottom() and not left() and not right():
+            state = 4
+        elif not top() and not bottom() and right():
+            state = 5
+        elif bottom() and left():
+            state = 6
+        elif bottom() and not left() and not right():
+            state = 7
+        elif bottom() and right():
+            state = 8
+
+        x ,y = self.__camera_index
+        state = (state << 1) + int(self.__table_cells[x, y])
+        return numpy.array([state])
 
     def performAction(self, action):
         # """ perform an action on the world that changes it's internal state (maybe stochastically).
@@ -48,17 +99,13 @@ class ScanTableEnv(Environment):
         # """
         # print "Action performed: ", action
         """Execute an action with the virtual camera"""
-        action = self.__actions[int(action[0])]
-        self.__last_action = action
-        reward = action.perform(self)
-        self.__total_reward += reward
-        print("%s\t%s => %s" % (action, self.__camera_index, self.__total_reward))
+        action = self.__actions[action]()
+        print("Perfoming Action: %s" % action)
+        action.perform(self)
         time.sleep(self.__action_delay_time)
-        return reward
 
     def reset(self):
         """Reinit the world"""
-        self.__total_reward = 0
         self.reset_cells_and_camera()
 
     def __update_if_idx_valid(self, x, y, value):
@@ -69,7 +116,7 @@ class ScanTableEnv(Environment):
 
     def scan_table(self):
         """Execute the SCAN_TABLE action. Should be execute from action()"""
-        curr_x, curr_y = self.camera_index
+        curr_x, curr_y = self.__camera_index
         for x in range(curr_x - self.__camera_fov_height, curr_x + 1 + self.__camera_fov_height):
             for y in range(curr_y - self.__camera_fov_width, curr_y + 1 + self.__camera_fov_width):
                 self.__update_if_idx_valid(x, y, True)
@@ -82,49 +129,23 @@ class ScanTableEnv(Environment):
         return self.__camera_index == (x, y)
 
     @property
-    def total_cells(self):
-        """How many cells(e.g. areas) are available on the table?"""
-        return self.__table_cells.size
-
-    @property
-    def discovered_cells(self):
-        """How many cells (e.g. areas) have been discovered/scanned by the camera?"""
-        return self.__table_cells.sum()
-
-    @property
     def discovered_percentage(self):
         """cells_discovered / cells_total"""
-        return self.discovered_cells / float(self.total_cells)
+        return self.__table_cells.sum() / float(self.__table_cells.size) * 100
+
 
     @property
     def cell_map(self):
-        """Get the data structure behind the table cells"""
         return self.__table_cells
 
     @property
-    def indim(self):
-        return len(self.__actions)
+    def numStates(self):
+        return 17
 
     @property
-    def outdim(self):
-        return self.__table_cells.size
+    def numActions(self):
+        return len(self.__actions)
 
     @property
     def camera_index(self):
         return self.__camera_index
-
-    @property
-    def camera_fov(self):
-        return (self.__camera_fov_height, self.__camera_fov_width)
-
-    @property
-    def last_action(self):
-        return self.__last_action
-
-    @property
-    def number_of_actions(self):
-        return len(self.__actions)
-
-    @property
-    def total_reward(self):
-        return self.__total_reward

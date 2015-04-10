@@ -13,11 +13,7 @@ class ActionBase(object):
 class ScanTableAction(ActionBase):
 
     def perform(self, environment):
-        old = environment.discovered_cells
         environment.scan_table()
-        new = environment.discovered_cells
-        fov_h, fov_w = environment.camera_fov
-        return -1 + (2 / float((fov_h + 1)  * (fov_w + 1))) * (new - old)
 
     def __str__(self):
         return "Scan Table"
@@ -29,16 +25,7 @@ class MoveToAction(ActionBase):
         self.y = y
 
     def perform(self, environment):
-        idx = numpy.asarray(environment.camera_index, dtype=int)
         environment.move_to(self.x, self.y)
-        new_idx = numpy.asarray(environment.camera_index, dtype=int)
-        max_idx = numpy.asarray(environment.cell_map.shape, dtype=int)
-        max_norm = numpy.linalg.norm(max_idx)
-
-        if (idx == new_idx).all():
-            return -1
-        else:
-            return (1 / max_norm * numpy.linalg.norm(new_idx - idx)) * -1
 
     def __str__(self):
         return "Move To %s / %s" % (self.x, self.y)
