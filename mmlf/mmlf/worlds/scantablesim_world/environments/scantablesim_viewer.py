@@ -4,4 +4,4 @@ __author__ = 'hansa'
 
 
 class ScanTableSimViewer(Viewer):
-    
+    pass    
