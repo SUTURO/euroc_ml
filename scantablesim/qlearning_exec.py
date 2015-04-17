@@ -1,4 +1,5 @@
-
+from pybrain.rl.learners.directsearch.reinforce import Reinforce
+from pybrain.rl.learners.valuebased.nfq import NFQ
 from qlearningenvtask import ScanTableEnv, ScanTableTask, ScanTableEnvCameraScoreState, SimonTask
 
 from pybrain.rl.learners.valuebased import ActionValueTable
@@ -82,7 +83,7 @@ def qlearningSimon(gui,sts,interactions):
     sts.set_simulate_delay_in_action(False)
     # define Q-learning agent
     # learner = Q(0.5, 0.5)
-    learner = Q()
+    learner = Reinforce()
     # learner = SARSA()
     # learner._setExplorer(EpsilonGreedyExplorer(0.0)) # the smaller the parameter, the less random the actions will be
     # learner._setExplorer(EpsilonGreedyExplorer(0.3,0.9))
