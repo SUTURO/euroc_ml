@@ -24,7 +24,7 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
             environmentName="ScanTableSim",
             discreteActionSpace=True,
             episodic=True,
-            continousStateSpace=False,
+            continuousStateSpace=False,
             continousActionSpace=False,
             stochastic=False)
         super(ScanTableSimEnvironment, self).__init__(*args, useGUI=useGUI, **kwargs)
