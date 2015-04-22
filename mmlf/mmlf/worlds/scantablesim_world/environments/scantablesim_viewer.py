@@ -1,7 +1,6 @@
-from collections import defaultdict
+import math
 from matplotlib.figure import Figure
 from mmlf.framework.observables import OBSERVABLES, TrajectoryObservable, StateActionValuesObservable
-from mmlf.framework.state import State
 from mmlf.gui.viewers.viewer import Viewer
 from mmlf import QtGui, QtCore, FigureCanvas
 
@@ -16,7 +15,6 @@ class ScanTableSimViewer(Viewer):
 
         self.scanTableSim = scanTableSim
         self.stateSpace = stateSpace
-        stateActionValuesObservables = OBSERVABLES.getAllObservablesOfType(StateActionValuesObservable)
 
         # Create matplotlib widgets
         plotWidgetPolicy = QtGui.QWidget(self)
@@ -31,38 +29,39 @@ class ScanTableSimViewer(Viewer):
         self.canvasPolicy.draw()
 
         # Combo Box for selecting the observable
-        observableLabel = QtGui.QLabel("Observable")
-        self.comboBox = QtGui.QComboBox(self)
-        self.comboBox.addItems(map(lambda x: "%s" % x.title, stateActionValuesObservables))
-        self.connect(self.comboBox, QtCore.SIGNAL('currentIndexChanged (int)'),
-                     self._observableChanged)
-
-        # Automatically update combobox when new float stream observables
-        #  are created during runtime
-        def updateComboBox(observable, action):
-            self.comboBox.clear()
-            stateActionValuesObservables = OBSERVABLES.getAllObservablesOfType(StateActionValuesObservable)
-            self.comboBox.addItems(map(lambda x: "%s" % x.title, stateActionValuesObservables))
-        OBSERVABLES.addObserver(updateComboBox)
+        refreshLabel = QtGui.QLabel("Refresh after")
+        comboBox = QtGui.QComboBox(self)
+        comboBox.addItems(["Every step", "10 Steps", "100 Steps"])
+        self.connect(comboBox, QtCore.SIGNAL('currentIndexChanged (int)'),
+                     self._refeshChanged)
 
         mdiArea = QtGui.QMdiArea(self)
         mdiArea.addSubWindow(plotWidgetPolicy)
         vlayout = QtGui.QVBoxLayout()
         vlayout.addWidget(mdiArea)
         hlayout = QtGui.QHBoxLayout()
-        hlayout.addWidget(observableLabel)
-        hlayout.addWidget(self.comboBox)
+        hlayout.addWidget(refreshLabel)
+        hlayout.addWidget(comboBox)
         vlayout.addLayout(hlayout)
         self.setLayout(vlayout)
         # Draw
         self.redraw()
-        self.stateActionValuesObservableCallback = lambda _, a: self.redraw()
-        if len(stateActionValuesObservables) > 0:
-            # Show per default the first observable
-            self.stateActionValuesObservable = stateActionValuesObservables[0]
-            self.stateActionValuesObservable.addObserver(self.stateActionValuesObservableCallback)
-        else:
-            self.stateActionValuesObservable = None
+        self.sample_num = 0
+        self.refresh_after = 1
+        self.trajectoryObservable = OBSERVABLES.getAllObservablesOfType(TrajectoryObservable)[0]
+        # Connect to observer (has to be the last thing!!)
+        self.trajectoryObservableCallback = lambda *transition: self.updateSamples()
+        self.trajectoryObservable.addObserver(self.trajectoryObservableCallback)
+
+
+    def _refeshChanged(self, idx):
+        self.refresh_after = int(math.pow(10, idx))
+
+    def updateSamples(self):
+        self.sample_num += 1
+        if self.sample_num % self.refresh_after == 0:
+            self.sample_num = 0
+            self.redraw()
 
     def get_fill_color_for_cell(self, cell_value):
         if not cell_value:
@@ -76,13 +75,14 @@ class ScanTableSimViewer(Viewer):
                          facecolor=color, edgecolor="k", zorder=zorder)
 
     def close(self):
-        if self.stateActionValuesObservable is not None:
+        #if self.stateActionValuesObservable is not None:
             # Remove old observable
-            self.stateActionValuesObservable.removeObserver(self.stateActionValuesObservableCallback)
+        #    self.stateActionValuesObservable.removeObserver(self.stateActionValuesObservableCallback)
+        self.trajectoryObservable.removeObserver(self.trajectoryObservableCallback)
         Viewer.close(self)
 
     def redraw(self):
-        cols, rows = self.scanTableSim.cell_map.shape
+        rows, cols = self.scanTableSim.cell_map.shape
         self.table_cells = self.scanTableSim.cell_map
         ax = self.figPolicy.gca()
         ax.clear()
@@ -91,7 +91,7 @@ class ScanTableSimViewer(Viewer):
                 if self.scanTableSim.camera_at_position(x, y):
                     fill_color = "k"
                 else:
-                    fill_color = self.get_fill_color_for_cell(self.table_cells[y, x])
+                    fill_color = self.get_fill_color_for_cell(self.table_cells[x, y])
                 self.plotSquare(ax, (y, x), color=fill_color)
         self.canvasPolicy.draw()
 

@@ -15,7 +15,8 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         "columns": 50,
         "camera_fov_height": 1,
         "camera_fov_width": 2,
-        "actionDelayTime": 0.0
+        "actionDelayTime": 0.0,
+        "maxActions": 100,
     }
 
     def __init__(self, useGUI, *args, **kwargs):
@@ -28,12 +29,12 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
             continuousActionSpace=False,
             stochastic=False)
         super(ScanTableSimEnvironment, self).__init__(*args, useGUI=useGUI, **kwargs)
-        self.__table_cells = numpy.zeros(shape=(self.configDict["columns"], self.configDict["rows"]), dtype=bool, order="F")
+        self.__table_cells = numpy.zeros(shape=(self.configDict["rows"], self.configDict["columns"]), dtype=bool, order="F")
 
         oldStyleStateSpace = {
             "camera_x": ("discrete", range(self.configDict["columns"])),
             "camera_y": ("discrete", range(self.configDict["rows"])),
-            "percentScanned": ("discrete", range(100))
+            "isScanned": ("discrete", range(0, 1))
         }
         self.stateSpace = StateSpace()
         self.stateSpace.addOldStyleSpace(oldStyleStateSpace)
@@ -47,7 +48,7 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         self.initialState = {
             "camera_x": 0,
             "camera_y": 0,
-            "percentScanned": 0
+            "isScanned": 0
         }
         self.currentState = deepcopy(self.initialState)
         if useGUI:
@@ -63,41 +64,60 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         return deepcopy(self.initialState)
 
     def _checkEpisodeFinished(self):
-        return self.discovered_percentage >= 95 or self.stepCounter >= 100
+        return self.discovered_percentage >= 95 or self.stepCounter >= self.configDict["maxActions"]
 
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
-        self.environmentLog.info("Executing Action: %s" % action)
-        #previousState = deepcopy(self.currentState)
+        previousState = deepcopy(self.currentState)
+
         x, y = self.currentState["camera_x"], self.currentState["camera_y"]
+        self.environmentLog.debug("Executing Action %s at (%d / %d)" % (action, x, y))
         if action == "left":
             self.move_to(x, y - 1)
         elif action == "right":
             self.move_to(x, y + 1)
         elif action == "up":
-            self.move_to(x - 1, y)
-        elif action == "down":
             self.move_to(x + 1, y)
+        elif action == "down":
+            self.move_to(x - 1, y)
         elif action == "scan":
             self.scan_table()
-            self.currentState["percentScanned"] = self.discovered_percentage
+
+        self.currentState["isScanned"] = 1 if self.__table_cells[x, y] else 0
 
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None
         if episodeFinished:
-            self.environmentLog.info("Episode lasted for %d steps" % self.stepCounter)
+            self.environmentLog.info("Episode %d lasted for %d steps" % (self.episodeCounter, self.stepCounter))
             self.episodeLengthObservable.addValue(self.episodeCounter,
                                                   self.stepCounter + 1)
             self.returnObservable.addValue(self.episodeCounter,
                                            -self.stepCounter)
-            reward = 10 if self.currentState != (0, 0) else -10
             self.stepCounter = 0
             self.episodeCounter += 1
 
             self.currentState = self.getInitialState()
+            self.__table_cells = numpy.zeros(shape=(self.configDict["rows"], self.configDict["columns"]), dtype=bool, order="C")
+            reward = 100 if self.discovered_percentage >= 95 else 0
+
+            self.trajectoryObservable.addTransition(previousState, action,
+                                                    reward, terminalState,
+                                                    episodeTerminated=episodeFinished)
         else:
-            reward = -1
+            prev_x, prev_y = previousState["camera_x"], previousState["camera_y"]
+            curr_x, curr_y = self.currentState["camera_x"], self.currentState["camera_y"]
+
+            if self.__table_cells[prev_x, prev_y] and not self.__table_cells[curr_x, curr_y]:
+                reward = 1
+            elif not self.__table_cells[prev_x, prev_y] and action == "scan":
+                reward = 10
+            else:
+                reward = -1
+
             self.stepCounter += 1
+            self.trajectoryObservable.addTransition(previousState, action,
+                                                    reward, self.currentState,
+                                                    episodeTerminated=episodeFinished)
         return {
             "reward": reward,
             "terminalState": terminalState,
@@ -106,13 +126,13 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         }
 
     def move_to(self, x, y):
-        if x >= 0 and y >= 0 and x < self.configDict["columns"] and y < self.configDict["rows"]:
+        if x >= 0 and y >= 0 and x < self.configDict["rows"] and y < self.configDict["columns"]:
             self.currentState["camera_x"] = x
             self.currentState["camera_y"] = y
 
 
     def __update_if_valid(self, x, y, value):
-        if x >= 0 and y >= 0 and x < self.configDict["columns"] and y < self.configDict["rows"]:
+        if x >= 0 and y >= 0 and x < self.configDict["rows"] and y < self.configDict["columns"]:
             self.__table_cells[x, y] = value
 
     def scan_table(self):
