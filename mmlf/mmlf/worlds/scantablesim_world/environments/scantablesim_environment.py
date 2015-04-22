@@ -4,6 +4,7 @@ from mmlf.framework.protocol import EnvironmentInfo
 from mmlf.environments.single_agent_environment import SingleAgentEnvironment
 from mmlf.framework.spaces import StateSpace, ActionSpace
 
+
 __author__ = 'hansa'
 
 
@@ -17,17 +18,17 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         "actionDelayTime": 0.0
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, useGUI, *args, **kwargs):
         self.environmentInfo = EnvironmentInfo(
             versionNumber="0.3",
             environmentName="ScanTableSim",
             discreteActionSpace=True,
             episodic=True,
-            continousStateSpace=False,
-            continousActionSpace=False,
+            continuousStateSpace=False,
+            continuousActionSpace=False,
             stochastic=False)
-        super(ScanTableSimEnvironment, self).__init__(*args, **kwargs)
-        self.__table_cells = numpy.zeros(shape=(self.configDict["rows"], self.configDict["columns"]), dtype=bool, order="C")
+        super(ScanTableSimEnvironment, self).__init__(*args, useGUI=useGUI, **kwargs)
+        self.__table_cells = numpy.zeros(shape=(self.configDict["columns"], self.configDict["rows"]), dtype=bool, order="F")
 
         oldStyleStateSpace = {
             "camera_x": ("discrete", range(self.configDict["columns"])),
@@ -49,6 +50,14 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
             "percentScanned": 0
         }
         self.currentState = deepcopy(self.initialState)
+        if useGUI:
+            from mmlf.gui.viewers import VIEWERS
+            from mmlf.worlds.scantablesim_world.environments.scantablesim_viewer import ScanTableSimViewer
+            VIEWERS.addViewer(lambda: ScanTableSimViewer(self,
+                                                 self.stateSpace,
+                                                 ["scan", "left", "right", "up", "down"]),
+                              "ScanTableSimViewer")
+
 
     def getInitialState(self):
         return deepcopy(self.initialState)
@@ -58,6 +67,7 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
 
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
+        self.environmentLog.info("Executing Action: %s" % action)
         #previousState = deepcopy(self.currentState)
         x, y = self.currentState["camera_x"], self.currentState["camera_y"]
         if action == "left":
@@ -78,6 +88,7 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None
         if episodeFinished:
+            self.environmentLog.info("Episode lasted for %d steps" % self.stepCounter)
             self.episodeLengthObservable.addValue(self.episodeCounter,
                                                   self.stepCounter + 1)
             self.returnObservable.addValue(self.episodeCounter,
@@ -129,6 +140,14 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
     @property
     def camera_index(self):
         return (self.currentState["camera_x"], self.currentState["camera_y"])
+
+    @property
+    def rows(self):
+        return self.configDict["rows"]
+
+    @property
+    def columns(self):
+        return self.configDict["columns"]
 
 
 EnvironmentClass = ScanTableSimEnvironment
