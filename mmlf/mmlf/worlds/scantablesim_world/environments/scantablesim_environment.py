@@ -81,7 +81,6 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         elif action == "down":
             self.move_to(x - 1, y)
         elif action == "scan":
-            self.environmentLog.info("scaned " +str(self.discovered_percentage))
             self.scan_table()
 
         self.currentState["isScanned"] = 1 if self.__table_cells[x, y] else 0
@@ -98,7 +97,6 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
                                            -self.stepCounter)
             self.stepCounter = 0
             self.episodeCounter += 1
-            self.environmentLog.info("result: " + str(self.currentState))
             self.currentState = self.getInitialState()
             self.__table_cells = numpy.zeros(shape=(self.configDict["rows"], self.configDict["columns"]), dtype=bool, order="C")
             reward = 100 if self.discovered_percentage >= 95 else 0
