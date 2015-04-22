@@ -16,10 +16,8 @@ class ScanTableSimViewer(Viewer):
 
         self.scanTableSim = scanTableSim
         self.stateSpace = stateSpace
-        self.actions = actions
-        self.samples = defaultdict(lambda : 0)
-        self.valueAccessFunction = None
-        self.stateActionValuesObservables = OBSERVABLES.getAllObservablesOfType(StateActionValuesObservable)
+        stateActionValuesObservables = OBSERVABLES.getAllObservablesOfType(StateActionValuesObservable)
+        trajectoryObservable = OBSERVABLES.getAllObservablesOfType(TrajectoryObservable)[0]
 
         # Create matplotlib widgets
         plotWidgetPolicy = QtGui.QWidget(self)
@@ -32,28 +30,45 @@ class ScanTableSimViewer(Viewer):
         self.canvasPolicy = FigureCanvas(self.figPolicy)
         self.canvasPolicy.setParent(plotWidgetPolicy)
         self.canvasPolicy.draw()
-        self.mdiArea = QtGui.QMdiArea(self)
-        self.mdiArea.addSubWindow(plotWidgetPolicy)
-        self.vlayout = QtGui.QVBoxLayout()
-        self.vlayout.addWidget(self.mdiArea)
-        self.hlayout = QtGui.QHBoxLayout()
-        self.vlayout.addLayout(self.hlayout)
-        self.setLayout(self.vlayout)
 
-        self.stateActionValuesObservableCallback = \
-             lambda valueAccessFunction, actions: self.updateValues(valueAccessFunction, actions)
-        if len(self.stateActionValuesObservables) > 0:
+        # Combo Box for selecting the observable
+        observableLabel = QtGui.QLabel("Observable")
+        self.comboBox = QtGui.QComboBox(self)
+        self.comboBox.addItems(map(lambda x: "%s" % x.title, stateActionValuesObservables))
+        self.connect(self.comboBox, QtCore.SIGNAL('currentIndexChanged (int)'),
+                     self._observableChanged)
+
+        # Automatically update combobox when new float stream observables
+        #  are created during runtime
+        def updateComboBox(observable, action):
+            self.comboBox.clear()
+            stateActionValuesObservables = OBSERVABLES.getAllObservablesOfType(StateActionValuesObservable)
+            self.comboBox.addItems(map(lambda x: "%s" % x.title, stateActionValuesObservables))
+        OBSERVABLES.addObserver(updateComboBox)
+
+        mdiArea = QtGui.QMdiArea(self)
+        mdiArea.addSubWindow(plotWidgetPolicy)
+        vlayout = QtGui.QVBoxLayout()
+        vlayout.addWidget(mdiArea)
+        hlayout = QtGui.QHBoxLayout()
+        hlayout.addWidget(observableLabel)
+        hlayout.addWidget(self.comboBox)
+        vlayout.addLayout(hlayout)
+        self.setLayout(vlayout)
+        # Draw
+        self.redraw()
+
+        # Connect to observer (has to be the last thing!!)
+        trajectoryObservableCallback = lambda *transition: self.redraw()
+        # trajectoryObservable.addObserver(trajectoryObservableCallback)
+
+        self.stateActionValuesObservableCallback = lambda _, a: self.redraw()
+        if len(stateActionValuesObservables) > 0:
             # Show per default the first observable
-            self.stateActionValuesObservable = self.stateActionValuesObservables[1]
-
+            self.stateActionValuesObservable = stateActionValuesObservables[0]
             self.stateActionValuesObservable.addObserver(self.stateActionValuesObservableCallback)
         else:
             self.stateActionValuesObservable = None
-        self.redraw()
-
-    def updateValues(self, valueAccessFunction, actions):
-        self.valueAccessFunction = valueAccessFunction
-        self.redraw()
 
     def get_fill_color_for_cell(self, cell_value):
         if not cell_value:
@@ -78,3 +93,12 @@ class ScanTableSimViewer(Viewer):
                 else:
                     fill_color = self.get_fill_color_for_cell(self.table_cells[y, x])
                 self.plotSquare(ax, (y, x), color=fill_color)
+        self.canvasPolicy.draw()
+
+    def _observableChanged(self, comboBoxIndex):
+        if self.stateActionValuesObservable is not None:
+            # Remove old observable
+            self.stateActionValuesObservable.removeObserver(self.stateActionValuesObservableCallback)
+        # Get new observable and add as listener
+        self.stateActionValuesObservable = self.stateActionValuesObservables[comboBoxIndex]
+        self.stateActionValuesObservable.addObserver(self.stateActionValuesObservableCallback)

@@ -24,8 +24,8 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
             environmentName="ScanTableSim",
             discreteActionSpace=True,
             episodic=True,
-            continousStateSpace=False,
-            continousActionSpace=False,
+            continuousStateSpace=False,
+            continuousActionSpace=False,
             stochastic=False)
         super(ScanTableSimEnvironment, self).__init__(*args, useGUI=useGUI, **kwargs)
         self.__table_cells = numpy.zeros(shape=(self.configDict["columns"], self.configDict["rows"]), dtype=bool, order="F")
@@ -68,16 +68,16 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
         self.environmentLog.info("Executing Action: %s" % action)
-        #previousState = deepcopy(self.currentState)
+        previousState = deepcopy(self.currentState)
         x, y = self.currentState["camera_x"], self.currentState["camera_y"]
         if action == "left":
             self.move_to(x, y - 1)
         elif action == "right":
             self.move_to(x, y + 1)
         elif action == "up":
-            self.move_to(x - 1, y)
-        elif action == "down":
             self.move_to(x + 1, y)
+        elif action == "down":
+            self.move_to(x - 1, y)
         elif action == "scan":
             self.scan_table()
             self.currentState["percentScanned"] = self.discovered_percentage
@@ -93,11 +93,16 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
             reward = 10 if self.currentState != (0, 0) else -10
             self.stepCounter = 0
             self.episodeCounter += 1
-
             self.currentState = self.getInitialState()
+            self.trajectoryObservable.addTransition(previousState, action,
+                                                    -1, terminalState,
+                                                    episodeTerminated=episodeFinished)
         else:
             reward = -1
             self.stepCounter += 1
+            self.trajectoryObservable.addTransition(previousState, action,
+                                                    -1, self.currentState,
+                                                    episodeTerminated=episodeFinished)
         return {
             "reward": reward,
             "terminalState": terminalState,
@@ -106,7 +111,7 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         }
 
     def move_to(self, x, y):
-        if x >= 0 and y >= 0 and x < self.configDict["columns"] and y < self.configDict["rows"]:
+        if x >= 0 and y >= 0 and x < self.configDict["rows"] and y < self.configDict["columns"]:
             self.currentState["camera_x"] = x
             self.currentState["camera_y"] = y
 
