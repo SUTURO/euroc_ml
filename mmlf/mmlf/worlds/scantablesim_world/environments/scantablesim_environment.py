@@ -34,7 +34,7 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         oldStyleStateSpace = {
             "camera_x": ("discrete", range(self.configDict["columns"])),
             "camera_y": ("discrete", range(self.configDict["rows"])),
-            "isScanned": ("discrete", range(0, 1))
+            "isScanned": ("discrete", [0, 1])
         }
         self.stateSpace = StateSpace()
         self.stateSpace.addOldStyleSpace(oldStyleStateSpace)
