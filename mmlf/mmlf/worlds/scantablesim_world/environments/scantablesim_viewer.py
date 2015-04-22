@@ -17,7 +17,6 @@ class ScanTableSimViewer(Viewer):
         self.scanTableSim = scanTableSim
         self.stateSpace = stateSpace
         stateActionValuesObservables = OBSERVABLES.getAllObservablesOfType(StateActionValuesObservable)
-        trajectoryObservable = OBSERVABLES.getAllObservablesOfType(TrajectoryObservable)[0]
 
         # Create matplotlib widgets
         plotWidgetPolicy = QtGui.QWidget(self)
@@ -57,11 +56,6 @@ class ScanTableSimViewer(Viewer):
         self.setLayout(vlayout)
         # Draw
         self.redraw()
-
-        # Connect to observer (has to be the last thing!!)
-        trajectoryObservableCallback = lambda *transition: self.redraw()
-        # trajectoryObservable.addObserver(trajectoryObservableCallback)
-
         self.stateActionValuesObservableCallback = lambda _, a: self.redraw()
         if len(stateActionValuesObservables) > 0:
             # Show per default the first observable
@@ -80,6 +74,12 @@ class ScanTableSimViewer(Viewer):
         return axis.fill([center[0] - 0.5, center[0] + 0.5, center[0] + 0.5, center[0] - 0.5],
                          [center[1] - 0.5, center[1] - 0.5, center[1] + 0.5, center[1] + 0.5],
                          facecolor=color, edgecolor="k", zorder=zorder)
+
+    def close(self):
+        if self.stateActionValuesObservable is not None:
+            # Remove old observable
+            self.stateActionValuesObservable.removeObserver(self.stateActionValuesObservableCallback)
+        Viewer.close(self)
 
     def redraw(self):
         cols, rows = self.scanTableSim.cell_map.shape
