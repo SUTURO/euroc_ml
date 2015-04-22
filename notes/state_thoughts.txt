@@ -18,3 +18,18 @@ States -> Action
 (t,t,t,f,t) = ERROR / Both boundaries hit?
 (t,t,t,t,f) = ERROR / Both boundaries hit?
 (t,t,t,t,t) = ERROR / Both boundaries hit?
+
+Simple learning algorithm:
+
+  global action_sequence;
+
+  choose Action a
+  execute Action a
+  if reward granted:
+    State s
+    Save mapping s -> a
+    Append a to action_sequence
+
+Rewards:
+  + Cells_discovered increased
+  + Moved from scanned cell to non-scanned cell
