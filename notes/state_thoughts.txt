@@ -1,0 +1,20 @@
+S=(CellsBelowUnscanned?, LeftBoundaryHit, RightBoundaryHit, FreeCellsLeft?, FreeCellsRight?)
+
+States -> Action
+(f,_,_,_,_) = SCAN
+(t,f,f,f,f) = ???
+(t,f,f,f,t) = RIGHT
+(t,f,f,t,f) = LEFT
+(t,f,f,t,t) = LEFT/RIGHT (Prefer: Right?)
+(t,f,t,f,f) = DOWN - Right boundary hit and no free cells
+(t,f,t,f,t) = ERROR / Right boundary hit but free cells right?
+(t,f,t,t,f) = LEFT
+(t,f,t,t,t) = LEFT
+(t,t,f,f,f) = DOWN - Left boundary hit but no free cells in this line
+(t,t,f,f,t) = RIGHT
+(t,t,f,t,f) = ERROR / Left boundary hit but free cells left?
+(t,t,f,t,t) = RIGHT
+(t,t,t,f,f) = ERROR / Both boundaries hit?
+(t,t,t,f,t) = ERROR / Both boundaries hit?
+(t,t,t,t,f) = ERROR / Both boundaries hit?
+(t,t,t,t,t) = ERROR / Both boundaries hit?
