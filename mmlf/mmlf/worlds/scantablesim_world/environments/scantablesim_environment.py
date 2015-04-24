@@ -3,7 +3,7 @@ import numpy
 from mmlf.framework.protocol import EnvironmentInfo
 from mmlf.environments.single_agent_environment import SingleAgentEnvironment
 from mmlf.framework.spaces import StateSpace, ActionSpace
-
+from mmlf.worlds.scantablesim_world.actions import ActionBase
 
 __author__ = 'hansa'
 
@@ -39,8 +39,10 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         self.stateSpace = StateSpace()
         self.stateSpace.addOldStyleSpace(oldStyleStateSpace)
 
+
+        obj = MoveActions()
         oldStyleActionSpace = {
-            "action": ("discrete", ["left", "right", "up", "down", "scan"])
+            "action": ("discrete", [obj.moveLeft, obj.moveRight])
         }
 
         self.actionSpace = ActionSpace()
@@ -69,24 +71,12 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
         previousState = deepcopy(self.currentState)
-
         x, y = self.currentState["camera_x"], self.currentState["camera_y"]
+
         self.environmentLog.debug("Executing Action %s at (%d / %d)" % (action, x, y))
-        if action == "left":
-            self.move_to(x, y - 1)
-        elif action == "right":
-            self.move_to(x, y + 1)
-        elif action == "up":
-            self.move_to(x + 1, y)
-        elif action == "down":
-            self.move_to(x - 1, y)
-        elif action == "scan":
-            self.scan_table()
+        reward = action(self)
 
         self.currentState["isScanned"] = 1 if self.__table_cells[x, y] else 0
-
-        # self.environmentLog.info("action: " + str(action))
-
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None
         if episodeFinished:
@@ -105,16 +95,6 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
                                                     reward, terminalState,
                                                     episodeTerminated=episodeFinished)
         else:
-            prev_x, prev_y = previousState["camera_x"], previousState["camera_y"]
-            curr_x, curr_y = self.currentState["camera_x"], self.currentState["camera_y"]
-
-            if self.__table_cells[prev_x, prev_y] and not self.__table_cells[curr_x, curr_y]:
-                reward = 1
-            elif not self.__table_cells[prev_x, prev_y] and action == "scan":
-                reward = 10
-            else:
-                reward = -1
-
             self.stepCounter += 1
             self.trajectoryObservable.addTransition(previousState, action,
                                                     reward, self.currentState,
