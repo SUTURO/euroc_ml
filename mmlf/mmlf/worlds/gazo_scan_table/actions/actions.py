@@ -8,9 +8,9 @@ import rospy
 
 class GazeboActions(object):
 
-    def __init__(self, environment, stepsX=4, stepsY=2):
-        self.__x_step = (environment.configDict["maxX"] - environment.configDict["minX"]) / stepsX
-        self.__y_step = (environment.configDict["maxY"] - environment.configDict["minY"]) / stepsY
+    def __init__(self, minX, maxX, minY, maxY, stepsX=4, stepsY=2):
+        self.__x_step = (maxX - minX) / stepsX
+        self.__y_step = (maxY - minY) / stepsY
         self.__move_cam = rospy.ServiceProxy("/suturo/manipulation/move_mastcam", MoveMastCam)
         self.__add_pointcloud = rospy.ServiceProxy("/suturo/environment/add_point_cloud", AddPointCloud)
 

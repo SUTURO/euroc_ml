@@ -17,10 +17,12 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
 
     DEFAULT_CONFIG_DICT = {
         "maxActions": 100,
-        "minX": -0.2825,
-        "maxX": 0.2825,
-        "minY": 0.5,
-        "maxY": 1.1,
+        "minX": -1.57,
+        "maxX": 1.57,
+        "minY": -1.57,
+        "maxY": 1.57,
+        "stepsX": 4,
+        "stepsY": 2,
         "task_name": "task1_v1"
     }
 
@@ -36,6 +38,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         super(GazeboScanTableEnvironment, self).__init__(*args, useGUI=useGUI, **kwargs)
 
         # Initialize the simulation
+        self.__taskdata = TaskData(name=self.configDict["task_name"])
         self.__init_simulation()
 
         self.pos_x = 0
@@ -50,7 +53,12 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.stateSpace = StateSpace()
         self.stateSpace.addOldStyleSpace(oldStyleStateSpace)
 
-        actions = GazeboActions(self)
+        actions = GazeboActions(self.configDict["minX"],
+                                self.configDict["maxX"],
+                                self.configDict["minY"],
+                                self.configDict["maxY"],
+                                self.configDict["stepsX"],
+                                self.configDict["stepsY"])
         oldStyleActionSpace = {
             "action": ("discrete", [actions.moveLeft,
                                     actions.moveRight,
@@ -72,7 +80,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         if useGUI:
             from mmlf.gui.viewers import VIEWERS
             from mmlf.worlds.gazo_scan_table.environments.gazebo_table_viewer import GazeboTableViewer
-            VIEWERS.addViewer(lambda: GazeboTableViewer(self),"ScanTableSimViewer")
+            VIEWERS.addViewer(lambda: GazeboTableViewer(self), str(GazeboTableViewer))
 
         self.get_map = rospy.ServiceProxy(Map.NAME_SERVICE_GET_MAP, GetMap)
         self.reset_map = rospy.ServiceProxy(Map.NAME_SERVICE_GET_MAP, ResetMap)
@@ -81,7 +89,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.__need_update = True
 
     def check_new_state(self):
-        x, y = self.pos_x, self.pos_y
+        x, y = self.camera_index
         r = False
         for i in range(x+1, self.configDict["rows"]):
             r = r or not self.cell_map[i,y]
@@ -106,12 +114,16 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         return self.discovered_percentage >= 95 or self.stepCounter >= self.configDict["maxActions"]
 
     def __init_simulation(self):
-        taskdata = TaskData(name=self.configDict["task_name"])
-        rospy.ServiceProxy("suturo/startup/start_simulation", TaskDataService)(taskdata)
-        rospy.ServiceProxy("suturo/startup/start_manipulation", TaskDataService)(taskdata)
-        rospy.ServiceProxy("/suturo/startup/start_perception", TaskDataService)(taskdata)
-        rospy.ServiceProxy("/suturo/startup/start_classifier", TaskDataService)(taskdata)
+        rospy.ServiceProxy("/suturo/startup/start_simulation", TaskDataService)(self.__taskdata)
+        rospy.ServiceProxy("/suturo/startup/start_manipulation", TaskDataService)(self.__taskdata)
+        rospy.ServiceProxy("/suturo/startup/start_perception", TaskDataService)(self.__taskdata)
 
+    def stop(self):
+        # Stop the simulation
+        try:
+            rospy.ServiceProxy("/suturo/startup/stop_simulation", TaskDataService)(self.__taskdata)
+        finally:
+            super(GazeboScanTableEnvironment, self).stop()
 
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
@@ -170,7 +182,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     @property
     def cell_map(self):
         if self.__cell_map is None or self.__need_update:
-            map = self.get_map()
+            map = self.get_map().map
             self.__cell_map = numpy.ndarray(shape=(map.size_column, map.size_column), dtype=bool)
             for x in range(map.size_column):
                 for y in range(map.size_column):
@@ -180,7 +192,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
 
     @property
     def camera_index(self):
-        return (self.currentState["camera_x"], self.currentState["camera_y"])
+        #TODO: Calculate a ray from the camera to the map plane
+        return (0 ,0)
 
     @property
     def rows(self):
