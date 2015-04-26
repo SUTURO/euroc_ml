@@ -8,47 +8,63 @@ import rospy
 
 class GazeboActions(object):
 
-    def __init__(self, minX, maxX, minY, maxY, stepsX=4, stepsY=2):
-        self.__x_step = (maxX - minX) / stepsX
-        self.__y_step = (maxY - minY) / stepsY
+    def __init__(self, minPan, maxPan, minTilt, maxTilt, stepsX=4, stepsY=2):
+        self.__pan_step = (maxPan - minPan) / stepsX
+        self.__tilt_step = (maxTilt - minTilt) / stepsY
+        self.__minPan = minPan
+        self.__maxPan = maxPan
+        self.__minTilt = minTilt
+        self.__maxTilt = maxTilt
         self.__move_cam = rospy.ServiceProxy("/suturo/manipulation/move_mastcam", MoveMastCam)
         self.__add_pointcloud = rospy.ServiceProxy("/suturo/environment/add_point_cloud", AddPointCloud)
 
     def __move(self, x, y, env):
-        env.pos_x += x
-        env.pos_y += y
-        if env.pos_x < env.configDict["minX"]:
-            env.pos_x = env.configDict["minX"]
-        elif env.pos_x > env.configDict["maxX"]:
-            env.pos_x = env.configDict["maxX"]
-        if env.pos_y < env.configDict["minY"]:
-            env.pos_y = env.configDict["minY"]
-        elif env.pos_y > env.configDict["maxY"]:
-            env.pos_y = env.configDict["maxY"]
+        env.pan += x
+        env.tilt += y
+        if env.pan < self.__minPan:
+            env.pan = self.__minPan
+        elif env.pan > self.__maxPan:
+            env.pan = self.__maxPan
+
+        if env.tilt < self.__minTilt:
+            env.tilt = self.__minTilt
+        elif env.tilt > self.__maxTilt:
+            env.tilt = self.__maxTilt
+        self.__move_cam(pan=env.pan, tilt=env.tilt)
 
 
     def moveLeft(self, environment):
-        self.__move(-self.__x_step, 0, environment)
+        self.__move(-self.__pan_step, 0, environment)
         return -1
+
+    moveLeft.name = "Move Left"
 
     def moveRight(self, env):
-        self.__move(self.__x_step, 0, env)
+        self.__move(self.__pan_step, 0, env)
         return -1
+
+    moveRight.name = "Move Right"
 
     def moveUp(self, env):
-        self.__move(0, -self.__y_step, env)
+        self.__move(0, -self.__tilt_step, env)
         return -1
 
+    moveUp.name = "Move Up"
+
     def moveDown(self, env):
-        self.__move(0, self.__y_step, env)
+        self.__move(0, self.__tilt_step, env)
         return -1
+
+    moveDown.name = "Move Down"
 
     def scan(self, env):
         old = env.discovered_percentage
         # Move the cam
-        if self.__move_cam(pan=env.pos_x, tilt=env.pos_y):
+        if self.__move_cam(pan=env.pan, tilt=env.tilt):
             # Scan the image and add to the point cloud
-            self.__add_pointcloud(True)
+            self.__add_pointcloud(scenecam=True)
             env.update_map()
             new = env.discovered_percentage
             return new - old
+
+    scan.name = "Scan"
