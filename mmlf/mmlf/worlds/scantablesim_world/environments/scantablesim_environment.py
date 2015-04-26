@@ -37,8 +37,8 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         #     "camera_y": ("discrete", range(self.configDict["rows"])),
         #     "isScanned": ("discrete", range(0, 1))
         # }
-        self.pos_x = 0
-        self.pos_y = 0
+        self.pos_x = self.configDict["rows"] / 2
+        self.pos_y = self.configDict["columns"] / 2
         oldStyleStateSpace = {
             # "camera_x": ("discrete", range(self.configDict["rows"])),
             # "camera_y": ("discrete", range(self.configDict["columns"])),
@@ -46,15 +46,16 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
             "isSomethingRight": ("discrete", [0,1]),
             "isSomethingLeft": ("discrete", [0,1]),
             "isSomethingUp": ("discrete", [0,1]),
-            "isSomethingDown": ("discrete", [0,1])
+            "isSomethingDown": ("discrete", [0,1]),
+            "isTurbo": ("discrete", [0,1])
         }
         self.stateSpace = StateSpace()
         self.stateSpace.addOldStyleSpace(oldStyleStateSpace)
 
         self.actions = SimSimAction()
         oldStyleActionSpace = {
-            "action": ("discrete", [self.actions.moveDown, self.actions.moveLeft, self.actions.moveRight,
-                                    self.actions.moveUp, self.actions.scan])
+            "action": ("discrete", [self.actions.scan, self.actions.moveDown, self.actions.moveLeft, self.actions.moveRight,
+                                    self.actions.moveUp, self.actions.turboMode])
         }
 
         self.actionSpace = ActionSpace()
@@ -64,9 +65,10 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
             # "camera_y": 0,
             "isScanned": 0,
             "isSomethingRight": 1,
-            "isSomethingLeft": 0,
+            "isSomethingLeft": 1,
             "isSomethingUp": 1,
-            "isSomethingDown": 0
+            "isSomethingDown": 1,
+            "isTurbo": 0
         }
         self.currentState = deepcopy(self.initialState)
         if useGUI:
@@ -84,6 +86,18 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
 
     def _checkEpisodeFinished(self):
         return self.discovered_percentage >= 95 or self.stepCounter >= self.configDict["maxActions"]
+
+    def isScanned(self):
+        curr_x, curr_y = self.camera_index
+        fov_width, fov_height = self.configDict["camera_fov_width"], self.configDict["camera_fov_height"]
+        scanned = 0
+        max = 0
+        for x in range(curr_x - fov_height, curr_x + 1 + fov_height):
+            for y in range(curr_y - fov_width+abs(curr_x-x), curr_y + 1 + fov_width-abs(curr_x-x)):
+                if x >= 0 and y >= 0 and x < self.configDict["rows"] and y < self.configDict["columns"] and self.__table_cells[x, y]:
+                    scanned += 1.
+                max += 1.
+        return 1-((max - scanned)/ max) > 0.7
 
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
@@ -103,7 +117,7 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         # elif action == "scan":
         #     scanned = self.scan_table()
 
-        self.currentState["isScanned"] = 1 if self.__table_cells[x, y] else 0
+        self.currentState["isScanned"] = self.isScanned()
 
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None

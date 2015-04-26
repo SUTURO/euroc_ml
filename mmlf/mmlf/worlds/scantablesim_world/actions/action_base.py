@@ -11,36 +11,54 @@ class ActionBase(object):
 class SimSimAction(object):
 
     def __init__(self):
-        pass
+        self.min_n = 2
 
     def moveLeft(self, env):
+        n = self.min_n
+        if env.currentState["isTurbo"]:
+            n = 10
         (x,y) = env.camera_index
-        self.move_to(x, y-1,env )
-        pass
+        self.move_to(x, y-n,env )
+        return -1
 
     def moveRight(self, env):
+        n = self.min_n
+        if env.currentState["isTurbo"]:
+            n = 10
         (x,y) = env.camera_index
-        self.move_to(x, y+1,env )
-        pass
+        self.move_to(x, y+n,env )
+        return -1
 
     def moveUp(self, env):
+        n = self.min_n
+        if env.currentState["isTurbo"]:
+            n = 10
         (x,y) = env.camera_index
-        self.move_to(x+1, y,env )
-        pass
+        self.move_to(x+n, y,env )
+        return -1
 
     def moveDown(self, env):
+        n = self.min_n
+        if env.currentState["isTurbo"]:
+            n = 10
         (x,y) = env.camera_index
-        self.move_to(x-1, y,env )
-        pass
+        self.move_to(x-n, y,env )
+        return -1
+
+    def turboMode(self, env):
+        env.currentState["isTurbo"] = int(not env.currentState["isTurbo"])
+        return -1
 
     def scan(self, env):
-        return self.scan_table(env)
+        return self.scan_table2(env)
         pass
 
     def move_to(self, x, y, env):
-        if x >= 0 and y >= 0 and x < env.configDict["rows"] and y < env.configDict["columns"]:
-            env.pos_x = x
-            env.pos_y = y
+        x = max(0, min(x,env.configDict["rows"]-1))
+        y = max(0, min(y,env.configDict["columns"]-1))
+        # if x >= 0 and y >= 0 and x < env.configDict["rows"] and y < env.configDict["columns"]:
+        env.pos_x = x
+        env.pos_y = y
 
     def scan_table(self,env):
         curr_x, curr_y = env.pos_x, env.pos_y
@@ -52,6 +70,12 @@ class SimSimAction(object):
                     scanned += 1
         return scanned
 
-    # def scan_table2(self,env):
-    #     cam_height =
-    #     pass
+    def scan_table2(self,env):
+        curr_x, curr_y = env.camera_index
+        fov_width, fov_height = env.configDict["camera_fov_width"], env.configDict["camera_fov_height"]
+        scanned = 0
+        for x in range(curr_x - fov_height, curr_x + 1 + fov_height):
+            for y in range(curr_y - fov_width+abs(curr_x-x), curr_y + 1 + fov_width-abs(curr_x-x)):
+                if env.update_if_valid(x, y, True):
+                    scanned += 1
+        return scanned
