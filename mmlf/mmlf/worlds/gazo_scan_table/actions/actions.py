@@ -30,13 +30,11 @@ class GazeboActions(object):
             env.tilt = self.__minTilt
         elif env.tilt > self.__maxTilt:
             env.tilt = self.__maxTilt
-        # self.__move_cam(pan=env.pan, tilt=env.tilt)
+        self.__move_cam(pan=env.pan, tilt=env.tilt)
 
     def moveLeft(self, environment):
         self.__move(-self.__pan_step, 0, environment)
         return -1
-    moveLeft.name = "Move Left"
-
     moveLeft.name = "Move Left"
 
     def moveRight(self, env):
@@ -44,20 +42,14 @@ class GazeboActions(object):
         return -1
     moveRight.name = "Move Right"
 
-    moveRight.name = "Move Right"
-
     def moveUp(self, env):
         self.__move(0, -self.__tilt_step, env)
         return -1
     moveUp.name = "Move Up"
 
-    moveUp.name = "Move Up"
-
     def moveDown(self, env):
         self.__move(0, self.__tilt_step, env)
         return -1
-    moveDown.name = "Move Down"
-
     moveDown.name = "Move Down"
 
     def scan(self, env):

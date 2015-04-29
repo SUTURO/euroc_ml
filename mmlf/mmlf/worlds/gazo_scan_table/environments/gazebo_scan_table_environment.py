@@ -1,6 +1,5 @@
 from copy import deepcopy
 import numpy
-import math
 from threading import Thread
 from euroc_c2_msgs.srv import StartSimulator, StopSimulator
 import rospy
@@ -11,11 +10,22 @@ from mmlf.framework.protocol import EnvironmentInfo
 from mmlf.environments.single_agent_environment import SingleAgentEnvironment
 from mmlf.framework.spaces import StateSpace, ActionSpace
 from mmlf.worlds.gazo_scan_table.actions import GazeboActions
+from suturo_planning_search.cell import Cell
 from suturo_planning_search.map import Map
 from suturo_planning_yaml_pars0r.yaml_pars0r import YamlPars0r
 
 
 __author__ = 'hansa'
+
+
+__stopped = False
+
+
+def publish_yaml(yaml):
+    parser = rospy.Publisher("/suturo/startup/yaml_pars0r_input", std_msgs.String)
+    while not __stopped:
+        parser.publish(data=yaml)
+        time.sleep(5)
 
 
 class GazeboScanTableEnvironment(SingleAgentEnvironment):
@@ -87,7 +97,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             VIEWERS.addViewer(lambda: GazeboTableViewer(self), "GazeboTable Viewer")
 
         self.get_map = rospy.ServiceProxy(Map.NAME_SERVICE_GET_MAP, GetMap)
-        self.reset_map = rospy.ServiceProxy(Map.NAME_SERVICE_GET_MAP, ResetMap)
+        self.reset_map = rospy.ServiceProxy(Map.NAME_SERVICE_RESET_MAP, ResetMap)
         self.map_percent_cleared = rospy.ServiceProxy("/suturo/environment/get_map_percent_cleared", GetPercentCleared)
         self.__cell_map = None
         self.__need_update = True
@@ -125,18 +135,12 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def _checkEpisodeFinished(self):
         return self.discovered_percentage >= 95.0 or self.stepCounter >= self.configDict["maxActions"]
 
-    def publish_yaml(self, yaml):
-        while not self.__stopped:
-            parser = rospy.Publisher("/suturo/startup/yaml_pars0r_input", std_msgs.String)
-            parser.publish(data=yaml)
-            time.sleep(1)
-
     def __init_simulation(self):
-        rospy.init_node(name="MMLF_Agent")
         description = rospy.ServiceProxy("/euroc_c2_task_selector/start_simulator", StartSimulator)(user_id="C2T03",
-                                                                                      scene_name=self.configDict["task_name"])
-        self.__stopped = False
-        self.__publisher = Thread(target=self.publish_yaml, args=(description.description_yaml,))
+                                                                                                    scene_name=self.configDict["task_name"])
+        __stopped = False
+        rospy.init_node(name="MMLF_Agent")
+        self.__publisher = Thread(target=publish_yaml, args=(description.description_yaml,))
         self.__publisher.start()
         task = YamlPars0r.parse_yaml(description.description_yaml)
         self.__base_pose = task.mast_of_cam.base_pose
@@ -145,7 +149,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def stop(self):
         # Stop the simulation
         try:
-            self.__stopped = True
+            __stopped = False
             self.__publisher.join()
             rospy.ServiceProxy("/euroc_c2_task_selector/stop_simulator", StopSimulator)()
         except rospy.ServiceException:
@@ -218,22 +222,16 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     @property
     def cell_map(self):
         if self.__cell_map is None or self.__need_update:
-            map = self.get_map().map
-            self.__cell_map = numpy.ndarray(shape=(map.size_column, map.size_column), dtype=bool)
-            for x in range(map.size_column):
-                for y in range(map.size_column):
-                    self.__cell_map[x, y] = map.field[x * map.size_column + y].marked
+            self.__map = Map.from_msg(self.get_map().map)
+            self.__cell_map = numpy.ndarray(shape=(Map.num_of_cells, Map.num_of_cells), dtype=bool)
+            for x in range(Map.num_of_cells):
+                for y in range(Map.num_of_cells):
+                    self.__cell_map[x, y] = self.__map.field[x * Map.num_of_cells + y].state != Cell.Unknown
+            self.__need_update = False
         return self.__cell_map
 
     @property
     def camera_index(self):
-        # Transform the pan and tilt into global coordinates
-        Tpt = numpy.asarray([
-            [math.cos(self.pan)*math.cos(self.tilt), -math.sin(self.pan), math.cos(self.pan)*math.sin(self.tilt)],
-            [math.sin(self.pan)*math.cos(self.tilt), math.cos(self.pan),  math.sin(self.pan)*math.sin(self.tilt)],
-            [-math.sin(self.tilt), 0, math.cos(self.tilt)],
-        ])
-        p = numpy.asarray([0, math.cos(math.pi / 2 + self.tilt), 0])
         return (0, 0)
 
     @property
