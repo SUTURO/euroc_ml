@@ -30,6 +30,7 @@ class GazeboActions(object):
             env.tilt = self.__minTilt
         elif env.tilt > self.__maxTilt:
             env.tilt = self.__maxTilt
+        env.update_index()
         self.__move_cam(pan=env.pan, tilt=env.tilt)
 
     def moveLeft(self, environment):

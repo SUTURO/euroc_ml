@@ -168,18 +168,18 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         for i in range(x+1, self.configDict["rows"]):
             r = r or not self.__table_cells[i,y]
         self.currentState["isSomethingRight"] = r
-        l = False
+        r = False
         for i in range(0, x):
-            l = l or not self.__table_cells[i,y]
-        self.currentState["isSomethingLeft"] = l
-        u=False
+            r = r or not self.__table_cells[i,y]
+        self.currentState["isSomethingLeft"] = r
+        r=False
         for i in range(y+1, self.configDict["columns"]):
-            u = u or not self.__table_cells[x,i]
-        self.currentState["isSomethingUp"] = u
-        d=False
+            r = r or not self.__table_cells[x,i]
+        self.currentState["isSomethingUp"] = r
+        r=False
         for i in range(0, y):
-            d = d or not self.__table_cells[x,i]
-        self.currentState["isSomethingDown"] = d
+            r = r or not self.__table_cells[x,i]
+        self.currentState["isSomethingDown"] = r
 
     def update_if_valid(self, x, y, value):
         if x >= 0 and y >= 0 and x < self.configDict["rows"] and y < self.configDict["columns"]:

@@ -12,6 +12,7 @@ class SimSimAction(object):
 
     def __init__(self):
         self.min_n = 2
+        self.moves = 1
 
     def moveLeft(self, env):
         n = self.min_n
@@ -19,7 +20,8 @@ class SimSimAction(object):
             n = 10
         (x,y) = env.camera_index
         self.move_to(x, y-n,env )
-        return -1
+        self.moves += 0
+        return -self.moves
 
     def moveRight(self, env):
         n = self.min_n
@@ -27,7 +29,8 @@ class SimSimAction(object):
             n = 10
         (x,y) = env.camera_index
         self.move_to(x, y+n,env )
-        return -1
+        self.moves += 0
+        return -self.moves
 
     def moveUp(self, env):
         n = self.min_n
@@ -35,7 +38,8 @@ class SimSimAction(object):
             n = 10
         (x,y) = env.camera_index
         self.move_to(x+n, y,env )
-        return -1
+        self.moves += 0
+        return -self.moves
 
     def moveDown(self, env):
         n = self.min_n
@@ -43,13 +47,15 @@ class SimSimAction(object):
             n = 10
         (x,y) = env.camera_index
         self.move_to(x-n, y,env )
-        return -1
+        self.moves += 0
+        return -self.moves
 
     def turboMode(self, env):
         env.currentState["isTurbo"] = int(not env.currentState["isTurbo"])
         return -1
 
     def scan(self, env):
+        self.moves = 1
         return self.scan_table2(env)
         pass
 

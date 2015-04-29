@@ -17,10 +17,10 @@ class GazeboTableViewer(Viewer):
 
         # Create matplotlib widgets
         plotWidgetPolicy = QtGui.QWidget(self)
-        plotWidgetPolicy.setMinimumSize(300, 400)
+        plotWidgetPolicy.setMinimumSize(400, 400)
         plotWidgetPolicy.setWindowTitle ("Table")
 
-        self.figPolicy = Figure((3.0, 4.0), dpi=100)
+        self.figPolicy = Figure((4.0, 4.0), dpi=100)
         self.figPolicy.subplots_adjust(left=0.01, bottom=0.01, right=0.99,
                                        top= 0.99, wspace=0.05, hspace=0.11)
         self.canvasPolicy = FigureCanvas(self.figPolicy)
