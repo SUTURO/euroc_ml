@@ -3,6 +3,7 @@ import numpy
 import math
 from threading import Thread
 from euroc_c2_msgs.srv import StartSimulator, StopSimulator
+from geometry_msgs.msg._PoseStamped import PoseStamped
 import rospy
 from suturo_environment_msgs.srv import GetMap, ResetMap, GetPercentCleared
 from std_msgs import msg as std_msgs
@@ -11,8 +12,10 @@ from mmlf.framework.protocol import EnvironmentInfo
 from mmlf.environments.single_agent_environment import SingleAgentEnvironment
 from mmlf.framework.spaces import StateSpace, ActionSpace
 from mmlf.worlds.gazo_scan_table.actions import GazeboActions
+from suturo_planning_manipulation.transformer import Transformer
 from suturo_planning_search.map import Map
 from suturo_planning_yaml_pars0r.yaml_pars0r import YamlPars0r
+# from suturo_planning_manipulation.tranformer import Transformer
 
 
 __author__ = 'hansa'
@@ -44,6 +47,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
 
         # Initialize the simulation
         self.__init_simulation()
+
+        self.transformer = Transformer()
 
         self.pan = 0
         self.tilt = 0
@@ -95,6 +100,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.__cols = None
         self.__cell_size = None
         self.__percent_cleared = 0.0
+        self.__update_index = True
 
     def check_new_state(self):
         x, y = self.camera_index
@@ -141,6 +147,9 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         task = YamlPars0r.parse_yaml(description.description_yaml)
         self.__base_pose = task.mast_of_cam.base_pose
         self.__pan_tilt_base = task.mast_of_cam.pan_tilt_base
+
+    def update_index(self):
+        self.__update_index = True
 
     def stop(self):
         # Stop the simulation
@@ -218,23 +227,37 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     @property
     def cell_map(self):
         if self.__cell_map is None or self.__need_update:
-            map = self.get_map().map
-            self.__cell_map = numpy.ndarray(shape=(map.size_column, map.size_column), dtype=bool)
-            for x in range(map.size_column):
-                for y in range(map.size_column):
-                    self.__cell_map[x, y] = map.field[x * map.size_column + y].marked
+            self.__map = self.get_map().map
+            self.__cell_map = numpy.ndarray(shape=(self.__map.size_column, self.__map.size_column), dtype=bool)
+            for x in range(self.__map.size_column):
+                for y in range(self.__map.size_column):
+                    self.__cell_map[x, y] = self.__map.field[x * self.__map.size_column + y].marked
         return self.__cell_map
 
     @property
     def camera_index(self):
         # Transform the pan and tilt into global coordinates
-        Tpt = numpy.asarray([
-            [math.cos(self.pan)*math.cos(self.tilt), -math.sin(self.pan), math.cos(self.pan)*math.sin(self.tilt)],
-            [math.sin(self.pan)*math.cos(self.tilt), math.cos(self.pan),  math.sin(self.pan)*math.sin(self.tilt)],
-            [-math.sin(self.tilt), 0, math.cos(self.tilt)],
-        ])
-        p = numpy.asarray([0, math.cos(math.pi / 2 + self.tilt), 0])
-        return (0, 0)
+        if self.__update_index:
+            c = PoseStamped()
+            c.header.frame_id = "sdepth"
+            c.pose.orientation.w = 1
+            cx = deepcopy(c)
+            cx.pose.position.x = 1
+            c = self.transformer.transform_to(c)
+            # print c
+            cx = self.transformer.transform_to(cx)
+            # print cx
+            s = (-c.pose.position.z) / cx.pose.position.z
+            # print "s: " + str(s)
+            (x,y) = (c.pose.position.x + s* cx.pose.position.x, c.pose.position.y + s* cx.pose.position.y)
+            # print x, y
+            # self.get_map()
+            m = Map(self.__map.size, False)
+            x,y = m.coordinates_to_index(x,y)
+            self.__update_index = False
+            self.x = x
+            self.y = y
+        return self.x, self.y
 
     @property
     def cell_size(self):
