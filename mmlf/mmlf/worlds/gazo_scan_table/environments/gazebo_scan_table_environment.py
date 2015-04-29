@@ -144,6 +144,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def __init_simulation(self):
         description = rospy.ServiceProxy("/euroc_c2_task_selector/start_simulator", StartSimulator)(user_id="C2T03",
                                                                                                     scene_name=self.configDict["task_name"])
+        global __stopped
         __stopped = False
         rospy.init_node(name="MMLF_Agent")
         self.__publisher = Thread(target=publish_yaml, args=(description.description_yaml,))
@@ -158,6 +159,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def stop(self):
         # Stop the simulation
         try:
+            global __stopped
             __stopped = False
             self.__publisher.join()
             rospy.ServiceProxy("/euroc_c2_task_selector/stop_simulator", StopSimulator)()
@@ -256,9 +258,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             # print "s: " + str(s)
             (x,y) = (c.pose.position.x + s* cx.pose.position.x, c.pose.position.y + s* cx.pose.position.y)
             # print x, y
-            # self.get_map()
-            m = Map(self.__map.size, False)
-            x,y = m.coordinates_to_index(x,y)
+            x,y = self.__map.coordinates_to_index(x,y)
             self.__update_index = False
             self.x = x
             self.y = y
