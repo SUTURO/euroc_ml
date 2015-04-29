@@ -21,16 +21,6 @@ from suturo_planning_yaml_pars0r.yaml_pars0r import YamlPars0r
 __author__ = 'hansa'
 
 
-__stopped = False
-
-
-def publish_yaml(yaml):
-    parser = rospy.Publisher("/suturo/startup/yaml_pars0r_input", std_msgs.String)
-    while not __stopped:
-        parser.publish(data=yaml)
-        time.sleep(5)
-
-
 class GazeboScanTableEnvironment(SingleAgentEnvironment):
 
     DEFAULT_CONFIG_DICT = {
@@ -111,6 +101,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.__cell_size = None
         self.__percent_cleared = 0.0
         self.__update_index = True
+        self.__map = None
+        self.__stopped = False
 
     def check_new_state(self):
         x, y = self.camera_index
@@ -141,13 +133,18 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def _checkEpisodeFinished(self):
         return self.discovered_percentage >= 95.0 or self.stepCounter >= self.configDict["maxActions"]
 
+    def publish_yaml(self, yaml):
+        parser = rospy.Publisher("/suturo/startup/yaml_pars0r_input", std_msgs.String)
+        while not self.__stopped:
+            parser.publish(data=yaml)
+            time.sleep(5)
+
     def __init_simulation(self):
         description = rospy.ServiceProxy("/euroc_c2_task_selector/start_simulator", StartSimulator)(user_id="C2T03",
                                                                                                     scene_name=self.configDict["task_name"])
-        global __stopped
-        __stopped = False
         rospy.init_node(name="MMLF_Agent")
-        self.__publisher = Thread(target=publish_yaml, args=(description.description_yaml,))
+        self.__stopped = False
+        self.__publisher = Thread(target=self.publish_yaml, args=(description.description_yaml,))
         self.__publisher.start()
         task = YamlPars0r.parse_yaml(description.description_yaml)
         self.__base_pose = task.mast_of_cam.base_pose
@@ -159,8 +156,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def stop(self):
         # Stop the simulation
         try:
-            global __stopped
-            __stopped = False
+            self.__stopped = False
             self.__publisher.join()
             rospy.ServiceProxy("/euroc_c2_task_selector/stop_simulator", StopSimulator)()
         except rospy.ServiceException:
@@ -258,6 +254,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             # print "s: " + str(s)
             (x,y) = (c.pose.position.x + s* cx.pose.position.x, c.pose.position.y + s* cx.pose.position.y)
             # print x, y
+            if self.__map is None:
+                cell_map = self.cell_map
             x,y = self.__map.coordinates_to_index(x,y)
             self.__update_index = False
             self.x = x
