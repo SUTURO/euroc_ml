@@ -61,5 +61,9 @@ class GazeboActions(object):
             self.__add_pointcloud(scenecam=True)
             env.update_map()
             new = env.discovered_percentage
-            return new - old
+            diff = new - old
+            if diff == 0:
+                return -1
+            else:
+                return diff
     scan.name = "Scan"

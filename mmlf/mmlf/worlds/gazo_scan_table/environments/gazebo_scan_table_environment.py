@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy
 from threading import Thread
+from multiprocessing import Process
 from euroc_c2_msgs.srv import StartSimulator, StopSimulator
 from geometry_msgs.msg._PoseStamped import PoseStamped
 import rospy
@@ -19,6 +20,27 @@ from suturo_planning_yaml_pars0r.yaml_pars0r import YamlPars0r
 
 
 __author__ = 'hansa'
+
+
+class MMLFNode(Process):
+    def __init__(self, yaml):
+        self.__parser = rospy.Publisher("/sutur/startup/yaml_pars0r_input", std_msgs.String)
+        self.__tf = rospy.Service("/mmlf/transform_to", PoseStamped, self.__handle_transform)
+        self.__transformer = Transformer()
+        self.__stopped = False
+        self.__yaml = yaml
+
+    def stop(self):
+        self.__stopped = True
+
+    def run(self):
+        rospy.init_node("MMLFNode")
+        while not self.__stopped:
+            self.__parser.publish(data=self.__yaml)
+            time.sleep(0.5)
+    
+    def __handle_transform(self, msg):
+        return self.__transformer.transform_to(msg)
 
 
 class GazeboScanTableEnvironment(SingleAgentEnvironment):
@@ -48,7 +70,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         # Initialize the simulation
         self.__init_simulation()
 
-        self.transformer = Transformer()
+        self.__transform_to = rospy.ServiceProxy("/mmlf/transform_to", PoseStamped)
 
         self.pan = 0
         self.tilt = 0
@@ -102,7 +124,6 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.__percent_cleared = 0.0
         self.__update_index = True
         self.__map = None
-        self.__stopped = False
 
     def check_new_state(self):
         x, y = self.camera_index
@@ -133,18 +154,11 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def _checkEpisodeFinished(self):
         return self.discovered_percentage >= 95.0 or self.stepCounter >= self.configDict["maxActions"]
 
-    def publish_yaml(self, yaml):
-        parser = rospy.Publisher("/suturo/startup/yaml_pars0r_input", std_msgs.String)
-        while not self.__stopped:
-            parser.publish(data=yaml)
-            time.sleep(5)
 
     def __init_simulation(self):
         description = rospy.ServiceProxy("/euroc_c2_task_selector/start_simulator", StartSimulator)(user_id="C2T03",
                                                                                                     scene_name=self.configDict["task_name"])
-        rospy.init_node(name="MMLF_Agent")
-        self.__stopped = False
-        self.__publisher = Thread(target=self.publish_yaml, args=(description.description_yaml,))
+        self.__publisher = MMLFNode(description.description_yaml)
         self.__publisher.start()
         task = YamlPars0r.parse_yaml(description.description_yaml)
         self.__base_pose = task.mast_of_cam.base_pose
@@ -156,7 +170,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def stop(self):
         # Stop the simulation
         try:
-            self.__stopped = False
+            self.__publisher.stop()
             self.__publisher.join()
             rospy.ServiceProxy("/euroc_c2_task_selector/stop_simulator", StopSimulator)()
         except rospy.ServiceException:
@@ -176,6 +190,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None
         if episodeFinished:
+            reward = 100 if self.discovered_percentage >= 95 else 0
+            print "Episode %d lasted for %d steps and gave a reward of %d" % (self.episodeCounter, self.stepCounter, reward)
             self.environmentLog.info("Episode %d lasted for %d steps" % (self.episodeCounter, self.stepCounter))
             self.episodeLengthObservable.addValue(self.episodeCounter,
                                                   self.stepCounter + 1)
@@ -185,8 +201,6 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             self.episodeCounter += 1
             self.currentState = self.getInitialState()
             self.resetTable()
-            reward = 100 if self.discovered_percentage >= 95 else 0
-
             self.trajectoryObservable.addTransition(previousState, action,
                                                     reward, terminalState,
                                                     episodeTerminated=episodeFinished)
@@ -221,9 +235,9 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
 
     @property
     def discovered_percentage(self):
-        if self.__need_update:
-            response = self.map_percent_cleared()
-            self.__percent_cleared = response.percent
+        response = self.map_percent_cleared()
+        self.__percent_cleared = response.percent * 100
+        print "Discovered Percent: %f" % self.__percent_cleared
         return self.__percent_cleared
 
     @property
@@ -246,9 +260,9 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             c.pose.orientation.w = 1
             cx = deepcopy(c)
             cx.pose.position.x = 1
-            c = self.transformer.transform_to(c)
+            c = self.__transform_to(c)
             # print c
-            cx = self.transformer.transform_to(cx)
+            cx = self.__transform_to(cx)
             # print cx
             s = (-c.pose.position.z) / cx.pose.position.z
             # print "s: " + str(s)
@@ -258,6 +272,14 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
                 cell_map = self.cell_map
             x,y = self.__map.coordinates_to_index(x,y)
             self.__update_index = False
+            if x < 0:
+                x = 0
+            elif x >= self.rows:
+                x = self.row - 1
+            if y < 0:
+                y = 0
+            elif y >= self.columns:
+                y = self.columns -1
             self.x = x
             self.y = y
         return self.x, self.y
