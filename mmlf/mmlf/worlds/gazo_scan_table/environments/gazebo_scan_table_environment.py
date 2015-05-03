@@ -1,7 +1,6 @@
 from copy import deepcopy
 import numpy
-from threading import Thread
-from multiprocessing import Process
+from multiprocessing import Process, Value
 from euroc_c2_msgs.srv import StartSimulator, StopSimulator
 from geometry_msgs.msg._PoseStamped import PoseStamped
 import rospy
@@ -16,31 +15,32 @@ from suturo_planning_search.cell import Cell
 from suturo_planning_manipulation.transformer import Transformer
 from suturo_planning_search.map import Map
 from suturo_planning_yaml_pars0r.yaml_pars0r import YamlPars0r
-# from suturo_planning_manipulation.tranformer import Transformer
+from mmlf_msgs.srv import TransformerService, TransformerServiceResponse
 
 
 __author__ = 'hansa'
 
 
 class MMLFNode(Process):
-    def __init__(self, yaml):
-        self.__parser = rospy.Publisher("/sutur/startup/yaml_pars0r_input", std_msgs.String)
-        self.__tf = rospy.Service("/mmlf/transform_to", PoseStamped, self.__handle_transform)
-        self.__transformer = Transformer()
-        self.__stopped = False
+    def __init__(self, yaml, stopped):
+        super(MMLFNode, self).__init__()
         self.__yaml = yaml
-
-    def stop(self):
-        self.__stopped = True
+        self.__stopped = stopped
 
     def run(self):
         rospy.init_node("MMLFNode")
-        while not self.__stopped:
-            self.__parser.publish(data=self.__yaml)
-            time.sleep(0.5)
+        parser = rospy.Publisher("/suturo/startup/yaml_pars0r_input", std_msgs.String, latch=True)
+        rospy.Service("/mmlf/transform_to", TransformerService, self.__handle_transform)
+        self.__transformer = Transformer()
+        r = rospy.Rate(1)  # 1Hz
+        while not self.__stopped.value:
+            parser.publish(data=self.__yaml)
+            r.sleep()
     
     def __handle_transform(self, msg):
-        return self.__transformer.transform_to(msg)
+        response = TransformerServiceResponse()
+        response.pose = self.__transformer.transform_to(msg.pose)
+        return response
 
 
 class GazeboScanTableEnvironment(SingleAgentEnvironment):
@@ -70,7 +70,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         # Initialize the simulation
         self.__init_simulation()
 
-        self.__transform_to = rospy.ServiceProxy("/mmlf/transform_to", PoseStamped)
+        self.__transform_to = rospy.ServiceProxy("/mmlf/transform_to", TransformerService)
 
         self.pan = 0
         self.tilt = 0
@@ -158,7 +158,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def __init_simulation(self):
         description = rospy.ServiceProxy("/euroc_c2_task_selector/start_simulator", StartSimulator)(user_id="C2T03",
                                                                                                     scene_name=self.configDict["task_name"])
-        self.__publisher = MMLFNode(description.description_yaml)
+        self.__stop_publisher = Value("b", False)
+        self.__publisher = MMLFNode(description.description_yaml, self.__stop_publisher)
         self.__publisher.start()
         task = YamlPars0r.parse_yaml(description.description_yaml)
         self.__base_pose = task.mast_of_cam.base_pose
@@ -170,11 +171,17 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def stop(self):
         # Stop the simulation
         try:
-            self.__publisher.stop()
-            self.__publisher.join()
-            rospy.ServiceProxy("/euroc_c2_task_selector/stop_simulator", StopSimulator)()
-        except rospy.ServiceException:
-            pass
+            try:
+                self.__stop_publisher.value = True
+                if not self.__publisher.join(timeout=2):
+                    self.__publisher.terminate()
+                    self.__publisher.join(2)
+            except rospy.ROSInterruptException:
+                pass
+            try:
+                rospy.ServiceProxy("/euroc_c2_task_selector/stop_simulator", StopSimulator)()
+            except rospy.ServiceException:
+                pass
         finally:
             super(GazeboScanTableEnvironment, self).stop()
 
@@ -191,7 +198,6 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         terminalState = self.currentState if episodeFinished else None
         if episodeFinished:
             reward = 100 if self.discovered_percentage >= 95 else 0
-            print "Episode %d lasted for %d steps and gave a reward of %d" % (self.episodeCounter, self.stepCounter, reward)
             self.environmentLog.info("Episode %d lasted for %d steps" % (self.episodeCounter, self.stepCounter))
             self.episodeLengthObservable.addValue(self.episodeCounter,
                                                   self.stepCounter + 1)
@@ -235,9 +241,10 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
 
     @property
     def discovered_percentage(self):
-        response = self.map_percent_cleared()
-        self.__percent_cleared = response.percent * 100
-        print "Discovered Percent: %f" % self.__percent_cleared
+        if self.__percent_cleared is None or self.__need_update:
+            response = self.map_percent_cleared()
+            self.__percent_cleared = response.percent * 100
+            self.environmentLog.debug("Discovered Percent: %.2f" % self.__percent_cleared)
         return self.__percent_cleared
 
     @property
@@ -248,7 +255,6 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             for x in range(Map.num_of_cells):
                 for y in range(Map.num_of_cells):
                     self.__cell_map[x, y] = self.__map.field[x * Map.num_of_cells + y].state != Cell.Unknown
-            self.__need_update = False
         return self.__cell_map
 
     @property
@@ -260,9 +266,9 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             c.pose.orientation.w = 1
             cx = deepcopy(c)
             cx.pose.position.x = 1
-            c = self.__transform_to(c)
+            c = self.__transform_to(pose=c).pose
             # print c
-            cx = self.__transform_to(cx)
+            cx = self.__transform_to(pose=cx).pose
             # print cx
             s = (-c.pose.position.z) / cx.pose.position.z
             # print "s: " + str(s)

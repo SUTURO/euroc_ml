@@ -1,0 +1,7 @@
+#Request
+geometry_msgs/PoseStamped pose
+
+---
+
+#Response
+geometry_msgs/PoseStamped pose
