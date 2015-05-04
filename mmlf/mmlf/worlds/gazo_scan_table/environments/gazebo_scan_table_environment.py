@@ -46,7 +46,6 @@ class MMLFNode(Process):
 class GazeboScanTableEnvironment(SingleAgentEnvironment):
 
     DEFAULT_CONFIG_DICT = {
-        "maxActions": 100,
         "minPan": -1.50,
         "maxPan": 1.50,
         "minTilt": -1.50,
@@ -152,7 +151,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         return deepcopy(self.initialState)
 
     def _checkEpisodeFinished(self):
-        return self.discovered_percentage >= 95.0 or self.stepCounter >= self.configDict["maxActions"]
+        return self.discovered_percentage >= 95.0
 
 
     def __init_simulation(self):
@@ -188,8 +187,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
         previousState = deepcopy(self.currentState)
-        x, y = self.camera_index
-        self.environmentLog.debug("Executing Action %s at (%d / %d)" % (action.name, x, y))
+	x, y = self.pan, self.tilt
+        self.environmentLog.debug("Executing Action %s at (%.2f / %.2f)" % (action.name, x, y))
         reward = action(self)
         self.check_new_state()
 
