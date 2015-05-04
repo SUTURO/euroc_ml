@@ -13,6 +13,7 @@ class SimSimAction(object):
     def __init__(self):
         self.min_n = 2
         self.moves = 1
+        self.old_scan = 0
 
     def moveLeft(self, env):
         n = self.min_n
@@ -57,7 +58,6 @@ class SimSimAction(object):
     def scan(self, env):
         self.moves = 1
         return self.scan_table2(env)
-        pass
 
     def move_to(self, x, y, env):
         x = max(0, min(x,env.configDict["rows"]-1))
@@ -77,11 +77,22 @@ class SimSimAction(object):
         return scanned
 
     def scan_table2(self,env):
+        self.old_scan = env.discovered_percentage
         curr_x, curr_y = env.camera_index
         fov_width, fov_height = env.configDict["camera_fov_width"], env.configDict["camera_fov_height"]
-        scanned = 0
+        # scanned = 0.
         for x in range(curr_x - fov_height, curr_x + 1 + fov_height):
             for y in range(curr_y - fov_width+abs(curr_x-x), curr_y + 1 + fov_width-abs(curr_x-x)):
-                if env.update_if_valid(x, y, True):
-                    scanned += 1
-        return scanned
+                # if env.update_if_valid(x, y, True):
+                env.update_if_valid(x, y, True)
+
+                    # scanned += 1.
+
+        r = env.discovered_percentage - self.old_scan
+        # if r > 0:
+        #     print r
+        return 10 if r > 3. else -10
+        # self.disc = env.discovered_percentage
+        # if env.discovered_percentage > 0:
+        #     print r
+        # return r

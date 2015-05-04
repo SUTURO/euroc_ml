@@ -122,7 +122,8 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None
         if episodeFinished:
-            reward = self.discovered_percentage
+            # reward = self.discovered_percentage **2 /10
+            reward = 100 if self.discovered_percentage > 95 else -100
             self.environmentLog.info("Episode %d lasted for %d steps; reward = %d" % (self.episodeCounter, self.stepCounter, reward))
             self.episodeLengthObservable.addValue(self.episodeCounter,
                                                   self.stepCounter + 1)
