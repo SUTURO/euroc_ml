@@ -46,12 +46,12 @@ class MMLFNode(Process):
 class GazeboScanTableEnvironment(SingleAgentEnvironment):
 
     DEFAULT_CONFIG_DICT = {
-        "minPan": -1.50,
-        "maxPan": 1.50,
-        "minTilt": -1.50,
-        "maxTilt": 1.50,
-        "stepsPan": 8,
-        "stepsTilt": 8,
+        "minPan": -1.10,
+        "maxPan": 1.20,
+        "minTilt": -1.40,
+        "maxTilt": 0.50,
+        "stepsPan": 4,
+        "stepsTilt": 4,
         "task_name": "task1_v1"
     }
 
@@ -83,18 +83,14 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.stateSpace = StateSpace()
         self.stateSpace.addOldStyleSpace(oldStyleStateSpace)
 
-        actions = GazeboActions(self.configDict["minPan"],
+        self.__actions = GazeboActions(self.configDict["minPan"],
                                 self.configDict["maxPan"],
                                 self.configDict["minTilt"],
                                 self.configDict["maxTilt"],
                                 self.configDict["stepsPan"],
                                 self.configDict["stepsTilt"])
         oldStyleActionSpace = {
-            "action": ("discrete", [actions.moveLeft,
-                                    actions.moveRight,
-                                    actions.moveUp,
-                                    actions.moveDown,
-                                    actions.scan])
+            "action": ("discrete", self.__actions.actions)
         }
 
         self.actionSpace = ActionSpace()
@@ -161,8 +157,6 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.__publisher = MMLFNode(description.description_yaml, self.__stop_publisher)
         self.__publisher.start()
         task = YamlPars0r.parse_yaml(description.description_yaml)
-        self.__base_pose = task.mast_of_cam.base_pose
-        self.__pan_tilt_base = task.mast_of_cam.pan_tilt_base
 
     def update_index(self):
         self.__update_index = True
@@ -188,8 +182,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         action = actionObject["action"]
         previousState = deepcopy(self.currentState)
 	x, y = self.pan, self.tilt
-        self.environmentLog.debug("Executing Action %s at (%.2f / %.2f)" % (action.name, x, y))
-        reward = action(self)
+        reward = self.__actions.performAction(action, self)
+        self.environmentLog.debug("Executed Action %s Pos: (%.2f / %.2f) Reward: %d" % (action, x, y, reward))
         self.check_new_state()
 
         self.currentState["isScanned"] = 1 if self.cell_map[x, y] else 0
@@ -210,7 +204,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
                                                     reward, terminalState,
                                                     episodeTerminated=episodeFinished)
         else:
-            self.stepCounter += 1
+            if action == "scan":
+                self.stepCounter += 1
             self.trajectoryObservable.addTransition(previousState, action,
                                                     reward, self.currentState,
                                                     episodeTerminated=episodeFinished)
@@ -237,6 +232,8 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.__rows = None
         self.__cols = None
         self.__percent_cleared = 0.0
+        self.pan = 0
+        self.tilt = 0
 
     @property
     def discovered_percentage(self):

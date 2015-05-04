@@ -8,6 +8,8 @@ import rospy
 
 class GazeboActions(object):
 
+    actions = ["left", "right", "up", "down", "scan"]
+
     def __init__(self, minPan, maxPan, minTilt, maxTilt, stepsX=4, stepsY=2):
         self.__pan_step = (maxPan - minPan) / stepsX
         self.__tilt_step = (maxTilt - minTilt) / stepsY
@@ -17,6 +19,18 @@ class GazeboActions(object):
         self.__maxTilt = maxTilt
         self.__move_cam = rospy.ServiceProxy("/suturo/manipulation/move_mastcam", MoveMastCam)
         self.__add_pointcloud = rospy.ServiceProxy("/suturo/environment/add_point_cloud", AddPointCloud)
+
+    def performAction(self, action, env):
+        if action == "left":
+            return self.moveLeft(env)
+        elif action == "right":
+            return self.moveRight(env)
+        elif action == "up":
+            return self.moveUp(env)
+        elif action == "down":
+            return self.moveDown(env)
+        elif action == "scan":
+            return self.scan(env)
 
     def __move(self, x, y, env):
         env.pan += x
@@ -63,7 +77,7 @@ class GazeboActions(object):
             new = env.discovered_percentage
             diff = int(new) - int(old)
             if diff <= 3:
-                return -1
+                return -10
             else:
-                return diff / 4.0
+                return 10
     scan.name = "Scan"
