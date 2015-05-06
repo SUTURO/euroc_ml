@@ -10,17 +10,46 @@ class ActionBase(object):
 
 class SimSimAction(object):
 
+    actions = ["left", "right", "up", "down", "scan"]
+
     def __init__(self):
-        self.min_n = 2
-        self.moves = 1
+        # self.__pan_step = (maxPan - minPan) / stepsX
+        # self.__tilt_step = (maxTilt - minTilt) / stepsY
+        # self.__minPan = minPan
+        # self.__maxPan = maxPan
+        # self.__minTilt = minTilt
+        # self.__maxTilt = maxTilt
+        # self.__move_cam = rospy.ServiceProxy("/suturo/manipulation/move_mastcam", MoveMastCam)
+        # self.__add_pointcloud = rospy.ServiceProxy("/suturo/environment/add_point_cloud", AddPointCloud)
         self.old_scan = 0
+        self.min_n = 5
+        self.moves = 1
+
+    def performAction(self, action, env):
+        if action == "left":
+            return self.moveLeft(env)
+        elif action == "right":
+            return self.moveRight(env)
+        elif action == "up":
+            return self.moveUp(env)
+        elif action == "down":
+            return self.moveDown(env)
+        elif action == "scan":
+            return self.scan(env)
+        # elif action == "turbo":
+        #     return self.turboMode(env)
+
+    # def __init__(self):
+    #     self.min_n = 2
+    #     self.moves = 1
+    #     self.old_scan = 0
 
     def moveLeft(self, env):
         n = self.min_n
         if env.currentState["isTurbo"]:
             n = 10
         (x,y) = env.camera_index
-        self.move_to(x, y-n,env )
+        self.move_to(x-n, y+n,env )
         self.moves += 0
         return -self.moves
 
@@ -29,7 +58,7 @@ class SimSimAction(object):
         if env.currentState["isTurbo"]:
             n = 10
         (x,y) = env.camera_index
-        self.move_to(x, y+n,env )
+        self.move_to(x-n, y+n,env )
         self.moves += 0
         return -self.moves
 
@@ -38,7 +67,7 @@ class SimSimAction(object):
         if env.currentState["isTurbo"]:
             n = 10
         (x,y) = env.camera_index
-        self.move_to(x+n, y,env )
+        self.move_to(x+n, y+n,env )
         self.moves += 0
         return -self.moves
 
@@ -47,7 +76,7 @@ class SimSimAction(object):
         if env.currentState["isTurbo"]:
             n = 10
         (x,y) = env.camera_index
-        self.move_to(x-n, y,env )
+        self.move_to(x-n, y-n,env )
         self.moves += 0
         return -self.moves
 
@@ -91,7 +120,7 @@ class SimSimAction(object):
         r = env.discovered_percentage - self.old_scan
         # if r > 0:
         #     print r
-        return 10 if r > 3. else -10
+        return 10 if r > 5. else -10
         # self.disc = env.discovered_percentage
         # if env.discovered_percentage > 0:
         #     print r

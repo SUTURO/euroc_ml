@@ -181,7 +181,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
         previousState = deepcopy(self.currentState)
-	x, y = self.pan, self.tilt
+        x, y = self.pan, self.tilt
         reward = self.__actions.performAction(action, self)
         self.environmentLog.debug("Executed Action %s Pos: (%.2f / %.2f) Reward: %d" % (action, x, y, reward))
         self.check_new_state()
