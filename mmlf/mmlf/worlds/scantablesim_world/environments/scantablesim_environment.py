@@ -52,10 +52,10 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         self.stateSpace = StateSpace()
         self.stateSpace.addOldStyleSpace(oldStyleStateSpace)
 
-        self.actions = SimSimAction()
+
+        self.__actions = SimSimAction()
         oldStyleActionSpace = {
-            "action": ("discrete", [self.actions.scan, self.actions.moveDown, self.actions.moveLeft, self.actions.moveRight,
-                                    self.actions.moveUp, self.actions.turboMode])
+            "action": ("discrete", self.__actions.actions)
         }
 
         self.actionSpace = ActionSpace()
@@ -105,24 +105,15 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         self.check_new_state()
         x, y = self.pos_x, self.pos_y
         self.environmentLog.debug("Executing Action %s at (%d / %d)" % (action, x, y))
-        scanned = action(self)
-        # if action == "left":
-        #     self.move_to(x, y - 1)
-        # elif action == "right":
-        #     self.move_to(x, y + 1)
-        # elif action == "up":
-        #     self.move_to(x + 1, y)
-        # elif action == "down":
-        #     self.move_to(x - 1, y)
-        # elif action == "scan":
-        #     scanned = self.scan_table()
+        reward = self.__actions.performAction(action, self)
 
         self.currentState["isScanned"] = self.isScanned()
 
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None
         if episodeFinished:
-            reward = self.discovered_percentage
+            reward = self.discovered_percentage **3 /1000
+            # reward = 100 if self.discovered_percentage > 95 else -100
             self.environmentLog.info("Episode %d lasted for %d steps; reward = %d" % (self.episodeCounter, self.stepCounter, reward))
             self.episodeLengthObservable.addValue(self.episodeCounter,
                                                   self.stepCounter + 1)
@@ -131,26 +122,17 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
             self.stepCounter = 0
             self.episodeCounter += 1
             self.currentState = self.getInitialState()
-            self.pos_x = 0
-            self.pos_y = 0
+            self.pos_x = self.configDict["rows"] / 2
+            self.pos_y = self.configDict["columns"] / 2
             self.__table_cells = numpy.zeros(shape=(self.configDict["rows"], self.configDict["columns"]), dtype=bool, order="C")
             # reward = 200 if self.discovered_percentage >= 95 else 0
             self.trajectoryObservable.addTransition(previousState, action,
                                                     reward, terminalState,
                                                     episodeTerminated=episodeFinished)
         else:
-            # prev_x, prev_y = previousState["camera_x"], previousState["camera_y"]
-            # curr_x, curr_y = self.currentState["camera_x"], self.currentState["camera_y"]
-
-            # if self.__table_cells[prev_x, prev_y] and not self.__table_cells[curr_x, curr_y]:
-            #     reward = 1
-            # elif not self.__table_cells[prev_x, prev_y] and action == "scan":
-            #     reward = scanned
-            # else:
+            # if action == "scan":
+            # if reward == 0:
             #     reward = -1
-            reward = scanned
-            if reward == 0:
-                reward = -1
             self.stepCounter += 1
             self.trajectoryObservable.addTransition(previousState, action,
                                                     reward, self.currentState,
