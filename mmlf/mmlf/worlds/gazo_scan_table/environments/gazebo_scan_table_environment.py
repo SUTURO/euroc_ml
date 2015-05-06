@@ -48,10 +48,11 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     DEFAULT_CONFIG_DICT = {
         "minPan": -1.10,
         "maxPan": 1.20,
-        "minTilt": -1.40,
-        "maxTilt": 0.50,
+        "minTilt": 0.50,
+        "maxTilt": 1.40,
         "stepsPan": 4,
         "stepsTilt": 4,
+	    "percentCleared": 95.0,
         "task_name": "task1_v1"
     }
 
@@ -66,13 +67,17 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             stochastic=False)
         super(GazeboScanTableEnvironment, self).__init__(*args, useGUI=useGUI, **kwargs)
 
-        # Initialize the simulation
-        self.__init_simulation()
-
-        self.__transform_to = rospy.ServiceProxy("/mmlf/transform_to", TransformerService)
-
+        self.__cell_map = None
+        self.__need_update = True
+        self.__rows = None
+        self.__cols = None
+        self.__cell_size = None
+        self.__percent_cleared = 0.0
+        self.__update_index = True
+        self.__map = None
         self.pan = 0
-        self.tilt = 0
+        self.tilt = 0.5
+
         oldStyleStateSpace = {
             "isScanned": ("discrete", [0, 1]),
             "isSomethingRight": ("discrete", [0,1]),
@@ -81,7 +86,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             "isSomethingDown": ("discrete", [0,1])
         }
         self.stateSpace = StateSpace()
-        self.stateSpace.addOldStyleSpace(oldStyleStateSpace)
+        self.stateSpace.addOldStyleSpace(oldStyleStateSpace, limitType="soft")
 
         self.__actions = GazeboActions(self.configDict["minPan"],
                                 self.configDict["maxPan"],
@@ -111,14 +116,9 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.get_map = rospy.ServiceProxy(Map.NAME_SERVICE_GET_MAP, GetMap)
         self.reset_map = rospy.ServiceProxy(Map.NAME_SERVICE_RESET_MAP, ResetMap)
         self.map_percent_cleared = rospy.ServiceProxy("/suturo/environment/get_map_percent_cleared", GetPercentCleared)
-        self.__cell_map = None
-        self.__need_update = True
-        self.__rows = None
-        self.__cols = None
-        self.__cell_size = None
-        self.__percent_cleared = 0.0
-        self.__update_index = True
-        self.__map = None
+        self.__transform_to = rospy.ServiceProxy("/mmlf/transform_to", TransformerService)
+        # Initialize the simulation
+        self.__init_simulation()
 
     def check_new_state(self):
         x, y = self.camera_index
@@ -147,7 +147,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         return deepcopy(self.initialState)
 
     def _checkEpisodeFinished(self):
-        return self.discovered_percentage >= 95.0
+        return self.discovered_percentage >= self.configDict["percentCleared"]
 
 
     def __init_simulation(self):
@@ -181,19 +181,25 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
         previousState = deepcopy(self.currentState)
-	x, y = self.pan, self.tilt
+        x, y = self.pan, self.tilt
         reward = self.__actions.performAction(action, self)
-        self.environmentLog.debug("Executed Action %s Pos: (%.2f / %.2f) Reward: %d" % (action, x, y, reward))
+
+        if action == "scan":
+            self.stepCounter += 1
         self.check_new_state()
 
+        self.environmentLog.debug("Executed Action %s Pos: (%.2f / %.2f) Reward: %d" % (action, x, y, reward))
+
         self.currentState["isScanned"] = 1 if self.cell_map[x, y] else 0
+
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None
+
         if episodeFinished:
-            reward = 100 if self.discovered_percentage >= 95 else 0
+#            reward = 100
             self.environmentLog.info("Episode %d lasted for %d steps" % (self.episodeCounter, self.stepCounter))
             self.episodeLengthObservable.addValue(self.episodeCounter,
-                                                  self.stepCounter + 1)
+                                                  self.stepCounter)
             self.returnObservable.addValue(self.episodeCounter,
                                            -self.stepCounter)
             self.stepCounter = 0
@@ -204,8 +210,6 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
                                                     reward, terminalState,
                                                     episodeTerminated=episodeFinished)
         else:
-            if action == "scan":
-                self.stepCounter += 1
             self.trajectoryObservable.addTransition(previousState, action,
                                                     reward, self.currentState,
                                                     episodeTerminated=episodeFinished)
@@ -233,7 +237,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.__cols = None
         self.__percent_cleared = 0.0
         self.pan = 0
-        self.tilt = 0
+        self.tilt = 0.5
 
     @property
     def discovered_percentage(self):
@@ -248,9 +252,9 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         if self.__cell_map is None or self.__need_update:
             self.__map = Map.from_msg(self.get_map().map)
             self.__cell_map = numpy.ndarray(shape=(Map.num_of_cells, Map.num_of_cells), dtype=bool)
-            for x in range(Map.num_of_cells):
-                for y in range(Map.num_of_cells):
-                    self.__cell_map[x, y] = self.__map.field[x * Map.num_of_cells + y].state != Cell.Unknown
+            for y in range(Map.num_of_cells):
+                for x in range(Map.num_of_cells):
+                    self.__cell_map[x, y] = self.__map.field[y * Map.num_of_cells + x].state != Cell.Unknown
         return self.__cell_map
 
     @property
@@ -263,21 +267,22 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
             cx = deepcopy(c)
             cx.pose.position.x = 1
             c = self.__transform_to(pose=c).pose
-            # print c
             cx = self.__transform_to(pose=cx).pose
-            # print cx
-            s = (-c.pose.position.z) / cx.pose.position.z
-            # print "s: " + str(s)
-            (x,y) = (c.pose.position.x + s* cx.pose.position.x, c.pose.position.y + s* cx.pose.position.y)
-            # print x, y
+
+            r = (cx.pose.position.x - c.pose.position.x,
+                 cx.pose.position.y - c.pose.position.y,
+                 cx.pose.position.z - c.pose.position.z)
+            s = float(-c.pose.position.z) / r[2]
+            (x,y) = (c.pose.position.x + s * r[0], c.pose.position.y + s * r[1])
+
             if self.__map is None:
                 cell_map = self.cell_map
-            x,y = self.__map.coordinates_to_index(x,y)
+            y, x = self.__map.coordinates_to_index(x,y)
             self.__update_index = False
             if x < 0:
                 x = 0
             elif x >= self.rows:
-                x = self.row - 1
+                x = self.rows - 1
             if y < 0:
                 y = 0
             elif y >= self.columns:
