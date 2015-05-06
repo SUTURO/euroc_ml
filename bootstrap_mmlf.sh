@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "Installing global dependencies"
-sudo apt-get install python2.7 wget tar make libyaml-dev swig
+sudo apt-get install python2.7 wget tar make libyaml-dev swig libstdc++6 libstdc++6-4.6-dev
 
 #echo "Creating and entering virtualenv (mmlf_venv)"
 #python2 -m virtualenv --always-copy mmlf_venv
@@ -46,7 +46,8 @@ tar xfz ann_1.1.2.tar.gz
 cd ann_1.1.2
 echo "-- Building libANN"
 make linux-g++ || exit $?
-sudo cp -r bin/ lib/ include/ /
+export ANN_LIB=$(pwd)/lib
+export ANN_INCLUDE=$(pwd)/include
 cd ..
 
 echo "-- Downloading scikits.ann"
@@ -59,8 +60,13 @@ sed '/NumpyTest/s/^/#/g' -i ./scikits/ann/__init__.py
 sed '/NumpyTest/s/^/#/g' -i ./scikits/ann/tests/test_ann.py
 
 echo "-- Building scikits.ann"
-ANN_LIB=/lib ANN_INCLUDE=/include python2 setup.py build_ext --inplace build test || exit $?
-sudo python2 setup.py install
+# DIRTY HACK: We need to redefine gcc to g++!!
+CC=g++ python2 setup.py build_ext --inplace build || exit $?
+sudo python2 setup.py install || exit $?
+cd ../..
+
+echo "Cleaning up.."
+rm -rf packages
 
 echo "Done"
 
