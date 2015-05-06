@@ -102,17 +102,18 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
     def evaluateAction(self, actionObject):
         action = actionObject["action"]
         previousState = deepcopy(self.currentState)
-        self.check_new_state()
+        self.check_new_state2()
         x, y = self.pos_x, self.pos_y
         self.environmentLog.debug("Executing Action %s at (%d / %d)" % (action, x, y))
         reward = self.__actions.performAction(action, self)
 
-        self.currentState["isScanned"] = self.isScanned()
+        # self.currentState["isScanned"] = self.isScanned()
+        self.currentState["isScanned"] = 1 if self.cell_map[x, y] else 0
 
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None
         if episodeFinished:
-            reward = self.discovered_percentage **3 /1000
+            reward = self.discovered_percentage **3 /10000
             # reward = 100 if self.discovered_percentage > 95 else -100
             self.environmentLog.info("Episode %d lasted for %d steps; reward = %d" % (self.episodeCounter, self.stepCounter, reward))
             self.episodeLengthObservable.addValue(self.episodeCounter,
@@ -162,6 +163,29 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         for i in range(0, y):
             r = r or not self.__table_cells[x,i]
         self.currentState["isSomethingDown"] = r
+
+    def check_new_state2(self):
+        x, y = self.pos_x, self.pos_y
+        oL = False
+        oR = False
+        uL = False
+        uR = False
+        for i in range(self.configDict["rows"]):
+            for j in range(self.configDict["columns"]):
+                if i < x and j < y:
+                    oL = oL or not self.__table_cells[i,j]
+                elif i > x and j < y:
+                    oR = oR or not self.__table_cells[i,j]
+                elif i < x and j > y:
+                    uL = uL or not self.__table_cells[i,j]
+                elif i > x and j > y:
+                    uR = uR or not self.__table_cells[i,j]
+
+        self.currentState["isSomethingRight"] = oL
+        self.currentState["isSomethingLeft"] = oR
+        self.currentState["isSomethingUp"] = uL
+        self.currentState["isSomethingDown"] = uR
+        pass
 
     def update_if_valid(self, x, y, value):
         if x >= 0 and y >= 0 and x < self.configDict["rows"] and y < self.configDict["columns"]:
