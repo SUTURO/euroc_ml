@@ -42,12 +42,12 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         oldStyleStateSpace = {
             # "camera_x": ("discrete", range(self.configDict["rows"])),
             # "camera_y": ("discrete", range(self.configDict["columns"])),
-            "isScanned": ("discrete", [0, 1]),
-            "isSomethingRight": ("discrete", [0,1]),
-            "isSomethingLeft": ("discrete", [0,1]),
-            "isSomethingUp": ("discrete", [0,1]),
-            "isSomethingDown": ("discrete", [0,1]),
-            "isTurbo": ("discrete", [0,1])
+            "isScanned": ("discrete", [True,False]),
+            "untenLinks": ("discrete", [True,False]),
+            "untenRechts": ("discrete", [True,False]),
+            "obenLinks": ("discrete", [True,False]),
+            "obenRechts": ("discrete", [True,False])
+            # "isTurbo": ("discrete", [0,1])
         }
         self.stateSpace = StateSpace()
         self.stateSpace.addOldStyleSpace(oldStyleStateSpace)
@@ -63,12 +63,12 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         self.initialState = {
             # "camera_x": 0,
             # "camera_y": 0,
-            "isScanned": 0,
-            "isSomethingRight": 1,
-            "isSomethingLeft": 1,
-            "isSomethingUp": 1,
-            "isSomethingDown": 1,
-            "isTurbo": 0
+            "isScanned": False,
+            "untenLinks": True,
+            "untenRechts": True,
+            "obenLinks": True,
+            "obenRechts": True,
+            # "isTurbo": 0
         }
         self.currentState = deepcopy(self.initialState)
         if useGUI:
@@ -104,16 +104,17 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         previousState = deepcopy(self.currentState)
         self.check_new_state2()
         x, y = self.pos_x, self.pos_y
-        self.environmentLog.debug("Executing Action %s at (%d / %d)" % (action, x, y))
         reward = self.__actions.performAction(action, self)
-
+        self.environmentLog.debug("   ")
+        self.environmentLog.debug("Executing Action %s" % (str(self.currentState)))
+        self.environmentLog.debug("Executing Action %s at (%d / %d), reward=%d" % (action, x, y, reward))
         # self.currentState["isScanned"] = self.isScanned()
-        self.currentState["isScanned"] = 1 if self.cell_map[x, y] else 0
+        self.currentState["isScanned"] = self.cell_map[x, y]
 
         episodeFinished = self._checkEpisodeFinished()
         terminalState = self.currentState if episodeFinished else None
         if episodeFinished:
-            reward = self.discovered_percentage **3 /10000
+            reward = self.discovered_percentage **3 /5000
             # reward = 100 if self.discovered_percentage > 95 else -100
             self.environmentLog.info("Episode %d lasted for %d steps; reward = %d" % (self.episodeCounter, self.stepCounter, reward))
             self.episodeLengthObservable.addValue(self.episodeCounter,
@@ -150,41 +151,41 @@ class ScanTableSimEnvironment(SingleAgentEnvironment):
         r = False
         for i in range(x+1, self.configDict["rows"]):
             r = r or not self.__table_cells[i,y]
-        self.currentState["isSomethingRight"] = r
+        self.currentState["untenLinks"] = r
         r = False
         for i in range(0, x):
             r = r or not self.__table_cells[i,y]
-        self.currentState["isSomethingLeft"] = r
+        self.currentState["untenRechts"] = r
         r=False
         for i in range(y+1, self.configDict["columns"]):
             r = r or not self.__table_cells[x,i]
-        self.currentState["isSomethingUp"] = r
+        self.currentState["obenLinks"] = r
         r=False
         for i in range(0, y):
             r = r or not self.__table_cells[x,i]
-        self.currentState["isSomethingDown"] = r
+        self.currentState["obenRechts"] = r
 
     def check_new_state2(self):
         x, y = self.pos_x, self.pos_y
-        oL = False
-        oR = False
         uL = False
-        uR = False
+        oLL = False
+        uRR = False
+        oRR = False
         for i in range(self.configDict["rows"]):
             for j in range(self.configDict["columns"]):
                 if i < x and j < y:
-                    oL = oL or not self.__table_cells[i,j]
-                elif i > x and j < y:
-                    oR = oR or not self.__table_cells[i,j]
-                elif i < x and j > y:
                     uL = uL or not self.__table_cells[i,j]
+                elif i > x and j < y:
+                    oLL = oLL or not self.__table_cells[i,j]
+                elif i < x and j > y:
+                    uRR = uRR or not self.__table_cells[i,j]
                 elif i > x and j > y:
-                    uR = uR or not self.__table_cells[i,j]
+                    oRR = oRR or not self.__table_cells[i,j]
 
-        self.currentState["isSomethingRight"] = oL
-        self.currentState["isSomethingLeft"] = oR
-        self.currentState["isSomethingUp"] = uL
-        self.currentState["isSomethingDown"] = uR
+        self.currentState["untenLinks"] = uL
+        self.currentState["untenRechts"] = uRR
+        self.currentState["obenLinks"] = oLL
+        self.currentState["obenRechts"] = oRR
         pass
 
     def update_if_valid(self, x, y, value):
