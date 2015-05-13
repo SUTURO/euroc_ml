@@ -117,7 +117,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
         self.initialState = {
          #   "x": x,
          #   "y": y,
-            "isScanned": False,
+            "isScanned": True,
             "isLeftDown": True,
             "isRightDown": True,
             "isLeftUp": True,
@@ -229,7 +229,7 @@ class GazeboScanTableEnvironment(SingleAgentEnvironment):
 
         if episodeFinished:
             #reward = 100 if self.discovered_percentage >= self.configDict["percentCleared"] else -100
-            reward = self.discovered_percentage ** 3 / 10000
+            reward = self.discovered_percentage ** 3 / 5000
             self.environmentLog.info("Episode %d lasted for %d steps; reward=%d; cleared=%d" % (self.episodeCounter, self.stepCounter, reward, self.__percent_cleared))
             self.episodeLengthObservable.addValue(self.episodeCounter,
                                                   self.stepCounter)

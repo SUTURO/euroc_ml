@@ -78,7 +78,7 @@ class GazeboActions(object):
         if self.oldx ==x and self.oldy == y:
             return -10
         elif self.move_cam(pan=env.pan, tilt=env.tilt):
-            r = 20 if not env.currentState["isScanned"] else -10
+            r = 30 if not env.currentState["isScanned"] else -10
             env.environmentLog.info("state: %s, Scanned: %d, x: %d, y: %d" % (str(env.currentState), r, x, y))
             self.__add_pointcloud(scenecam=True)
             env.update_map()
