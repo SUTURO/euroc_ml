@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+	<name>suturo_learning</name>
+	<version>0.1.0</version>
+	<description>The suturo_learning package</description>
+
+	<maintainer email="pmania@cs.uni-bremen.de">SUTURO</maintainer>
+	<author>SUTURO Team</author>
+	<license>Apache 2.0</license>
+
+	<buildtool_depend>catkin</buildtool_depend>
+
+	<build_depend>knowrob_common</build_depend>
+	<build_depend>knowrob_vis</build_depend>
+	<build_depend>knowrob_actions</build_depend>
+	<build_depend>knowrob_srdl</build_depend>
+
+	<run_depend>knowrob_actions</run_depend>
+	<run_depend>knowrob_srdl</run_depend>
+	<run_depend>knowrob_vis</run_depend>
+
+</package>
