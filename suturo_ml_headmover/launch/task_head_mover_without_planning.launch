@@ -1,0 +1,27 @@
+<launch>
+
+  <!-- Run only task variation 1 by default -->
+  <arg name="task" default="head_mover" />
+
+  <!-- Let the /clock topic use the simulatioon time instead of real time. This param has to be set to true before we start other nodes! -->
+  <param name="use_sim_time" type="bool" value="true" />
+
+  <!-- Start manipulation -->
+  <include file="$(find euroc_launch)/launch/manipulation.launch" />
+
+  <!-- Start Interface service provider -->
+  <node name="scan_map_services" pkg="suturo_planning_interface" type="start_services.py" />
+
+  <!-- Start YAML-Par0r -->
+  <node name="yaml_pars0r" pkg="suturo_planning_yaml_pars0r" type="yaml_pars0r_node.py" />
+
+  <!-- Start Task selector -->
+  <node name="task_selector" pkg="euroc_launch" type="TaskSelector" />
+
+  <!-- Fixed frame publisher -->
+  <node name="map_odom_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom_combined 100" />
+  <node name="map_base_footprint_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /base_footprint 100" />
+
+  <param name="task_variation" value="$(arg task)" />
+  <rosparam command="load" file="$(find suturo_ml_headmover)/launch/$(arg task).yml" ns="/task_description" />
+</launch>
