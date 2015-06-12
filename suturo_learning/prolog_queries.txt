@@ -1,0 +1,16 @@
+?- get_planned_goals_w_alt(G).
+Correct to: "suturo_learning:get_planned_goals_w_alt(G)"? 
+Please answer 'y' or 'n'? yes
+G = [[top_grab,red_cube],[place_in_zone,''],[open_gripper,''],[side_grab,blue_handle],[place_in_zone,''],[turn,'']] ;
+G = [[top_grab,red_cube],[place_in_zone,''],[open_gripper,''],[top_grab,blue_handle],[place_in_zone,''],[turn,'']].
+
+?- assert_outcome_for_goal_list([[top_grab,red_cube],[place_in_zone,''],[open_gripper,''],[side_grab,blue_handle],[place_in_zone,''],[turn,'']],'failure').
+Correct to: "suturo_learning:assert_outcome_for_goal_list([[top_grab,red_cube],[place_in_zone,''],[open_gripper,''],[side_grab,blue_handle],[place_in_zone,''],[turn,'']],failure)"? yes
+true.
+
+?- get_planned_goals_w_alt(G).
+Correct to: "suturo_learning:get_planned_goals_w_alt(G)"? yes
+G = [[top_grab,red_cube],[place_in_zone,''],[open_gripper,''],[top_grab,blue_handle],[place_in_zone,''],[turn,'']].
+
+?- 
+
