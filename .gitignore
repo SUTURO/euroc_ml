@@ -8,3 +8,5 @@ pip-selfcheck.json
 mmlf_venv
 torch
 dqn/*.t7
+*.fasl
+*.*~
