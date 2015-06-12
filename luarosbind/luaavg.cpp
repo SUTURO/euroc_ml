@@ -16,32 +16,32 @@ extern "C"
 }
 
 #include <iostream>
-#include <luabind/luabind.hpp>
+// #include <luabind/luabind.hpp>
+// 
+// void greet()
+// {
+//     std::cout << "hello world!\n";
+// }
 
-void greet()
-{
-    std::cout << "hello world!\n";
-}
-
-extern "C" int init(lua_State* L)
-{
-    using namespace luabind;
-    
-    std::cout << "init 1!\n";
-
-    luabind::open(L);
-    
-    std::cout << "init 2!\n";
-
-    module(L)
-    [
-        def("greetasdf", &greet)
-    ];
-    
-    std::cout << "init 3!\n";
-
-    return 0;
-}
+// extern "C" int init(lua_State* L)
+// {
+//     using namespace luabind;
+//     
+//     std::cout << "init 1!\n";
+// 
+//     luabind::open(L);
+//     
+//     std::cout << "init 2!\n";
+// 
+//     module(L)
+//     [
+//         def("greetasdf", &greet)
+//     ];
+//     
+//     std::cout << "init 3!\n";
+// 
+//     return 0;
+// }
 
 extern "C" int asdf(lua_State* L)
 {
