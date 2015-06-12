@@ -1,62 +1,30 @@
 (in-package :exec)
 
 (defvar *yaml-pub*)
-(defparameter red-sphere-pose `#(,(make-msg "geometry_msgs/Pose" 
-                                   (:W :ORIENTATION) 1
-                                   (:X :ORIENTATION) 0
-                                   (:Y :ORIENTATION) 0
-                                   (:Y :ORIENTATION) 0
-                                   (:X :POSITION) 0
-                                   (:Y :POSITION) 0.5
-                                   (:Z :POSITION) 0.1)))
-(defparameter red-cube-pose `#(,(make-msg "geometry_msgs/Pose" 
-                                (:W :ORIENTATION) 1
-                                (:X :ORIENTATION) 0
-                                (:Y :ORIENTATION) 0
-                                (:Y :ORIENTATION) 0
-                                (:X :POSITION) -0.3
-                                (:Y :POSITION) -0.4
-                                (:Z :POSITION) 0.03)))
-(defparameter blue-handle-pose `#(,(make-msg "geometry_msgs/Pose" 
-                              (:W :ORIENTATION) 1
-                              (:X :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:X :POSITION) 0
-                              (:Y :POSITION) 0.5
-                              (:Z :POSITION) 0.03)
-                            ,(make-msg "geometry_msgs/Pose" 
-                              (:W :ORIENTATION) 1
-                              (:X :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:X :POSITION) (+ 0 0.0275)
-                              (:Y :POSITION) (+ 0.5 0.0025)
-                              (:Z :POSITION) (+ 0.03 0.0225))
-                            ,(make-msg "geometry_msgs/Pose" 
-                              (:W :ORIENTATION) 1
-                              (:X :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:X :POSITION) (+ 0 -0.0275)
-                              (:Y :POSITION) (+ 0.5 -0.0025)
-                              (:Z :POSITION) (+ 0.03 0.0225))
-                            ,(make-msg "geometry_msgs/Pose" 
-                              (:W :ORIENTATION) 1
-                              (:X :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:X :POSITION) (+ 0 -0.0025)
-                              (:Y :POSITION) (+ 0.5 0.0275)
-                              (:Z :POSITION) (+ 0.03 0.0225))
-                            ,(make-msg "geometry_msgs/Pose" 
-                              (:W :ORIENTATION) 1
-                              (:X :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:Y :ORIENTATION) 0
-                              (:X :POSITION) (+ 0 0.0025)
-                              (:Y :POSITION) (+ 0.5 -0.0275)
-                              (:Z :POSITION) (+ 0.03 0.0225))))
+(defparameter red-sphere-start-pose (make-msg "geometry_msgs/Pose" 
+                                              (:W :ORIENTATION) 1
+                                              (:X :ORIENTATION) 0
+                                              (:Y :ORIENTATION) 0
+                                              (:Y :ORIENTATION) 0
+                                              (:X :POSITION) 0
+                                              (:Y :POSITION) 0.5
+                                              (:Z :POSITION) 0.04))
+(defparameter red-cube-start-pose (make-msg "geometry_msgs/Pose" 
+                                            (:W :ORIENTATION) 1
+                                            (:X :ORIENTATION) 0
+                                            (:Y :ORIENTATION) 0
+                                            (:Y :ORIENTATION) 0
+                                            (:X :POSITION) -0.3
+                                            (:Y :POSITION) -0.4
+                                            (:Z :POSITION) 0.03))
+(defparameter blue-handle-start-pose (make-msg "geometry_msgs/Pose" 
+                                               (:W :ORIENTATION) 1
+                                               (:X :ORIENTATION) 0
+                                               (:Y :ORIENTATION) 0
+                                               (:Y :ORIENTATION) 0
+                                               (:X :POSITION) 0
+                                               (:Y :POSITION) 0.5
+                                               (:Z :POSITION) 0.01))
 (defun parse-yaml ()
   "Subscribes the yaml publisher and sets environment:*yaml* to stay informed about changes"
   ; TODO: Publish the yaml description to the yaml pars0r input
@@ -84,13 +52,33 @@
       ,@body)
     (roslisp-utilities:shutdown-ros)))
 
-(defun publish-objects-to-collision-scene()
+(defun publish-objects-to-collision-scene ()
   (loop for object across (msg-slot-value environment::*yaml* 'objects) do
-    (let ((primitive-poses (cond 
-                            ((string= (msg-slot-value object 'name) "red_sphere") red-sphere-pose)
-                            ((string= (msg-slot-value object 'name) "red_cube") red-cube-pose)
-                            ((string= (msg-slot-value object 'name) "blue_handle") blue-handle-pose))))
-    (manipulation::publish-collision-object (msg-slot-value object 'name) (msg-slot-value object 'primitives) primitive-poses 0))))
+    (let ((start-pose (cond 
+                        ((string= (msg-slot-value object 'name) "red_sphere") red-sphere-start-pose)
+                        ((string= (msg-slot-value object 'name) "red_cube") red-cube-start-pose)
+                        ((string= (msg-slot-value object 'name) "blue_handle") blue-handle-start-pose)))
+          (primitive-poses '())) 
+      (loop for primitive-pose across (msg-slot-value object 'primitive_poses) do
+        (if (not (string= (msg-slot-value object 'name) "red_sphere"))
+        (push (make-msg "geometry_msgs/Pose" 
+                        :ORIENTATION (msg-slot-value start-pose 'orientation) 
+                        :POSITION (point+ (msg-slot-value start-pose 'position) (msg-slot-value primitive-pose 'position))) primitive-poses))
+      (format t "~a" primitive-poses)
+      (manipulation::publish-collision-object (msg-slot-value object 'name) (msg-slot-value object 'primitives) (make-array (list (length primitive-poses)) 
+                                                                                                                            :initial-contents (reverse primitive-poses)) 0)))))
+
+(defun point+ (p1 p2)
+"Adds two gemeotry_msgs/Point and returns the solution
+* Arguments
+- p1 :: The first point as geometry_msgs/Point
+- p2 :: The second point as geometry_msgs/Point
+* Return
+The sum of the point as geometry_msgs/Point
+"
+  (make-msg "geometry_msgs/Point" :x (+ (msg-slot-value p1 'x) (msg-slot-value p2 'x)) 
+                                  :y (+ (msg-slot-value p1 'y) (msg-slot-value p2 'y)) 
+                                  :z (+ (msg-slot-value p1 'z) (msg-slot-value p2 'z))))
 
 (defun task-selector ()
   "Starts the plan for the task from the parameter server.
@@ -98,7 +86,7 @@
    If no task is set in the parameter server, the task given
    as argument will be started (default: task1_v1)"
   (with-ros-node
-    (let ((tsk (get-param "/task_variation" "task1_v1")))
+    (let ((tsk (get-param "/task_variation" "head_mover")))
       (unless (wait-for-service +service-name-start-simulator+ +timeout-service+)
         (ros-error (task-selector) "Service ~a timed out." +service-name-start-simulator+)
         (fail))
@@ -123,7 +111,10 @@
 
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
+  (print "FUUUU BAR")
+  (sleep 20)
   (manipulation:init)
+  (publish-objects-to-collision-scene)
   (with-process-modules
     (with-retry-counters ((all-retry-count 2)
                           (inform-objects-retry-count 2)
@@ -131,27 +122,27 @@
       (with-failure-handling
           ((simple-plan-failure (e)
              (declare (ignore e))
-             (ros-warn (toplevel task1) "Something failed.")
+             (ros-warn (toplevel head_mover) "Something failed.")
              (do-retry all-retry-count
-               (ros-warn (toplevel task1) "Retrying all.")
+               (ros-warn (toplevel head_mover) "Retrying all.")
              (reset-counter inform-objects-retry-count)
                (reset-counter objects-in-place-retry-count)
                (retry))))
           (with-failure-handling
               ((objects-information-failed (e)
                  (declare (ignore e))
-                 (ros-warn (toplevel task1) "Failed to inform objects.")
+                 (ros-warn (toplevel head_mover) "Failed to inform objects.")
                  (do-retry inform-objects-retry-count
-                   (ros-warn (toplevel task1) "Retrying.")
+                   (ros-warn (toplevel head_mover) "Retrying.")
                    (retry))))
             (let ((objects (achieve '(objects-informed))))
               (with-failure-handling
                   (((or objects-in-place-failed
                         cram-plan-failures:manipulation-failure) (e)
                      (declare (ignore e))
-                     (ros-warn (toplevel task1) "Failed to put objects in place.")
+                     (ros-warn (toplevel head_mover) "Failed to put objects in place.")
                      (do-retry objects-in-place-retry-count
-                       (ros-warn (toplevel task1) "Retrying.")
+                       (ros-warn (toplevel head_mover) "Retrying.")
                        (retry))))
                 (achieve `(objects-in-place ,objects)))))))))
 
@@ -160,6 +151,47 @@
 Callback for the function [[parse-yaml]]. Sets the variable environment:*yaml*.
 "
   (setf environment:*yaml* msg))
+
+(def-goal (achieve (grab-top ?object))
+" 
+Grabs the given object from the top
+* Arguments
+- ?objects :: The object that should be grabed
+"
+)
+
+(def-goal (achieve (grab-side ?object))
+" 
+Grabs the given object from the side
+* Arguments
+- ?objects :: The object that should be grabed
+"
+)
+
+(def-goal (achieve (place-in-zone ?object))
+" 
+Grabs the given object from the top
+* Arguments
+- ?objects :: The object that should be grabed
+"
+)
+
+(def-goal (achieve (open-gripper ?object))
+" 
+Grabs the given object from the top
+* Arguments
+- ?objects :: The object that should be grabed
+"
+)
+
+
+(def-goal (achieve (turn ?object))
+" 
+Grabs the given object from the top
+* Arguments
+- ?objects :: The object that should be grabed
+"
+)
 
 (defun call-service-state (service-name taskdata)
   "
@@ -192,4 +224,4 @@ Initialize the simulation:
     (call-service-state "start_simulation" taskdata)
     (call-service-state "start_manipulation" taskdata)
     (call-service-state "init" taskdata)) 
-  (manipulation:init))
+  (publish-objects-to-collision-scene))
