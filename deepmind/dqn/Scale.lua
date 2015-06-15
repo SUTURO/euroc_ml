@@ -8,7 +8,7 @@ require "nn"
 require "image"
 
 local scale = torch.class('nn.Scale', 'nn.Module')
-
+local scaleWin = nil
 
 function scale:__init(height, width)
     self.height = height
@@ -23,6 +23,7 @@ function scale:forward(x)
 
     x = image.rgb2y(x)
     x = image.scale(x, self.width, self.height, 'bilinear')
+    scaleWin = image.display({image=x, win=scaleWin})
     return x
 end
 

@@ -9,3 +9,4 @@ mmlf_venv
 torch
 dqn/*.t7
 *.fasl
+*.*~

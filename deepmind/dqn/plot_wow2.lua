@@ -1,6 +1,6 @@
 require 'nn'
 require 'initenv'
---require 'cutorch'
+require 'cutorch'
 require 'gnuplot'
 
 if #arg < 1 then
@@ -10,7 +10,7 @@ end
 
 data = torch.load(arg[1])
 
---gnuplot.raw('set multiplot layout 2, 3')
+gnuplot.raw('set multiplot layout 2, 3')
 
 gnuplot.figure()
 gnuplot.title('Reward history')
