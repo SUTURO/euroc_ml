@@ -13,7 +13,7 @@
         #:manipulation
         #:constants
         #:suturo-planning-planlib)
-  (:export #:task-selector #:head_mover #:task1_v1)
+  (:export #:task-selector #:head_mover #:task1_v1 #:grab-side #:grab-top #:open-gripper #:place-in-zone #:turn)
   (:desig-properties
     #:type
     #:max-distance

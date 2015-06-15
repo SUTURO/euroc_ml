@@ -9,6 +9,7 @@
                process-modules
                suturo_msgs-msg
                moveit_msgs-msg
+               json_prolog_msgs-srv
                suturo-planning-constants
                suturo-planning-environment
                suturo-planning-pm-perception

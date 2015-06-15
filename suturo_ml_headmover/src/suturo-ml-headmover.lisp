@@ -112,7 +112,7 @@ The sum of the point as geometry_msgs/Point
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
   (print "FUUUU BAR")
-  (sleep 20)
+  (sleep 60)
   (manipulation:init)
   (publish-objects-to-collision-scene)
   (with-process-modules
@@ -225,3 +225,42 @@ Initialize the simulation:
     (call-service-state "start_manipulation" taskdata)
     (call-service-state "init" taskdata)) 
   (publish-objects-to-collision-scene))
+
+(defun call-prolog-next-solution(id)
+  "* Arguments 
+- id :: The ID of the object which solution should be found
+* Return Value
+ Returns a list with two elements. The first is a number with:
+ - 0 :: No solution found 
+ - 1 :: wrong id
+ - 2 :: query failed
+ - 3 :: done
+ - 4 :: service timed out
+ The second element is the found solution
+* Description
+ TODO "
+  (let ((result '()))
+    (if (not (roslisp:wait-for-service "json_prolog/next_solution" +timeout-service+))
+        (progn 
+          (print "Prolog next solution timed out")
+          (setf result '(4 "")))
+        (setf result (roslisp:call-service "json_prolog/next_solution" 'json_prolog_msgs-srv:PrologNextSolution :id id)))
+    `(,(msg-slot-value result 'status) ,(msg-slot-value result 'solution))))
+
+(defun try-solutions (object)
+  (do ((result '(0 "")))
+      ((= (first result) 3) (first result))
+    (setf result (call-prolog-next-solution (msg-slot-value object 'name)))
+    (cond 
+      ((= (first result) 0) (print "No solution found"))
+      ((= (first result) 1) (print "Wrong id"))
+      ((= (first result) 2) (print "Query failed"))
+      ((= (first result) 4) (print "Timed out"))
+      ((= (first result) 3) 
+       (cond
+         ((string= (second result) "grab-top") (achieve `(grap-top ,object)))
+         ((string= (second result) "grab-side") (achieve `(grap-side ,object)))
+         ((string= (second result) "turn") (achieve `(turn ,object)))
+         ((string= (second result) "open-gripper") (achieve `(open-gripper ,object)))
+         ((string= (second result) "place-in-zone") (achieve `(place-in-zone ,object))))))))
+               

@@ -76,6 +76,21 @@ Taken from simple_belief since the package pulls too many dependencies"
   (cram-reasoning:<- (map-scanned)
     (cram-reasoning:lisp-pred is-map-scanned))
 
+  (cram-reasoning:<- (grab-side ?object)
+    (cram-reasoning:lisp-pred no))
+
+  (cram-reasoning:<- (grab-top ?object)
+    (cram-reasoning:lisp-pred no))
+
+  (cram-reasoning:<- (turn ?object)
+    (cram-reasoning:lisp-pred no))
+
+  (cram-reasoning:<- (open-gripper ?object)
+    (cram-reasoning:lisp-pred no))
+
+  (cram-reasoning:<- (place-in-zone ?object)
+    (cram-reasoning:lisp-pred no))
+
   (cram-reasoning:<- (objects-informed)
     ; TODO: Implement me
     (cram-reasoning:lisp-pred no))
