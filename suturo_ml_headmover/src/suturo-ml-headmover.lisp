@@ -32,6 +32,7 @@
 (defparameter blue-handle-collision nil)
 (defparameter blue-handle-object-desig nil)
 (defparameter last-object-grabbed "")
+(defparameter +service-name-move-hand+ "/suturo/manipulation/move_relative")
 
 (defun parse-yaml ()
   "Subscribes the yaml publisher and sets environment:*yaml* to stay informed about changes"
@@ -242,6 +243,7 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "TURNING")
+  (turn)
 )
 
 (defun init-exec()
@@ -388,27 +390,23 @@ Initialize the simulation:
       ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone)))
       (t (print "No matching goal found")))))
 
-(defun grasp-top (object)
+(defun turn ()
   "
   Grasp the given object and lift it
   * Arguments
   - object-designator :: The designator describing the object - object-designator
   "
-  (let ((collision-object object))
-    (if (not (roslisp:wait-for-service +service-name-grasp-object+ +timeout-service+))
-        (let ((timed-out-text (concatenate 'string "Times out waiting for service" +service-name-grasp-object+)))
-          (roslisp:ros-warn nil t timed-out-text)
-          (cpl-impl:fail 'cram-plan-failures:manipulation-failure))
-        (progn
-          (let* ((response (roslisp:call-service +service-name-grasp-object+ 
-                                                 'suturo_manipulation_msgs-srv:GraspObject
-                                                 :object (roslisp:setf-msg collision-object 
-                                                                           (stamp header) 
-                                                                           (roslisp:ros-time))
-                                                 :density (manipulation::get-object-density collision-object 
-                                                                                            (roslisp:msg-slot-value environment:*yaml* 'objects)) 
-                                                 :prefer_grasp_position 2))
-                 (result (roslisp:msg-slot-value response 'result))
-                 (grasp-position (roslisp:msg-slot-value response 'grasp_position))))))))
+  (if (not (roslisp:wait-for-service +service-name-move-hand+ +timeout-service+))
+      (let ((timed-out-text (concatenate 'string "Times out waiting for service" +service-name-move-hand+)))
+        (roslisp:ros-warn nil t timed-out-text)
+        (cpl-impl:fail 'cram-plan-failures:manipulation-failure))
+      (progn
+        (let* ((response (roslisp:call-service +service-name-move-hand+ 
+                                               'suturo_manipulation_msgs-srv:MoveRelative
+                                               :relative_goal (make-msg "geometry_msgs/TwistStamped"
+                                                                        (twist) (make-msg "geometry_msgs/Twist"
+                                                                                          (angular) (make-msg "geometry_msgs/Vector3"
+                                                                                                              (z) 3.15))))))
+          (print (roslisp:msg-slot-value response 'result))))))
 
 
