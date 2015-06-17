@@ -3,6 +3,8 @@
 	get_planned_goals/1
 ]).
 
+:- owl_parse('package://suturo_learning/owl/suturo_learning.owl').
+:- rdf_db:rdf_register_ns(suturo_learning, 'http://www.suturo.de/suturo_learning#',     [keep(true)]).
 :- use_module(library('knowrob_mongo')).
 
 get_designator_by_type(Type, Designator) :-
@@ -16,7 +18,7 @@ get_designator_by_type(Type, Designator) :-
     rdf_split_url('http://knowrob.org/kb/cram_log.owl#', DesigID, Designator).
 
 get_planned_goals(Goals) :-
-  Goals = [['top_grab','red_cube'], ['place_in_zone',''],['open_gripper',''],['side_grab','blue_handle'],['turn','']].
+  Goals = [['side_grab','blue_handle'],['turn',''],['open_gripper',''],['top_grab','red_cube'], ['place_in_zone','']].
 
 
 % Generate multiple plans
