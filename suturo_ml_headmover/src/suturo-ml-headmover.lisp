@@ -71,14 +71,13 @@
         ((string= (msg-slot-value object 'name) "blue_handle") (setf start-pose blue-handle-start-pose)))
       (loop for primitive-pose across (msg-slot-value object 'primitive_poses) do
         (if (not (string= (msg-slot-value object 'name) "red_sphere"))
-        (push (make-msg "geometry_msgs/Pose" 
+            (push (make-msg "geometry_msgs/Pose" 
                         :ORIENTATION (msg-slot-value start-pose 'orientation) 
-                        :POSITION (point+ (msg-slot-value start-pose 'position) (msg-slot-value primitive-pose 'position))) primitive-poses))
-      (format t "~a" primitive-poses)
-      (manipulation::publish-collision-object (msg-slot-value object 'name) 
-                                              (msg-slot-value object 'primitives) 
-                                              (make-array (list (length primitive-poses) 
-                                                                :initial-contents (reverse primitive-poses)) 0)))))
+                        :POSITION (point+ (msg-slot-value start-pose 'position) (msg-slot-value primitive-pose 'position))) primitive-poses)))
+        (manipulation::publish-collision-object (msg-slot-value object 'name) 
+                                                (msg-slot-value object 'primitives) 
+                                                (make-array (list (length primitive-poses) 
+                                                                  :initial-contents (reverse primitive-poses)))0))))
 
 (defun publish-head-mover-scene ()
   (manipulation::publish-collision-object "blue_handle"
