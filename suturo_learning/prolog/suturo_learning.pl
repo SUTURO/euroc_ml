@@ -3,6 +3,8 @@
 	get_planned_goals/1
 ]).
 
+:- owl_parse('package://suturo_learning/owl/suturo_learning.owl').
+:- rdf_db:rdf_register_ns(rs_components, 'http://www.suturo.de/suturo_learning#',     [keep(true)]).
 :- use_module(library('knowrob_mongo')).
 
 get_designator_by_type(Type, Designator) :-
