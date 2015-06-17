@@ -103,7 +103,7 @@
                                              "geometry_msgs/Pose" 
                                              (position) (roslisp:make-msg 
                                                          "geometry_msgs/Point" 
-                                                         (x) -0.3 (y) -0.4 (z) 0.0)
+                                                         (x) -0.3 (y) -0.4 (z) 0.025)
                                              (orientation) (roslisp:make-msg 
                                                             "geometry_msgs/Quaternion" 
                                                             (x) 0.0 (y) 0.0 (z) 0.0 (w) 1.0)))
@@ -258,7 +258,7 @@ Grabs the given object from the top
       (wait-duration 1)
       (when (not (eql (msg-slot-value result 'subscriber-connections) nil))
         (return)))
-    (publish-objects-to-collision-scene)))
+    (publish-head-mover-scene)))
 
 (defun init-exec-params()
   (loop for object across (msg-slot-value environment::*yaml* 'objects) do
