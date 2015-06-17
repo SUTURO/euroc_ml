@@ -44,6 +44,9 @@
     #:objects
     #:find-objects-in-map
     #:pose-estimate-object
+    #:prefer-grasp-position
+    #:target-zone
+    #:put-down
     #:scan-map)
   (:documentation
    "* Description

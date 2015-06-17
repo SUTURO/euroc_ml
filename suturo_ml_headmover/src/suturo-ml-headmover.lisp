@@ -25,6 +25,14 @@
                                                (:X :POSITION) 0
                                                (:Y :POSITION) 0.5
                                                (:Z :POSITION) 0.01))
+(defparameter red-cube nil)
+(defparameter red-cube-collision nil)
+(defparameter red-cube-object-desig nil)
+(defparameter blue-handle nil)
+(defparameter blue-handle-collision nil)
+(defparameter blue-handle-object-desig nil)
+(defparameter last-object-grabbed "")
+
 (defun parse-yaml ()
   "Subscribes the yaml publisher and sets environment:*yaml* to stay informed about changes"
   ; TODO: Publish the yaml description to the yaml pars0r input
@@ -53,19 +61,20 @@
     (roslisp-utilities:shutdown-ros)))
 
 (defun publish-objects-to-collision-scene ()
+  "TODO SIMPLIFY CAUSE COLLISION OBJEKT IS ALREADY THERE"
   (loop for object across (msg-slot-value environment::*yaml* 'objects) do
-    (let ((start-pose (cond 
-                        ((string= (msg-slot-value object 'name) "red_sphere") red-sphere-start-pose)
-                        ((string= (msg-slot-value object 'name) "red_cube") red-cube-start-pose)
-                        ((string= (msg-slot-value object 'name) "blue_handle") blue-handle-start-pose)))
-          (primitive-poses '())) 
+    (let ((start-pose nil)
+          (primitive-poses '()))
+      (cond 
+        ((string= (msg-slot-value object 'name) "red_sphere") (setf start-pose red-sphere-start-pose))
+        ((string= (msg-slot-value object 'name) "red_cube") (setf start-pose red-cube-start-pose))
+        ((string= (msg-slot-value object 'name) "blue_handle") (setf start-pose blue-handle-start-pose)))
       (loop for primitive-pose across (msg-slot-value object 'primitive_poses) do
         (if (not (string= (msg-slot-value object 'name) "red_sphere"))
-        (push (make-msg "geometry_msgs/Pose" 
-                        :ORIENTATION (msg-slot-value start-pose 'orientation) 
-                        :POSITION (point+ (msg-slot-value start-pose 'position) (msg-slot-value primitive-pose 'position))) primitive-poses))
-      (format t "~a" primitive-poses)
-      (manipulation::publish-collision-object (msg-slot-value object 'name) (msg-slot-value object 'primitives) (make-array (list (length primitive-poses)) 
+            (push (make-msg "geometry_msgs/Pose" 
+                            :ORIENTATION (msg-slot-value start-pose 'orientation) 
+                            :POSITION (point+ (msg-slot-value start-pose 'position) (msg-slot-value primitive-pose 'position))) primitive-poses))
+        (manipulation::publish-collision-object (msg-slot-value object 'name) (msg-slot-value object 'primitives) (make-array (list (length primitive-poses)) 
                                                                                                                             :initial-contents (reverse primitive-poses)) 0)))))
 
 (defun point+ (p1 p2)
@@ -112,39 +121,10 @@ The sum of the point as geometry_msgs/Point
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
   (print "FUUUU BAR")
-  (sleep 60)
-  (manipulation:init)
-  (publish-objects-to-collision-scene)
+  (init-exec)
+
   (with-process-modules
-    (with-retry-counters ((all-retry-count 2)
-                          (inform-objects-retry-count 2)
-                          (objects-in-place-retry-count 3))
-      (with-failure-handling
-          ((simple-plan-failure (e)
-             (declare (ignore e))
-             (ros-warn (toplevel head_mover) "Something failed.")
-             (do-retry all-retry-count
-               (ros-warn (toplevel head_mover) "Retrying all.")
-             (reset-counter inform-objects-retry-count)
-               (reset-counter objects-in-place-retry-count)
-               (retry))))
-          (with-failure-handling
-              ((objects-information-failed (e)
-                 (declare (ignore e))
-                 (ros-warn (toplevel head_mover) "Failed to inform objects.")
-                 (do-retry inform-objects-retry-count
-                   (ros-warn (toplevel head_mover) "Retrying.")
-                   (retry))))
-            (let ((objects (achieve '(objects-informed))))
-              (with-failure-handling
-                  (((or objects-in-place-failed
-                        cram-plan-failures:manipulation-failure) (e)
-                     (declare (ignore e))
-                     (ros-warn (toplevel head_mover) "Failed to put objects in place.")
-                     (do-retry objects-in-place-retry-count
-                       (ros-warn (toplevel head_mover) "Retrying.")
-                       (retry))))
-                (achieve `(objects-in-place ,objects)))))))))
+    (execute-prolog-solutions)))
 
 (defun yaml-cb (msg)
   "
@@ -152,13 +132,21 @@ Callback for the function [[parse-yaml]]. Sets the variable environment:*yaml*.
 "
   (setf environment:*yaml* msg))
 
+(defparameter bla nil)
 (def-goal (achieve (grab-top ?object))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
-)
+  (print "GRABBING_TOP")
+  (setf bla ?object)
+  (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 1))))) 
+    (equate ?object new-desig))
+  (perform (make-designator 'action `((to grasp)
+                                      (obj ,?object))))
+  (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id)))
+
 
 (def-goal (achieve (grab-side ?object))
 " 
@@ -166,32 +154,153 @@ Grabs the given object from the side
 * Arguments
 - ?objects :: The object that should be grabed
 "
-)
+  (print "GRABBING_SIDE")
+  (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 2))))) 
+    (equate ?object new-desig))
+  (perform (make-designator 'action `((to grasp)
+                                      (obj ,?object))))
+  (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id)))
 
-(def-goal (achieve (place-in-zone ?object))
+(def-goal (achieve (place-in-zone))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
-)
+  (print "PLACING IN ZONE")
+  (let ((object-grabbed
+          (cond 
+            ((string= last-object-grabbed "red_cube") red-cube-object-desig)
+            ((string= last-object-grabbed "blue_handle") blue-handle-object-desig)
+            (t nil))))
+    (if object-grabbed
+        (let ((target-location (make-designator 'location `((pose ,(cl-tf:make-pose-stamped 
+          (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'HEADER) 'FRAME_ID)
+          (ros-time) 
+          (cl-transforms:make-3d-vector 
+           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'POSITION) 'X)
+           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'POSITION) 'Y)
+           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'POSITION) 'Z))
+          (cl-transforms:make-quaternion 
+           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'X)
+           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'Y)
+           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'Z)
+           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'W))
+))))))
 
-(def-goal (achieve (open-gripper ?object))
+          (perform (make-designator 'action `((to put-down)
+                                              (obj ,(current-desig object-grabbed))
+                                              (at ,target-location))))))))
+        
+
+(def-goal (achieve (open-gripper))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
+  (print "OPENING GRIPPER")
 )
 
 
-(def-goal (achieve (turn ?object))
+(def-goal (achieve (turn))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
+  (print "TURNING")
 )
+
+(defun init-exec()
+  (init-exec-collision-scene)
+  (init-exec-params)
+  (init-exec-object-designators))
+
+
+(defun init-exec-collision-scene()
+  "Initialises the collision scene"
+  (let ((result (manipulation::init)))
+    (loop
+      (setf result (manipulation:init))
+      (wait-duration 1)
+      (when (not (eql (msg-slot-value result 'subscriber-connections) nil))
+        (return)))
+    (publish-objects-to-collision-scene)))
+
+(defun init-exec-params()
+  (loop for object across (msg-slot-value environment::*yaml* 'objects) do
+    (let ((start-pose nil)
+          (primitive-poses '()))
+      (cond 
+        ((string= (msg-slot-value object 'name) "red_cube") 
+         (progn
+          (setf start-pose red-cube-start-pose)
+          (setf red-cube object)))
+        ((string= (msg-slot-value object 'name) "blue_handle") 
+         (progn
+           (setf start-pose blue-handle-start-pose)
+           (setf blue-handle object))))
+      (if start-pose
+          (progn
+            (loop for primitive-pose across (msg-slot-value object 'primitive_poses) do
+              (push (make-msg "geometry_msgs/Pose" 
+                              :ORIENTATION (msg-slot-value start-pose 'orientation) 
+                              :POSITION (point+ (msg-slot-value start-pose 'position) (msg-slot-value primitive-pose 'position))) primitive-poses))
+            (cond 
+              ((string= (msg-slot-value object 'name) "red_cube") (setf red-cube-collision  
+                                                                        (make-msg "moveit_msgs/CollisionObject" 
+                                                                                  :ID (msg-slot-value object 'name)
+                                                                                  :PRIMITIVES (msg-slot-value object 'primitives)
+                                                                                  :PRIMITIVE_POSES (make-array (list (length primitive-poses))
+                                                                                                               :initial-contents (reverse primitive-poses))
+                                                                                  :OPERATION 0
+                                                                                  (:FRAME_ID :HEADER) "/map"
+                                                                                  (:STAMP :HEADER) (roslisp:ros-time) 
+                                                                                  (:SEQ :HEADER) 0))) 
+              ((string= (msg-slot-value object 'name) "blue_handle") (setf blue-handle-collision  
+                                                                        (make-msg "moveit_msgs/CollisionObject" 
+                                                                                  :ID (msg-slot-value object 'name)
+                                                                                  :PRIMITIVES (msg-slot-value object 'primitives)
+                                                                                  :PRIMITIVE_POSES (make-array (list (length primitive-poses))
+                                                                                                               :initial-contents (reverse primitive-poses))
+                                                                                  :OPERATION 0
+                                                                                  (:FRAME_ID :HEADER) "/map"
+                                                                                  (:STAMP :HEADER) (roslisp:ros-time) 
+                                                                                  (:SEQ :HEADER) 0)))))))))
+(defun init-exec-object-designators ()
+  (loop for zone across (msg-slot-value environment::*yaml* 'target_zones) do
+      (cond 
+        ((string= (msg-slot-value zone 'expected_object) "red_cube") (setf red-cube-object-desig
+                                                                            (make-designator 'object 
+                                                                                             `((collision-object ,red-cube-collision)
+                                                                                               (target-zone ,(make-msg "geometry_msgs/PoseStamped"
+                                                                                                                       (:FRAME_ID :HEADER) "/map"
+                                                                                                                       (:STAMP :HEADER) (roslisp:ros-time) 
+                                                                                                                       (:SEQ :HEADER) 0
+                                                                                                                      :pose (make-msg "geometry_msgs/Pose"
+                                                                                                                                      (:W :ORIENTATION) 1
+                                                                                                                                      (:X :ORIENTATION) 0
+                                                                                                                                      (:Y :ORIENTATION) 0
+                                                                                                                                      (:Y :ORIENTATION) 0
+                                                                                                                                      :POSITION (msg-slot-value zone 'target_position))))))))
+        ((string= (msg-slot-value zone 'expected_object) "blue_handle") (setf blue-handle-object-desig
+                                                                            (make-designator 'object 
+                                                                                             `((collision-object ,blue-handle-collision)
+                                                                                               (target-zone ,(make-msg "geometry_msgs/PoseStamped"
+                                                                                                                       (:FRAME_ID :HEADER) "/map"
+                                                                                                                       (:STAMP :HEADER) (roslisp:ros-time) 
+                                                                                                                       (:SEQ :HEADER) 0
+                                                                                                                      :pose (make-msg "geometry_msgs/Pose"
+                                                                                                                                      (:W :ORIENTATION) 1
+                                                                                                                                      (:X :ORIENTATION) 0
+                                                                                                                                      (:Y :ORIENTATION) 0
+                                                                                                                                      (:Y :ORIENTATION) 0
+                                                                                                                                      :POSITION (msg-slot-value zone 'target_position))))))))
+
+   ))) 
+  
+                
 
 (defun call-service-state (service-name taskdata)
   "
@@ -226,41 +335,23 @@ Initialize the simulation:
     (call-service-state "init" taskdata)) 
   (publish-objects-to-collision-scene))
 
-(defun call-prolog-next-solution(id)
-  "* Arguments 
-- id :: The ID of the object which solution should be found
-* Return Value
- Returns a list with two elements. The first is a number with:
- - 0 :: No solution found 
- - 1 :: wrong id
- - 2 :: query failed
- - 3 :: done
- - 4 :: service timed out
- The second element is the found solution
-* Description
- TODO "
-  (let ((result '()))
-    (if (not (roslisp:wait-for-service "json_prolog/next_solution" +timeout-service+))
-        (progn 
-          (print "Prolog next solution timed out")
-          (setf result '(4 "")))
-        (setf result (roslisp:call-service "json_prolog/next_solution" 'json_prolog_msgs-srv:PrologNextSolution :id id)))
-    `(,(msg-slot-value result 'status) ,(msg-slot-value result 'solution))))
+(defun execute-prolog-solutions()
+  ""
+  (let ((goals (first (first (json-prolog:prolog-simple-1 "get_planned_goals(G)")))))
+    (loop for goal in goals do
+      (if (typep goal 'list) 
+          (try-solution goal)))))
+  
+(defun try-solution (query)
+  (let ((object nil))
+    (cond
+      ((eql (second query) CL-USER::'|'red_cube'|) (setf object red-cube-object-desig))
+      ((eql (second query) CL-USER::'|'blue_handle'|) (setf object blue-handle-object-desig)))
+    (cond
+      ((eql (first query) CL-USER::'|'top_grab'|) (achieve `(grab-top ,object)))
+      ((eql (first query) CL-USER::'|'side_grab'|) (achieve `(grab-side ,object)))
+      ((eql (first query) CL-USER::'|'turn'|) (achieve `(turn)))
+      ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper)))
+      ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone)))
+      (t (print "No matching goal found")))))
 
-(defun try-solutions (object)
-  (do ((result '(0 "")))
-      ((= (first result) 3) (first result))
-    (setf result (call-prolog-next-solution (msg-slot-value object 'name)))
-    (cond 
-      ((= (first result) 0) (print "No solution found"))
-      ((= (first result) 1) (print "Wrong id"))
-      ((= (first result) 2) (print "Query failed"))
-      ((= (first result) 4) (print "Timed out"))
-      ((= (first result) 3) 
-       (cond
-         ((string= (second result) "grab-top") (achieve `(grap-top ,object)))
-         ((string= (second result) "grab-side") (achieve `(grap-side ,object)))
-         ((string= (second result) "turn") (achieve `(turn ,object)))
-         ((string= (second result) "open-gripper") (achieve `(open-gripper ,object)))
-         ((string= (second result) "place-in-zone") (achieve `(place-in-zone ,object))))))))
-               
