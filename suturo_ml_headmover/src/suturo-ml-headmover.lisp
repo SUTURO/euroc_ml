@@ -71,11 +71,44 @@
         ((string= (msg-slot-value object 'name) "blue_handle") (setf start-pose blue-handle-start-pose)))
       (loop for primitive-pose across (msg-slot-value object 'primitive_poses) do
         (if (not (string= (msg-slot-value object 'name) "red_sphere"))
-            (push (make-msg "geometry_msgs/Pose" 
-                            :ORIENTATION (msg-slot-value start-pose 'orientation) 
-                            :POSITION (point+ (msg-slot-value start-pose 'position) (msg-slot-value primitive-pose 'position))) primitive-poses))
-        (manipulation::publish-collision-object (msg-slot-value object 'name) (msg-slot-value object 'primitives) (make-array (list (length primitive-poses)) 
-                                                                                                                            :initial-contents (reverse primitive-poses)) 0)))))
+        (push (make-msg "geometry_msgs/Pose" 
+                        :ORIENTATION (msg-slot-value start-pose 'orientation) 
+                        :POSITION (point+ (msg-slot-value start-pose 'position) (msg-slot-value primitive-pose 'position))) primitive-poses))
+      (format t "~a" primitive-poses)
+      (manipulation::publish-collision-object (msg-slot-value object 'name) 
+                                              (msg-slot-value object 'primitives) 
+                                              (make-array (list (length primitive-poses) 
+                                                                :initial-contents (reverse primitive-poses)) 0)))))
+
+(defun publish-head-mover-scene ()
+  (manipulation::publish-collision-object "blue_handle"
+                                          `#(,(roslisp:make-msg 
+                                             "shape_msgs/SolidPrimitive" 
+                                             (type) 1 
+                                             (dimensions) #(0.048 0.048 0.12)) )
+                                          `#(,(roslisp:make-msg 
+                                             "geometry_msgs/Pose" 
+                                             (position) (roslisp:make-msg 
+                                                         "geometry_msgs/Point" 
+                                                         (x) 0.0 (y) 0.5 (z) 0.06)
+                                             (orientation) (roslisp:make-msg 
+                                                            "geometry_msgs/Quaternion" 
+                                                            (x) 0.0 (y) 0.0 (z) 0.0 (w) 1.0)))
+                                          0)
+  (manipulation::publish-collision-object "red_cube"
+                                          `#(,(roslisp:make-msg 
+                                             "shape_msgs/SolidPrimitive" 
+                                             (type) 1 
+                                             (dimensions) #(0.05 0.05 0.05)) )
+                                          `#(,(roslisp:make-msg 
+                                             "geometry_msgs/Pose" 
+                                             (position) (roslisp:make-msg 
+                                                         "geometry_msgs/Point" 
+                                                         (x) -0.3 (y) -0.4 (z) 0.0)
+                                             (orientation) (roslisp:make-msg 
+                                                            "geometry_msgs/Quaternion" 
+                                                            (x) 0.0 (y) 0.0 (z) 0.0 (w) 1.0)))
+                                          0))
 
 (defun point+ (p1 p2)
 "Adds two gemeotry_msgs/Point and returns the solution
@@ -335,6 +368,7 @@ Initialize the simulation:
     (call-service-state "init" taskdata)) 
   (publish-objects-to-collision-scene))
 
+
 (defun execute-prolog-solutions()
   ""
   (let ((goals (first (first (json-prolog:prolog-simple-1 "get_planned_goals(G)")))))
@@ -354,4 +388,28 @@ Initialize the simulation:
       ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper)))
       ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone)))
       (t (print "No matching goal found")))))
+
+(defun grasp-top (object)
+  "
+  Grasp the given object and lift it
+  * Arguments
+  - object-designator :: The designator describing the object - object-designator
+  "
+  (let ((collision-object object))
+    (if (not (roslisp:wait-for-service +service-name-grasp-object+ +timeout-service+))
+        (let ((timed-out-text (concatenate 'string "Times out waiting for service" +service-name-grasp-object+)))
+          (roslisp:ros-warn nil t timed-out-text)
+          (cpl-impl:fail 'cram-plan-failures:manipulation-failure))
+        (progn
+          (let* ((response (roslisp:call-service +service-name-grasp-object+ 
+                                                 'suturo_manipulation_msgs-srv:GraspObject
+                                                 :object (roslisp:setf-msg collision-object 
+                                                                           (stamp header) 
+                                                                           (roslisp:ros-time))
+                                                 :density (manipulation::get-object-density collision-object 
+                                                                                            (roslisp:msg-slot-value environment:*yaml* 'objects)) 
+                                                 :prefer_grasp_position 2))
+                 (result (roslisp:msg-slot-value response 'result))
+                 (grasp-position (roslisp:msg-slot-value response 'grasp_position))))))))
+
 
