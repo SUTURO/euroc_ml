@@ -404,8 +404,10 @@ Initialize the simulation:
                                                'suturo_manipulation_msgs-srv:MoveRelative
                                                :relative_goal (make-msg "geometry_msgs/TwistStamped"
                                                                         (twist) (make-msg "geometry_msgs/Twist"
+                                                                                          (linear) (make-msg "geometry_msgs/Vector3"
+                                                                                                              (y) 0.0)
                                                                                           (angular) (make-msg "geometry_msgs/Vector3"
-                                                                                                              (z) 3.15))))))
+                                                                                                              (z) 3.1415926))))))
           (print (roslisp:msg-slot-value response 'result))))))
 
 
