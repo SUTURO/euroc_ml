@@ -85,12 +85,12 @@
                                           `#(,(roslisp:make-msg 
                                              "shape_msgs/SolidPrimitive" 
                                              (type) 1 
-                                             (dimensions) #(0.048 0.048 0.22)) )
+                                             (dimensions) #(0.048 0.048 0.20)) )
                                           `#(,(roslisp:make-msg 
                                              "geometry_msgs/Pose" 
                                              (position) (roslisp:make-msg 
                                                          "geometry_msgs/Point" 
-                                                         (x) 0.0 (y) 0.5 (z) 0.11)
+                                                         (x) 0.0 (y) 0.5 (z) 0.10)
                                              (orientation) (roslisp:make-msg 
                                                             "geometry_msgs/Quaternion" 
                                                             (x) 0.0 (y) 0.0 (z) 0.0 (w) 1.0)))
@@ -193,7 +193,7 @@ Grabs the given object from the side
   (perform (make-designator 'action `((to grasp)
                                       (obj ,?object))))
   (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id)))
-n
+
 (def-goal (achieve (place-in-zone))
 " 
 Grabs the given object from the top
