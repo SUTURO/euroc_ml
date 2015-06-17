@@ -16,15 +16,15 @@ get_designator_by_type(Type, Designator) :-
     rdf_split_url('http://knowrob.org/kb/cram_log.owl#', DesigID, Designator).
 
 get_planned_goals(Goals) :-
-  Goals = [['top_grab','red_cube'], ['place_in_zone',''],['open_gripper',''],['side_grab','blue_handle'],['place_in_zone',''],['turn','']].
+  Goals = [['top_grab','red_cube'], ['place_in_zone',''],['open_gripper',''],['side_grab','blue_handle'],['turn','']].
 
 
 % Generate multiple plans
 goal_list_generator(Goals):-
-  Goals = [['top_grab','red_cube'], ['place_in_zone',''],['open_gripper',''],['side_grab','blue_handle'],['place_in_zone',''],['turn','']].
+  Goals = [['top_grab','red_cube'], ['place_in_zone',''],['open_gripper',''],['side_grab','blue_handle'],['turn','']].
 
 goal_list_generator(Goals):-
-  Goals = [['top_grab','red_cube'], ['place_in_zone',''],['open_gripper',''],['top_grab','blue_handle'],['place_in_zone',''],['turn','']].
+  Goals = [['top_grab','red_cube'], ['place_in_zone',''],['open_gripper',''],['top_grab','blue_handle'],['turn','']].
 
 % TODO Construct goal list
 get_planned_goals_w_alt(Goals) :-
