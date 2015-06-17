@@ -41,6 +41,8 @@
     #:pose-name
     #:classify-object
     #:focus-object
+    #:open-gripper
+    #:position
     #:objects
     #:find-objects-in-map
     #:pose-estimate-object

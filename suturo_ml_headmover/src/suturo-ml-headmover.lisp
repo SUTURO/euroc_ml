@@ -84,12 +84,12 @@
                                           `#(,(roslisp:make-msg 
                                              "shape_msgs/SolidPrimitive" 
                                              (type) 1 
-                                             (dimensions) #(0.048 0.048 0.12)) )
+                                             (dimensions) #(0.048 0.048 0.20)) ) ;0.12
                                           `#(,(roslisp:make-msg 
                                              "geometry_msgs/Pose" 
                                              (position) (roslisp:make-msg 
                                                          "geometry_msgs/Point" 
-                                                         (x) 0.0 (y) 0.5 (z) 0.06)
+                                                         (x) 0.0 (y) 0.5 (z) 0.1) ;0.06
                                              (orientation) (roslisp:make-msg 
                                                             "geometry_msgs/Quaternion" 
                                                             (x) 0.0 (y) 0.0 (z) 0.0 (w) 1.0)))
@@ -232,7 +232,8 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "OPENING GRIPPER")
-)
+  (perform (make-designator 'action `((to open-gripper)
+                                      (position 0.0)))))
 
 
 (def-goal (achieve (turn))
