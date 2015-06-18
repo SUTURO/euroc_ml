@@ -4,7 +4,7 @@
 ]).
 
 :- owl_parse('package://suturo_learning/owl/suturo_learning.owl').
-:- rdf_db:rdf_register_ns(suturo_learning, 'http://www.suturo.de/suturo_learning#',     [keep(true)]).
+:- rdf_db:rdf_register_ns(suturo_learning, 'http://knowrob.org/kb/suturo_learning.owl#',     [keep(true)]).
 :- use_module(library('knowrob_mongo')).
 
 get_designator_by_type(Type, Designator) :-
@@ -49,5 +49,31 @@ clear_asserts:-
   retractall(failed_goal_list(_)),
   assert(failed_goal_list([])),
   assert(successful_goal_list([])).
+
+action_for_effect(Effect,Action) :-
+  owl_subclass_of(Action, 'http://knowrob.org/kb/suturo_learning.owl#Action'),
+  class_properties(Action,'http://knowrob.org/kb/suturo_learning.owl#postActionEffect',Effect).
+
+precondition_for_action(Action,Precondition) :-
+  owl_subclass_of(Action, suturo_learning:'Action'),class_properties(Action,suturo_learning:'preCondition',Precondition).
+
+% plan(Effect, ListOfActions) :-
+%   action_for_effect(Effect,Action), 
+%   precondition_for_action(Action,Precond) ->
+%     plan(Effect,
+%     append([ListOfActions, 
+plan_actions_for_goal(Goal,ListOfActions) :-
+  action_for_effect(Goal,Action), 
+  plan_actions(Action,ListOfActions).
+
+
+plan_actions(Action, ListOfDependendActions) :-
+  precondition_for_action(Action,Precond) ->
+    action_for_effect(Precond,PreAction),
+    plan_actions(PreAction, S),
+    append(S, [PreAction], ListOfDependendActions)
+  ;
+    ListOfDependendActions = [].
+
 
 

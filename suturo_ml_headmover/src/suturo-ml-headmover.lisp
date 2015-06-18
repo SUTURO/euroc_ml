@@ -165,7 +165,6 @@ Callback for the function [[parse-yaml]]. Sets the variable environment:*yaml*.
 "
   (setf environment:*yaml* msg))
 
-(defparameter bla nil)
 (def-goal (achieve (grab-top ?object))
 " 
 Grabs the given object from the top
@@ -173,7 +172,6 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "GRABBING_TOP")
-  (setf bla ?object)
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 1))))) 
     (equate ?object new-desig))
   (perform (make-designator 'action `((to grasp)
