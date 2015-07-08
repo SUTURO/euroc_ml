@@ -1,0 +1,244 @@
+<?xml version="1.0"?>
+
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY swrl "http://www.w3.org/2003/11/swrl#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY knowrob "http://knowrob.org/kb/knowrob.owl#" >
+    <!ENTITY computable "http://knowrob.org/kb/computable.owl#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+
+<rdf:RDF xmlns="http://knowrob.org/kb/rs_components.owl#"
+     xml:base="http://knowrob.org/kb/rs_components.owl"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:swrl="http://www.w3.org/2003/11/swrl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:knowrob="http://knowrob.org/kb/knowrob.owl#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:computable="http://knowrob.org/kb/computable.owl#">
+    <owl:Ontology rdf:about="http://knowrob.org/kb/suturo_learning.owl">
+        <rdfs:comment rdf:datatype="&xsd;string">Knowledge about our task description
+					</rdfs:comment>
+        <owl:imports rdf:resource="package://knowrob_common/owl/knowrob.owl"/>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#postActionEffect -->
+
+    <owl:ObjectProperty rdf:about="http://knowrob.org/kb/suturo_learning.owl#postActionEffect"/>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#preCondition -->
+
+    <owl:ObjectProperty rdf:about="http://knowrob.org/kb/suturo_learning.owl#preCondition"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#Action -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#Action"/>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#Container -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#Container">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Object"/>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#Effect -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#Effect"/>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#EmptyContainer -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#EmptyContainer">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Effect"/>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#Grab -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#Grab">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Action"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/suturo_learning.owl#postActionEffect"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/suturo_learning.owl#ObjectInHand"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#Object -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#Object"/>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#ObjectInHand -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#ObjectInHand">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Effect"/>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#ObjectNotInHand -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#ObjectNotInHand">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Effect"/>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#ObjectOverZone -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#ObjectOverZone">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Effect"/>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#ObjectPlacedInZone -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#ObjectPlacedInZone">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Effect"/>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#OpenGripper -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#OpenGripper">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Action"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/suturo_learning.owl#postActionEffect"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/suturo_learning.owl#ObjectNotInHand"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/suturo_learning.owl#preCondition"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/suturo_learning.owl#ObjectInHand"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#OpenGripperOverZone -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#OpenGripperOverZone">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#OpenGripper"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/suturo_learning.owl#postActionEffect"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/suturo_learning.owl#ObjectPlacedInZone"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/suturo_learning.owl#preCondition"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/suturo_learning.owl#ObjectOverZone"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#PlaceInZone -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#PlaceInZone">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Action"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/suturo_learning.owl#postActionEffect"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/suturo_learning.owl#ObjectOverZone"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/suturo_learning.owl#preCondition"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/suturo_learning.owl#ObjectInHand"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#SideGrab -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#SideGrab">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Grab"/>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#TopGrab -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#TopGrab">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Grab"/>
+    </owl:Class>
+    
+
+
+    <!-- http://knowrob.org/kb/suturo_learning.owl#TurnObject -->
+
+    <owl:Class rdf:about="http://knowrob.org/kb/suturo_learning.owl#TurnObject">
+        <rdfs:subClassOf rdf:resource="http://knowrob.org/kb/suturo_learning.owl#Action"/>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/suturo_learning.owl#preCondition"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/suturo_learning.owl#ObjectInHand"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+        <rdfs:subClassOf>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://knowrob.org/kb/suturo_learning.owl#postActionEffect"/>
+                <owl:someValuesFrom rdf:resource="http://knowrob.org/kb/suturo_learning.owl#EmptyContainer"/>
+            </owl:Restriction>
+        </rdfs:subClassOf>
+    </owl:Class>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 3.5.1) http://owlapi.sourceforge.net -->
+
