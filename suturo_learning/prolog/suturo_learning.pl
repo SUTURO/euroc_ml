@@ -54,7 +54,8 @@ precondition_for_action(Action,Precondition) :-
 %     append([ListOfActions, 
 plan_actions_for_goal(Goal,ListOfActions) :-
   action_for_effect(Goal,Action), 
-  plan_actions(Action,ListOfActions).
+  plan_actions(Action,ListOfPreActions),
+  append(ListOfPreActions, [Action], ListOfActions).
 
 
 plan_actions(Action, ListOfDependendActions) :-
