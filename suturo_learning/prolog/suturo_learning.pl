@@ -1,21 +1,11 @@
 :- module(suturo_learning, [
-	get_designator_by_type/2,
-	get_planned_goals/1
+	get_planned_goals/1,
+    get_actions_for_object/2
 ]).
 
 :- owl_parse('package://suturo_learning/owl/suturo_learning.owl').
 :- rdf_db:rdf_register_ns(suturo_learning, 'http://knowrob.org/kb/suturo_learning.owl#',     [keep(true)]).
-:- use_module(library('knowrob_mongo')).
-
-get_designator_by_type(Type, Designator) :-
-    jpl_list_to_array(['designator.TYPE'], QueryKeysArr),
-    jpl_list_to_array([Type], QueryValuesArr),
-    knowrob_mongo:mongo_interface(DB),
-    jpl_call(DB, 'getDesignatorsByPattern', [QueryKeysArr, QueryValuesArr], DesigJavaArr),
-    jpl_array_to_list(DesigJavaArr, DesigJavaList),
-    member(DesigJava, DesigJavaList),
-    jpl_call(DesigJava, 'get', ['_id'], DesigID),
-    rdf_split_url('http://knowrob.org/kb/cram_log.owl#', DesigID, Designator).
+:- use_module(library('knowrob_mango')).
 
 get_planned_goals(Goals) :-
   Goals = [['side_grab','blue_handle'],['turn',''],['open_gripper',''],['top_grab','red_cube'], ['place_in_zone','']].
@@ -76,4 +66,5 @@ plan_actions(Action, ListOfDependendActions) :-
     ListOfDependendActions = [].
 
 
-
+get_actions_for_object(Action, Description) :-
+    mang_desig_matches(Action, Description).
