@@ -13,7 +13,7 @@
       border: 1px solid lightgray;
       float: left;
     }
-    #nodedetails {
+    #nodedetailarea {
 			background: #CCE0F5;
 			float:left;
 			width: 400px;
@@ -29,7 +29,7 @@
 		{
 			font-size: 1em !important;
 			color: #000 !important;
-			font-family: Sans-Serif,Monospace !important;
+			font-family: Sans-Serif, Monospace !important;
 		}
   </style>
 </head>
@@ -40,9 +40,31 @@
 <!-- </p> -->
 
 <div id="mynetwork"></div>
-<div id="nodedetails"><p><b>Detailed information</b></p></div>
+<div id="nodedetailarea"><p><b>Detailed information</b></p>
+	<p id="nodedetails">Click on a node to get more information about the context</p></div>
 
 <script type="text/javascript">
+	// NodeTypeEnum = {
+	// 	STATE : 0,
+	// 	ERROR : 1,
+	// 	SUCCESS : 2
+	// }
+	function statusNodeText(name,featureList,timestamp)
+  {
+		var output = "Statename: " + name + "<br>\n";  
+		output += "Features: " + featureList + "<br>\n";
+		output += "Timestamp: " + timestamp + "<br>\n";
+		output += "CRAMContext: TODO? Show stuff that happened until 'now' <br>\n";
+		return output;
+  }
+
+	function errorNodeText(errorcontext,timestamp)
+  {
+		var output = "Error Context: " + errorcontext + "<br>\n";
+		output += "Timestamp: " + timestamp + "<br>\n";
+		return output;
+  }
+
   // create an array with nodes
   var nodes = new vis.DataSet([
     {id: 1, label: 'Root State'},
@@ -79,6 +101,36 @@
     }
   };
   var network = new vis.Network(container, data, options);
+
+  network.on("click", function (params) {
+        params.event = "[original event]";
+        // document.getElementById('nodedetails').innerHTML = '<h2>Click event:</h2>' + JSON.stringify(params, null, 4);
+				if(params.nodes.length > 0){
+			  	var nodeId = params.nodes[0];
+			  	document.getElementById('nodedetails').innerHTML = document.getElementById(nodeId).value;
+				}
+				else
+				{
+					// User clicked somewhere in the canvas, but didn't hit a node
+			  	document.getElementById('nodedetails').innerHTML = "";
+				}
+    });
+
+  // DOM is loaded ....
+  window.onload = function() {
+		// Set informations for every state node
+		document.getElementById('1').value = statusNodeText("Root State",['ObjectInHand','lastActionSuccesful'],12323716237);
+		// And every error node
+		document.getElementById('6').value = errorNodeText("FAILURE in PROCESS-MODULE",123213762173168);
+  };
 </script>
+<!-- Information about graph entities -->
+<input type="hidden" id="1" value="1">
+<input type="hidden" id="2" value="2">
+<input type="hidden" id="3" value="3">
+<input type="hidden" id="4" value="4">
+<input type="hidden" id="5" value="5">
+<input type="hidden" id="6" value="6">
+<input type="hidden" id="7" value="7">
 </body>
 </html>
