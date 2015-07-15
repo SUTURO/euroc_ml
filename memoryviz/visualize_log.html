@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+<head>
+  <title>Network | Basic usage</title>
+
+  <script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>
+  <link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
+
+  <style type="text/css">
+    #mynetwork {
+      width: 600px;
+      height: 600px;
+      border: 1px solid lightgray;
+      float: left;
+    }
+    #nodedetails {
+			background: #CCE0F5;
+			float:left;
+			width: 400px;
+			height: 600px;
+			/* margin: 4px; */
+		}
+
+		#nodedetails p{
+			margin: 4px;
+		}
+
+		html *
+		{
+			font-size: 1em !important;
+			color: #000 !important;
+			font-family: Sans-Serif,Monospace !important;
+		}
+  </style>
+</head>
+<body>
+<h1>MemoryViz - Visualizing Robot Action Memories</h1>
+<!-- <p> -->
+<!--   Log visualization  -->
+<!-- </p> -->
+
+<div id="mynetwork"></div>
+<div id="nodedetails"><p><b>Detailed information</b></p></div>
+
+<script type="text/javascript">
+  // create an array with nodes
+  var nodes = new vis.DataSet([
+    {id: 1, label: 'Root State'},
+    {id: 2, label: 'State 2'},
+    {id: 3, label: 'State 3'},
+    {id: 4, label: 'State 4'},
+    {id: 5, label: 'State 5'},
+    {id: 6, label: 'Error',   shape: 'diamond', color: 'red'},
+    {id: 7, label: 'Success', shape: 'diamond', color: 'green'},
+  ]);
+
+  // create an array with edges
+  var edges = new vis.DataSet([
+    {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 2, to: 4, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 2, to: 5, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 5, to: 6, arrows:'to', label:'Outcome', font: {align: 'top'}},
+    {from: 4, to: 7, arrows:'to', label:'Outcome', font: {align: 'top'}},
+  ]);
+
+  // create a network
+  var container = document.getElementById('mynetwork');
+  var data = {
+    nodes: nodes,
+    edges: edges
+  };
+  var options = {
+    layout: {
+        hierarchical:{
+            direction: "UD",
+            sortMethod: "directed"
+        }
+    }
+  };
+  var network = new vis.Network(container, data, options);
+</script>
+</body>
+</html>
