@@ -29,7 +29,8 @@ contacts = []
 def contact_ballback(data):
     global contacts
     contacts.append(data)
-    if len(contacts) > 1000
+    if len(contacts) > 1000:
+        pass
 
 if __name__ == '__main__':
     rospy.init_node("Contactdetector", anonymous=True)
