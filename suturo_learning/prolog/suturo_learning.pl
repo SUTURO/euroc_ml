@@ -5,6 +5,7 @@
 
 :- owl_parse('package://suturo_learning/owl/suturo_learning.owl').
 :- rdf_db:rdf_register_ns(suturo_learning, 'http://knowrob.org/kb/suturo_learning.owl#',     [keep(true)]).
+:- rdf_db:rdf_register_ns(knowrob, 'http://knowrob.org/kb/knowrob.owl#',     [keep(true)]).
 :- use_module(library('knowrob_mango')).
 
 get_planned_goals(Goals) :-
@@ -69,3 +70,32 @@ plan_actions(Action, ListOfDependendActions) :-
 
 get_actions_for_object(Action, Description) :-
     mang_desig_matches(Action, Description).
+
+
+% REASONING PART
+% ANALYZE THE INCOMING LOGS FOR FACTS
+%
+% Rules prefixed with an l operate directly on the log data
+%
+% Don't forget to load a log before you use these functions!
+l_get_robot_experiment(X):-
+  owl_individual_of(X,knowrob:'RobotExperiment').
+
+% Get sub actions for a given entity
+l_get_sub_actions(X,Sub):-
+  owl_has(X,knowrob:'subAction',Sub).
+
+l_get_next_actions(X,Next):-
+  owl_has(X,knowrob:'nextAction',Next).
+
+l_get_type_of_entity(X,Type):-
+  owl_has(X,rdf:'type',Type).
+
+% Example types:
+% knowrob:'PerformOnProcessModule' 
+
+l_get_entities_of_type(X,Type):-
+  owl_has(X,rdf:'type', Type).
+
+l_get_task_success(X,Success):-
+  owl_has(X,knowrob:'taskSuccess',Success).
