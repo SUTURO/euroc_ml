@@ -1,4 +1,3 @@
-from abc import abstractmethod
 import random
 
 __author__ = 'suturo'
@@ -10,12 +9,19 @@ class Policy(object):
         self.q = q
         pass
 
-    def getNextAction(self, state):
+    def getNextAction(self, stateMsg):
         pass
+
+    def stateToTuple(self, stateMsg):
+        stateTuple = []
+        for f in stateMsg.featureList:
+            stateTuple.append((f.featureName, f.value))
+        return tuple(stateTuple)
 
 class GreedyPolicy(Policy):
 
-    def getNextAction(self, state):
+    def getNextAction(self, stateMsg):
+        state = self.stateToTuple(stateMsg)
         muh = 0.00001
         max_a = []
         for a in self.actions:
@@ -32,7 +38,8 @@ class EpsilonGreedyPolicy(Policy):
         super(EpsilonGreedyPolicy,self).__init__(q, actions)
         self.epsilon = epsilon
 
-    def getNextAction(self, state):
+    def getNextAction(self, stateMsg):
+        state = self.stateToTuple(stateMsg)
         # Select action using epsilon-greedy action selection
         if random.random() < self.epsilon:
             return random.choice(self.actions)

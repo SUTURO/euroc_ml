@@ -6,11 +6,21 @@ class Learner(object):
     def __init__(self, q_init_value=10):
         self.q = defaultdict(lambda : q_init_value)
 
-    def learn(self, policy):
+    def learn(self, feedPolicyRequest):
         return self.q
 
     def get_q(self):
         return self.q
+
+    def tranform_policy(self, feedPolicyRequest):
+        p = []
+        for e in feedPolicyRequest.policy.policyEntrys:
+            state = []
+            for f in e.state.featureList:
+                state.append((f.featureName, f.value))
+            # action
+            p.append((tuple(state),e.action.actionId,e.reward))
+        return p
 
 class SarsaLambdaLearner(Learner):
 
@@ -22,7 +32,8 @@ class SarsaLambdaLearner(Learner):
         self.gamma = gamma
         self.l = l
 
-    def learn(self, policy):
+    def learn(self, feedPolicyRequest):
+        policy = self.tranform_policy(feedPolicyRequest)
         for i, (s,a,r) in enumerate(policy):
             if i == len(policy) -1:
                 break
