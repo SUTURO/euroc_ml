@@ -93,9 +93,46 @@ l_get_type_of_entity(X,Type):-
 
 % Example types:
 % knowrob:'PerformOnProcessModule' 
-
+% knowrob:'WithFailureHandling'
+% knowrob:'CRAMPerform'
+% knowrob:'CRAMAchieve'
+% knowrob:'CRAMAction'
+% knowrob:'CRAMDesignator'
+% knowrob:'TimePoint'
+% knowrob:'RobotExperiment'
+% knowrob:'AnnotationInformation'
 l_get_entities_of_type(X,Type):-
   owl_has(X,rdf:'type', Type).
 
 l_get_task_success(X,Success):-
   owl_has(X,knowrob:'taskSuccess',Success).
+
+% LEARNINGACTIONS will now be defined as the achieved CRAM Goals
+get_learningactions(La):-
+  l_get_type_of_entity(La,'http://knowrob.org/kb/knowrob.owl#CRAMAchieve').
+
+get_learningaction_sequence(LaS):-
+  bagof([La,Str], (get_learningactions(La),owl_has(La,'http://knowrob.org/kb/knowrob.owl#goalContext',Str)), LaS).
+
+% Extract the name of an action from a learning action sequence generated
+% by get_learningaction_sequence
+% Index begins at 1
+get_learningaction_name(LaS, IndexOfAction, Name):-
+  get_learningaction_sequence(LaS), nth1(IndexOfAction,LaS,Elem), Elem=[X,Y], Y=(literal(type(_,Name))).
+
+% Resolves to crucial information in our context:
+% - The designator
+% - taskSuccess
+% - endTime
+% - startTime
+% - goalContext
+% learningaction_info(La,P,Info):-
+%   get_learningactions(La),
+%   P = 'http://knowrob.org/kb/knowrob.owl#designator';
+%   P = 'http://knowrob.org/kb/knowrob.owl#taskSuccess';
+%   P = 'http://knowrob.org/kb/knowrob.owl#endTime';
+%   P = 'http://knowrob.org/kb/knowrob.owl#startTime';
+%   P = 'http://knowrob.org/kb/knowrob.owl#goalContext',
+%   owl_has(La,P,Info).
+
+
