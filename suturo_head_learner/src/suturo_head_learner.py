@@ -2,12 +2,14 @@
 # from gazebo_msgs.msg._ContactState import ContactState
 from collections import defaultdict
 import rospy
+from suturo_head_mover_msgs.msg._SuturoMlAction import SuturoMlAction
 from suturo_head_mover_msgs.srv._SuturoMlFeedPolicy import SuturoMlFeedPolicy, SuturoMlFeedPolicyRequest, \
     SuturoMlFeedPolicyResponse
 from suturo_head_mover_msgs.srv._SuturoMlNextAction import SuturoMlNextAction, SuturoMlNextActionRequest, \
     SuturoMlNextActionResponse
 from learner import SarsaLambdaLearner
 from policy import GreedyPolicy
+from policy import EpsilonGreedyPolicy
 
 __author__ = 'ichumuh'
 
@@ -19,16 +21,14 @@ class SuturoMlHeadLearner(object):
         self.policy = []
         self.q = defaultdict(lambda : 10)
         self.learner = SarsaLambdaLearner()
-        self.testactions=[0,1,2,3]
-        self.policyMaker = GreedyPolicy(self.q, self.testactions)
+        self.actions = filter(lambda x: x[0].startswith('Const'), [(a,s) for a,s in vars(SuturoMlAction).iteritems()])
+        self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, .0)
         print("SuturoMlHeadLearnerPolicyFeeder started.")
 
     def feedCallback(self, feedPolicyRequest):
-        # r = SuturoMlFeedPolicyRequest()
-        # r = self.tranform_policy(data)
-        # print(r)
         print("start learning")
         self.q = self.learner.learn(feedPolicyRequest)
+        self.policyMaker.updateQ(self.q)
         print("learning done.\n new q: \n")
         print(self.q)
 
@@ -37,8 +37,6 @@ class SuturoMlHeadLearner(object):
         return response
 
     def nextActionCallback(self, nextActionRequest):
-        # a = SuturoMlNextActionRequest()
-        # a.state
         r = SuturoMlNextActionResponse()
         r.action.actionId = self.policyMaker.getNextAction(nextActionRequest.state)
         return r
