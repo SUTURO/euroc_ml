@@ -2,12 +2,18 @@
 
   <!-- Run only task variation 1 by default -->
   <arg name="task" default="head_mover" />
+  <arg name="disable_prolog" default="false" />
 
   <!-- Let the /clock topic use the simulatioon time instead of real time. This param has to be set to true before we start other nodes! -->
   <param name="use_sim_time" type="bool" value="true" />
 
   <!-- Start learning -->
-  <!-- <include file="$(find suturo_learning)/launch/json_prolog.launch" /> -->
+  
+  <!-- set the initial packe for json_prolog -->
+  <param name="initial_package" type="string" value="suturo_learning" />
+
+  <!-- start the node -->
+  <node unless="$(arg disable_prolog)" name="json_prolog" pkg="json_prolog" type="json_prolog_node" required="true" output="screen" cwd="node" />
 
   <!-- Start manipulation -->
   <include file="$(find euroc_launch)/launch/manipulation.launch" />
