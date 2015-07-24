@@ -108,11 +108,21 @@ l_get_task_success(X,Success):-
   owl_has(X,knowrob:'taskSuccess',Success).
 
 % LEARNINGACTIONS will now be defined as the achieved CRAM Goals
-get_learningactions(La):-
+get_learningactions_in_experiment(Experiment, La):-
+  l_get_robot_experiment(Experiment),
+  l_get_sub_actions(Experiment,La),
   l_get_type_of_entity(La,'http://knowrob.org/kb/knowrob.owl#CRAMAchieve').
 
+get_learningactions(La):-
+  get_learningactions_in_experiment(_, La).
+  % l_get_type_of_entity(La,'http://knowrob.org/kb/knowrob.owl#CRAMAchieve').
+
+get_learningaction_sequence_in_experiment(Experiment,LaS):-
+  bagof([La,Str], (get_learningactions_in_experiment(Experiment,La),owl_has(La,'http://knowrob.org/kb/knowrob.owl#goalContext',Str)), LaS).
+
 get_learningaction_sequence(LaS):-
-  bagof([La,Str], (get_learningactions(La),owl_has(La,'http://knowrob.org/kb/knowrob.owl#goalContext',Str)), LaS).
+  get_learningaction_sequence_in_experiment(_,LaS).
+  % bagof([La,Str], (get_learningactions(La),owl_has(La,'http://knowrob.org/kb/knowrob.owl#goalContext',Str)), LaS).
 
 % Extract the name of an action from a learning action sequence generated
 % by get_learningaction_sequence
