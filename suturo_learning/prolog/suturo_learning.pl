@@ -3,6 +3,9 @@
     get_actions_for_object/2
 ]).
 
+:- use_module(library(http/json)).
+:- use_module(library(http/json_convert)).
+
 :- owl_parse('package://suturo_learning/owl/suturo_learning.owl').
 :- rdf_db:rdf_register_ns(suturo_learning, 'http://knowrob.org/kb/suturo_learning.owl#',     [keep(true)]).
 :- rdf_db:rdf_register_ns(knowrob, 'http://knowrob.org/kb/knowrob.owl#',     [keep(true)]).
@@ -118,17 +121,27 @@ get_learningactions(La):-
   % l_get_type_of_entity(La,'http://knowrob.org/kb/knowrob.owl#CRAMAchieve').
 
 get_learningaction_sequence_in_experiment(Experiment,LaS):-
-  bagof([La,Str], (get_learningactions_in_experiment(Experiment,La),owl_has(La,'http://knowrob.org/kb/knowrob.owl#goalContext',Str)), LaS).
+  bagof([La,Str], 
+  (
+    get_learningactions_in_experiment(Experiment,La),
+    owl_has(La,'http://knowrob.org/kb/knowrob.owl#goalContext',Str)
+  ), ActionSequenceDirty),
+  maplist(clean_name_of_action_in_tupel, ActionSequenceDirty, LaS).
 
 get_learningaction_sequence(LaS):-
   get_learningaction_sequence_in_experiment(_,LaS).
   % bagof([La,Str], (get_learningactions(La),owl_has(La,'http://knowrob.org/kb/knowrob.owl#goalContext',Str)), LaS).
+  %
+clean_name_of_action_in_tupel([X,Y],Output):-
+Y=(literal(type(_,Name))), Output=[X,Name].
+
+% extract_bool
 
 % Extract the name of an action from a learning action sequence generated
 % by get_learningaction_sequence
 % Index begins at 1
-get_learningaction_name(LaS, IndexOfAction, Name):-
-  get_learningaction_sequence(LaS), nth1(IndexOfAction,LaS,Elem), Elem=[X,Y], Y=(literal(type(_,Name))).
+% get_learningaction_name(LaS, IndexOfAction, Name):-
+%   get_learningaction_sequence(LaS), nth1(IndexOfAction,LaS,Elem), Elem=[X,Y], Y=(literal(type(_,Name))).
 
 % Resolves to crucial information in our context:
 % - The designator
