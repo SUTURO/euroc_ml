@@ -34,6 +34,10 @@
 (defparameter last-object-grabbed "")
 (defparameter +service-name-move-hand+ "/suturo/manipulation/move_relative")
 
+(defparameter featureObjectInHand "none")
+(defparameter featureLastActionSuccesful 0)
+(defparameter featureGoalsSuccesful '(0 0))
+
 (defun parse-yaml ()
   "Subscribes the yaml publisher and sets environment:*yaml* to stay informed about changes"
   ; TODO: Publish the yaml description to the yaml pars0r input
@@ -165,7 +169,7 @@ Callback for the function [[parse-yaml]]. Sets the variable environment:*yaml*.
 "
   (setf environment:*yaml* msg))
 
-(def-goal (achieve (grab-top ?object))
+(def-goal (achieve (grab-top ?action ?object))
 " 
 Grabs the given object from the top
 * Arguments
@@ -174,12 +178,11 @@ Grabs the given object from the top
   (print "GRABBING_TOP")
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 1))))) 
     (equate ?object new-desig))
-  (perform (make-designator 'action `((to grasp)
-                                      (obj ,?object))))
+  (grab-object ?action ?object)
   (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id)))
 
 
-(def-goal (achieve (grab-side ?object))
+(def-goal (achieve (grab-side ?action ?object))
 " 
 Grabs the given object from the side
 * Arguments
@@ -188,18 +191,29 @@ Grabs the given object from the side
   (print "GRABBING_SIDE")
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 2))))) 
     (equate ?object new-desig))
-  (perform (make-designator 'action `((to grasp)
-                                      (obj ,?object))))
+  (grab-object ?action ?object)
   (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id)))
 
-(def-goal (achieve (place-in-zone))
+(defun grab-object (?action ?object)
+  (let ((new-desig (copy-designator (current-desig ?action) :new-description 
+                                    `((to grasp)
+                                      (obj ,?object))))) 
+    (equate (current-desig ?action) new-desig)
+    (perform (current-desig ?action))
+    (handle-object-in-hand-feature ?object)))
+
+(defun handle-object-in-hand-feature(object-desig)
+  (setf featureObjectInHand (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id)))
+
+(def-goal (achieve (place-in-zone ?action))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
   (print "PLACING IN ZONE")
-  (let ((object-grabbed
+  (let ((new-desig nil)
+        (object-grabbed
           (cond 
             ((string= last-object-grabbed "red_cube") red-cube-object-desig)
             ((string= last-object-grabbed "blue_handle") blue-handle-object-desig)
@@ -217,23 +231,28 @@ Grabs the given object from the top
            (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'Y)
            (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'Z)
            (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'W))
-))))))
-
-          (perform (make-designator 'action `((to put-down)
-                                              (obj ,(current-desig object-grabbed))
-                                              (at ,target-location))))))))
+          )))))) 
+          (setf new-desig (copy-designator (current-desig ?action) :new-description `((to put-down)
+                                                                                      (obj ,(current-desig object-grabbed))
+                                                                                      (at ,target-location))))
+          (equate (current-desig ?action) new-desig)
+          (perform (current-desig ?action))
+          (setf featureObjectInHand "none")
+          (setf (elt featureGoalsSuccesful 0) 1)))))
         
 
-(def-goal (achieve (open-gripper))
+(def-goal (achieve (open-gripper ?action))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
   (print "OPENING GRIPPER")
-  (perform (make-designator 'action `((to open-gripper)
-                                      (position 0.0)))))
-
+  (let ((new-desig (copy-designator (current-desig ?action) :new-description `((to open-gripper)
+                                                                               (position 0.0)))))
+    (equate (current-desig ?action) new-desig)
+    (perform (current-desig ?action))
+    (setf featureObjectInHand "none")))
 
 (def-goal (achieve (turn))
 " 
@@ -243,13 +262,12 @@ Grabs the given object from the top
 "
   (print "TURNING")
   (turn)
-)
+  (setf (elt featureGoalsSuccesful 1) 1))
 
 (defun init-exec()
   (init-exec-collision-scene)
   (init-exec-params)
   (init-exec-object-designators))
-
 
 (defun init-exec-collision-scene()
   "Initialises the collision scene"
@@ -377,17 +395,26 @@ Initialize the simulation:
           (try-solution goal)))))
   
 (defun try-solution (query)
-  (let ((object nil))
+  (let ((object nil)
+        (action-desig (make-designator 'action '(()) )))
+    (write-features-to-desig action-desig)
     (cond
       ((eql (second query) CL-USER::'|'red_cube'|) (setf object red-cube-object-desig))
       ((eql (second query) CL-USER::'|'blue_handle'|) (setf object blue-handle-object-desig)))
     (cond
-      ((eql (first query) CL-USER::'|'top_grab'|) (achieve `(grab-top ,object)))
-      ((eql (first query) CL-USER::'|'side_grab'|) (achieve `(grab-side ,object)))
+      ((eql (first query) CL-USER::'|'top_grab'|) (achieve `(grab-top ,action-desig ,object)))
+      ((eql (first query) CL-USER::'|'side_grab'|) (achieve `(grab-side ,action-desig ,object)))
       ((eql (first query) CL-USER::'|'turn'|) (achieve `(turn)))
       ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper)))
-      ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone)))
+      ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone ,action-desig)))
       (t (print "No matching goal found")))))
+
+(defun write-features-to-desig (action-desig)
+  (let ((new-desig (copy-designator (current-desig action-desig) :new-description 
+                                    `((objInHand ,featureObjectInHand)
+                                      (lastActionSuccesful ,featureLastActionSuccesful) 
+                                      (goalsSuccesful ,featureGoalsSuccesful)) ))) 
+    (equate (current-desig action-desig) new-desig)))
 
 (defun turn ()
   "
