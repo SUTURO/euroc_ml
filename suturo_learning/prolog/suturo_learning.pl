@@ -109,7 +109,7 @@ l_get_task_success(X,Success):-
 
 % LEARNINGACTIONS will now be defined as the achieved CRAM Goals
 get_learningactions_in_experiment(Experiment, La):-
-  l_get_robot_experiment(Experiment),
+  l_get_robot_experiment(Experiment), !,
   l_get_sub_actions(Experiment,La),
   l_get_type_of_entity(La,'http://knowrob.org/kb/knowrob.owl#CRAMAchieve').
 
@@ -124,11 +124,29 @@ get_learningaction_sequence(LaS):-
   get_learningaction_sequence_in_experiment(_,LaS).
   % bagof([La,Str], (get_learningactions(La),owl_has(La,'http://knowrob.org/kb/knowrob.owl#goalContext',Str)), LaS).
 
+get_learningaction_name([_, Y], Name) :-
+    Y=(literal(type(_, Name))).
+
+get_action_name(X, Name) :-
+    owl_has(X, knowrob:'goalContext', Str),
+    Str=(literal(type(_, Action))),
+    % parse the action name, Action may be something like (GRAB-SIDE ?OBJECT)
+    % or (TURN)
+    % split at the whitespace
+    atomic_list_concat(L1, ' ', Action),
+    nth1(1, L1, Tmp1),
+    % split the "("
+    atomic_list_concat(L2, '(', Tmp1),
+    nth1(2, L2, Tmp2),
+    % split the ")"
+    atomic_list_concat(L3, ')', Tmp2),
+    nth1(1, L3, Name). 
+
 % Extract the name of an action from a learning action sequence generated
 % by get_learningaction_sequence
 % Index begins at 1
-get_learningaction_name(LaS, IndexOfAction, Name):-
-  get_learningaction_sequence(LaS), nth1(IndexOfAction,LaS,Elem), Elem=[X,Y], Y=(literal(type(_,Name))).
+get_learningaction_sequence_name(LaS, IndexOfAction, Name):-
+  get_learningaction_sequence(LaS), nth1(IndexOfAction,LaS,Elem), get_learning_action_name(Elem, Name).
 
 % Resolves to crucial information in our context:
 % - The designator
