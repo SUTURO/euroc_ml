@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]
+  then
+    echo "example usage: ./mongo_export ../../sr_experimental_data/exp-2015-07-29_08-45-18"
+  else
+	MUH=`echo $1 | rev | cut -d'/' -f 1 | rev`
+	GOAL="/home/suturo/catkin_ws/src/euroc/euroc_ml/logs"
+	cp -r $1 $GOAL
+	if ! [ $? -eq 0 ]; then
+	    exit 0
+	fi
+	cd $GOAL/$MUH
+	if ! [ $? -eq 0 ]; then
+	    exit 0
+	fi
+	mongoexport --db $MUH --collection logged_designators --out logged_designators.json
+	mongoexport --db $MUH --collection system.indexes --out system.indexes.json
+	mongoexport --db $MUH --collection tf --out tf.json
+fi
