@@ -112,12 +112,12 @@ l_get_task_success(X,Success):-
 
 % LEARNINGACTIONS will now be defined as the achieved CRAM Goals
 get_learningactions_in_experiment(Experiment, La):-
-  l_get_robot_experiment(Experiment), !,
+  l_get_robot_experiment(Experiment),
   l_get_sub_actions(Experiment,La),
   l_get_type_of_entity(La,'http://knowrob.org/kb/knowrob.owl#CRAMAchieve').
 
 get_learningactions(La):-
-  get_learningactions_in_experiment(_, La).
+    get_learningactions_in_experiment(_, La).
 
 get_learningaction_sequence_in_experiment(Experiment,LaS):-
   bagof([La,Str], 
