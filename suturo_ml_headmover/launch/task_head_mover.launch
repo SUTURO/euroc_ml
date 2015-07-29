@@ -7,11 +7,10 @@
 
   <include file="$(find suturo_ml_headmover)/launch/task_head_mover_without_planning.launch">
     <arg name="task" value="$(arg task)" />
+    <arg name="disable_logging" value="$(arg disable_logging)" />
     <arg name="disable_prolog" value="$(arg disable_prolog)" />
   </include>
   
-  <include unless="$(arg disable_logging)" file="$(find suturo_ml_headmover)/launch/logging.launch" />
-
   <node unless="$(arg disable_planning)" name="planning" pkg="suturo_ml_headmover" type="task" required="true" output="screen" />
 
 </launch>

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+echo $$ > /tmp/ml_headmover_bashtoplevel.pid
+while true; do
+    roslaunch suturo_ml_headmover task_head_mover.launch "$@"
+done

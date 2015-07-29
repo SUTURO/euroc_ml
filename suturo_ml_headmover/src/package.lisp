@@ -48,6 +48,9 @@
     #:pose-estimate-object
     #:prefer-grasp-position
     #:target-zone
+    #:objInHand
+    #:lastActionSuccesful
+    #:goalsSuccesful
     #:put-down
     #:scan-map)
   (:documentation
