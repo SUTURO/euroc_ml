@@ -23,7 +23,7 @@ load_owl(Dir, Blacklist) :-
 	string_concat(HalfDirElem, DirElem, FullDirElem),
 	load_owl(FullDirElem, Blacklist).
 
-load_owl(Dir, Blacklist) :-
+load_owl(Dir, _) :-
 	exists_file(Dir),
 	end_with(Dir, 'owl'),
 	owl_parse(Dir),
