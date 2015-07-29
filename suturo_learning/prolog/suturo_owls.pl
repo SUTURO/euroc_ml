@@ -1,9 +1,16 @@
 % Dir ist absoluter Pfad
 :- module(suturo_owls, [
-    load_owls/2
+    load_owls/2,
+    load_owls/1
 ]).
 
-load_owls(Dir, Blacklist) :-
+load_owls(Dir) :-
+	findall(_,load_owl(Dir,['']),_).
+
+load_owls(Dir, Blacklist):-
+	findall(_,load_owl(Dir,Blacklist),_).
+
+load_owl(Dir, Blacklist) :-
 	exists_directory(Dir),
 	directory_files(Dir,Dir2),
 	member(DirElem,Dir2),
@@ -14,9 +21,9 @@ load_owls(Dir, Blacklist) :-
 	DirElem \= BlackElem,
 	string_concat(Dir, '/', HalfDirElem),
 	string_concat(HalfDirElem, DirElem, FullDirElem),
-	load_owls(FullDirElem, Blacklist).
+	load_owl(FullDirElem, Blacklist).
 
-load_owls(Dir, Blacklist) :-
+load_owl(Dir, Blacklist) :-
 	exists_file(Dir),
 	end_with(Dir, 'owl'),
 	owl_parse(Dir),
