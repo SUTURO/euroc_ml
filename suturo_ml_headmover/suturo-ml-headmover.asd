@@ -18,7 +18,8 @@
                suturo-planning-planlib
                cram-beliefstate
                euroc_c2_msgs-srv
-               euroc_c2_msgs-msg)
+               euroc_c2_msgs-msg
+               suturo_head_mover_msgs-srv)
   :components
   ((:module "src"
             :components
