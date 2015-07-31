@@ -1,0 +1,57 @@
+{
+"http://knowrob.org/kb/cram_log.owl#RobotExperiment_GlZXufSJCV9zW1IU": { "states":  [
+  "TestState",
+  "TestState",
+  "TestState",
+  "TestState",
+  "TestState",
+  "TestState",
+  "TestState",
+  "TestState",
+  "TestState",
+  "TestState"
+],
+"actions":  [
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_bQYQ1PbcP4kOFsRb",
+    "(GRAB-SIDE ?OBJECT)"
+  ],
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_0tdXyG0X1gbfXaOy",
+    "(TURN)"
+  ],
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_l23F5m842ueYyowA",
+    "(OPEN-GRIPPER)"
+  ],
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_F3zIKjR04TJY0yMM",
+    "(GRAB-TOP ?OBJECT)"
+  ],
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_iHkzgrSggiUGvl6k",
+    "(PLACE-IN-ZONE)"
+  ],
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_bQYQ1PbcP4kOFsRb",
+    "(GRAB-SIDE ?OBJECT)"
+  ],
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_0tdXyG0X1gbfXaOy",
+    "(TURN)"
+  ],
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_l23F5m842ueYyowA",
+    "(OPEN-GRIPPER)"
+  ],
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_F3zIKjR04TJY0yMM",
+    "(GRAB-TOP ?OBJECT)"
+  ],
+  [
+    "http://knowrob.org/kb/cram_log.owl#CRAMAchieve_iHkzgrSggiUGvl6k",
+    "(PLACE-IN-ZONE)"
+  ]
+],
+"state_description": ["a","b","c","d","e"]
+}}
