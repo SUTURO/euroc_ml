@@ -1,5 +1,5 @@
 (in-package :exec)
-
+"""FEATURES IN MSG"""
 (defvar *yaml-pub*)
 (defparameter red-sphere-start-pose (make-msg "geometry_msgs/Pose" 
                                               (:W :ORIENTATION) 1
@@ -25,6 +25,10 @@
                                                (:X :POSITION) 0
                                                (:Y :POSITION) 0.5
                                                (:Z :POSITION) 0.01))
+(defvar FEATURE_RED_CUBE_IN_HAND 1)
+(defvar FEATURE_BLUE_HANDLE_IN_HAND 2)
+(defvar FEATURE_NONE_IN_HAND 0)
+
 (defparameter red-cube nil)
 (defparameter red-cube-collision nil)
 (defparameter red-cube-object-desig nil)
@@ -34,9 +38,10 @@
 (defparameter last-object-grabbed "")
 (defparameter +service-name-move-hand+ "/suturo/manipulation/move_relative")
 
-(defparameter featureObjectInHand "none")
+(defparameter featureObjectInHand 0)
 (defparameter featureLastActionSuccesful 0)
-(defparameter featureGoalsSuccesful '(0 0))
+(defparameter featureGoalPlacedInZoneSuccesful 0)
+(defparameter featureGoalTurnedSuccesful 0)
 
 (defun parse-yaml ()
   "Subscribes the yaml publisher and sets environment:*yaml* to stay informed about changes"
@@ -178,8 +183,7 @@ Grabs the given object from the top
   (print "GRABBING_TOP")
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 1))))) 
     (equate ?object new-desig))
-  (grab-object ?action ?object)
-  (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id)))
+  (grab-object ?action ?object))
 
 
 (def-goal (achieve (grab-side ?action ?object))
@@ -191,8 +195,8 @@ Grabs the given object from the side
   (print "GRABBING_SIDE")
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 2))))) 
     (equate ?object new-desig))
-  (grab-object ?action ?object)
-  (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id)))
+  (grab-object ?action ?object))
+
 
 (defun grab-object (?action ?object)
   (let ((new-desig (copy-designator (current-desig ?action) :new-description 
@@ -200,10 +204,14 @@ Grabs the given object from the side
                                       (obj ,?object))))) 
     (equate (current-desig ?action) new-desig)
     (perform (current-desig ?action))
-    (handle-object-in-hand-feature ?object)))
+    (handle-object-in-hand-feature ?object)
+    (setf featureLastActionSuccesful 1)))
 
 (defun handle-object-in-hand-feature(object-desig)
-  (setf featureObjectInHand (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id)))
+  (cond
+      ((string= (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id) "red_cube") (setf featureObjectInHand FEATURE_RED_CUBE_IN_HAND))
+      ((string= (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id) "blue_handle") (setf featureObjectInHand FEATURE_BLUE_HANDLE_IN_HAND))
+      (t (setf featureObjectInHand FEATURE_NONE_IN_HAND))))
 
 (def-goal (achieve (place-in-zone ?action))
 " 
@@ -237,8 +245,8 @@ Grabs the given object from the top
                                                                                       (at ,target-location))))
           (equate (current-desig ?action) new-desig)
           (perform (current-desig ?action))
-          (setf featureObjectInHand "none")
-          (setf (elt featureGoalsSuccesful 0) 1)))))
+          (setf featureObjectInHand FEATURE_NONE_IN_HAND)
+          (setf featureGoalPlacedInZoneSuccesful 1)))))
         
 
 (def-goal (achieve (open-gripper ?action))
@@ -252,7 +260,7 @@ Grabs the given object from the top
                                                                                (position 0.0)))))
     (equate (current-desig ?action) new-desig)
     (perform (current-desig ?action))
-    (setf featureObjectInHand "none")))
+    (setf featureObjectInHand FEATURE_NONE_IN_HAND)))
 
 (def-goal (achieve (turn))
 " 
@@ -262,7 +270,7 @@ Grabs the given object from the top
 "
   (print "TURNING")
   (turn)
-  (setf (elt featureGoalsSuccesful 1) 1))
+  (setf featureGoalTurnedSuccesful 1))
 
 (defun init-exec()
   (init-exec-collision-scene)
@@ -415,10 +423,19 @@ Initialize the simulation:
 
 (defun write-features-to-desig (action-desig)
   (let ((new-desig (copy-designator (current-desig action-desig) :new-description 
-                                    `((objInHand ,featureObjectInHand)
-                                      (lastActionSuccesful ,featureLastActionSuccesful) 
-;                                      (goalsSuccesful ,featureGoalsSuccesful)
-	)))) 
+                                    `((make-msg "suturo_head_mover_msgs/SuturoMLState"
+                                                                        (featureList) `(,(make-msg "suturo_head_mover_msgs/SuturoMLFeature"
+                                                                                                   (featureName) "objectInHand" 
+                                                                                                   (value) featureObjectInHand) 
+                                                                                         ,(make-msg "suturo_head_mover_msgs/SuturoMLFeature"
+                                                                                                   (featureName) "lastActionSuccesful" 
+                                                                                                   (value) featureLastActionSuccesful)
+                                                                                         ,(make-msg "suturo_head_mover_msgs/SuturoMLFeature"
+                                                                                                   (featureName) "goalPlacedInZoneSuccesful" 
+                                                                                                   (value) featureGoalPlacedInZoneSuccesful)
+                                                                                         ,(make-msg "suturo_head_mover_msgs/SuturoMLFeature"
+                                                                                                   (featureName) "featureGoalTurnedSuccesful" 
+                                                                                                   (value) featureObjectInHand))))))) 
     (equate (current-desig action-desig) new-desig)))
 
 (defun turn ()
