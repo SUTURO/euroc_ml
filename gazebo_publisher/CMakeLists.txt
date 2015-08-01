@@ -117,7 +117,7 @@ link_directories(/opt/euroc_c2s1/lib ${LINK_DIRECTORIES} )
 
 ## Declare a cpp executable
 # add_executable(gazebo_publisher_node src/gazebo_publisher_node.cpp)
-add_executable(gazebo_publisher src/gazebo_publisher.cpp)
+add_executable(gazebo_contact_publisher src/gazebo_contact_publisher.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -128,7 +128,7 @@ add_executable(gazebo_publisher src/gazebo_publisher.cpp)
 #   ${catkin_LIBRARIES}
 # )
 
-target_link_libraries(gazebo_publisher
+target_link_libraries(gazebo_contact_publisher
   ${catkin_LIBRARIES}
   ${GAZEBO_LIBRARIES}
   ${Boost_LIBRARIES}

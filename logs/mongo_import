@@ -1,0 +1,22 @@
+#!/bin/sh
+
+if [ $# -eq 0 ]
+  then
+    echo "example usage: ./mongo_import exp-2015-07-29_08-45-18"
+  else
+	# MUH=`echo $1 | rev | cut -d'/' -f 1 | rev`
+	# MUH=$1
+	# GOAL="/home/suturo/catkin_ws/src/euroc/euroc_ml/logs"
+	# cp -r $1 $GOAL
+	# if ! [ $? -eq 0 ]; then
+	    # exit 0
+	# fi
+	cd $1
+	if ! [ $? -eq 0 ]; then
+	    exit 0
+	fi
+	mongorestore --collection logged_designators --db $1 dump/$1/logged_designators.bson
+	mongorestore --collection system.indexes --db $1 dump/$1/system.indexes.bson
+	mongorestore --collection tf --db $1 dump/$1/tf.bson
+	# mongorestore --collection tf --db exp-2015-08-01_11-33-33 dump/exp-2015-08-01_11-33-33/tf.bson
+fi
