@@ -206,6 +206,7 @@ Grabs the given object from the side
     (equate (current-desig ?action) new-desig)
     (perform (current-desig ?action))
     (handle-object-in-hand-feature ?object)
+    (setf lastObjectGrabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
     (setf featureLastActionSuccesful 1)))
 
 (defun handle-object-in-hand-feature(object-desig)
@@ -419,7 +420,8 @@ Initialize the simulation:
   (let ((goals (first (first (json-prolog:prolog-simple-1 "get_planned_goals(G)")))))
     (loop for goal in goals do
       (if (typep goal 'list) 
-          (try-solution goal)))))
+          (try-solution goal))))
+  (hammertime))
   
 (defun try-solution (query)
   (let ((object nil)
