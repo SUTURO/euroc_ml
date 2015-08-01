@@ -52,13 +52,15 @@ def load_data():
     # Fetch data for RobotExperiments
     for experiment in experimentNames:
         extracted_data = Experiment()
-        query = prolog.query("suturo_learning:get_robot_experiment_name('"+experiment+"',ExperimentName)")
+        query = prolog.query("suturo_learning:get_robot_experiment_name('"+experiment+"',ExperimentName), suturo_learning:get_learningaction_sequence_in_experiment('"+experiment+"', LS), suturo_learning:get_state_sequence_for_action_sequence(LS, SSeq)")
         # TODO: Only first result
         # print "Found " + len(query.solutions()) + " solutions"
         for solution in query.solutions():
-            print 'Found Name. ExperimentName= %s' % (solution['ExperimentName'])
+            print 'Found Data for Experiment. ExperimentName= %s' % (solution['ExperimentName'])
+            extracted_data.name = solution['ExperimentName']
+            extracted_data.actions = solution['LS']
+            extracted_data.states = solution['SSeq']
         query.finish() 
-        extracted_data.name = solution['ExperimentName']
 
   # get_learningaction_sequence_in_experiment(Experiment, LS), 
   # get_state_sequence_for_action_sequence(LS, SSeq),
