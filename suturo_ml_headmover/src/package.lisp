@@ -52,6 +52,7 @@
     #:lastActionSuccesful
     #:goalsSuccesful
     #:put-down
+    #:features
     #:scan-map)
   (:documentation
    "* Description
