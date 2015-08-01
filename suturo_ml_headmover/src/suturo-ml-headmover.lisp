@@ -161,7 +161,7 @@ The sum of the point as geometry_msgs/Point
   (init-exec)
 
   (with-process-modules
-    (achieve `(hammertime))
+    (hammertime)
     (execute-prolog-solutions)))
 
 (defun yaml-cb (msg)
@@ -426,7 +426,7 @@ Initialize the simulation:
       ((eql (first query) CL-USER::'|'turn'|) (achieve `(turn)))
       ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper)))
       ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone ,action-desig)))
-      ((eql (first query) CL-USER::'|'hammertime'|) (achieve `(hammertime)))
+      ;((eql (first query) CL-USER::'|'hammertime'|) (achieve `(hammertime)))
       (t (print "No matching goal found")))))
 
 (defun write-features-to-desig (action-desig)
