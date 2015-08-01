@@ -33,8 +33,8 @@ def contact_callback(data):
         contacts.pop(0)
 
 if __name__ == '__main__':
-    rospy.init_node("Contactdetector", anonymous=True)
+    rospy.init_node("SuturoMlContactdetector", anonymous=True)
     contact_sub = rospy.Subscriber("/gazebo/contacts", ContactsState, contact_callback)
-    s = rospy.Service('Contactdetector', SuturoMlCheckContact, muh)
+    s = rospy.Service('SuturoMlContactdetector', SuturoMlCheckContact, muh)
 
     rospy.spin()
