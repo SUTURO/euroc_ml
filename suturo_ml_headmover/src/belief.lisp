@@ -77,15 +77,14 @@ Taken from simple_belief since the package pulls too many dependencies"
     (cram-reasoning:lisp-pred is-map-scanned))
 
   (cram-reasoning:<- (grab-side ?object)
+    (print "THA TEST FUUBAR")
+    (print grab-side)
     (cram-reasoning:lisp-pred no))
 
   (cram-reasoning:<- (grab-top ?object)
     (cram-reasoning:lisp-pred no))
 
   (cram-reasoning:<- (turn ?object)
-    (cram-reasoning:lisp-pred no))
-   
-  (cram-reasoning:<- (hammertimet)
     (cram-reasoning:lisp-pred no))
 
   (cram-reasoning:<- (open-gripper ?object)

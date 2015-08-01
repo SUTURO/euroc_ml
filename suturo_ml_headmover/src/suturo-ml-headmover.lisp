@@ -442,13 +442,16 @@ Initialize the simulation:
       (t (print "No matching goal found")))))
 
 (defun write-features-to-desig (action-desig)
-  (let ((new-desig (copy-designator (current-desig action-desig) :new-description 
+;    (cram-beliefstate::alter-node `((state ,`#(,featureObjectInHand 
+;                             ,featureLastActionSuccesful
+;                             ,featureGoalPlacedInZoneSuccesful
+;                             ,featureGoalTurnedSuccesful)))))
+    (let ((new-desig (copy-designator (current-desig action-desig) :new-description 
                                     `((state ,`#(,featureObjectInHand 
                                                  ,featureLastActionSuccesful
                                                  ,featureGoalPlacedInZoneSuccesful
                                                  ,featureGoalTurnedSuccesful))))))
-    (print new-desig)
-    (equate (current-desig action-desig) new-desig)))
+    (cram-beliefstate::add-designator-to-active-node new-desig)))
 
 (defun turn ()
   "
