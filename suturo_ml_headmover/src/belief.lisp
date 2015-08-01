@@ -84,6 +84,9 @@ Taken from simple_belief since the package pulls too many dependencies"
 
   (cram-reasoning:<- (turn ?object)
     (cram-reasoning:lisp-pred no))
+   
+  (cram-reasoning:<- (hammertimet)
+    (cram-reasoning:lisp-pred no))
 
   (cram-reasoning:<- (open-gripper ?object)
     (cram-reasoning:lisp-pred no))

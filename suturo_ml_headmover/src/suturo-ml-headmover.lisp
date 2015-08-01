@@ -166,6 +166,7 @@ The sum of the point as geometry_msgs/Point
   (init-exec)
 
   (with-process-modules
+    (hammertime)
     (execute-prolog-solutions)))
 
 (defun yaml-cb (msg)
@@ -271,6 +272,24 @@ Grabs the given object from the top
   (print "TURNING")
   (turn)
   (setf featureGoalTurnedSuccesful 1))
+
+(defun hammertime()
+"
+Kills all ROS-Nodes - including the euroc simulator and this plan and associated nodes
+"
+  (print "STOP! HAMMERTIME!")
+  (let
+    ((full-service-name "suturo/hammertime"))
+    (print (concatenate 'string "calling service: " full-service-name))
+    (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
+        (progn
+          (let 
+              ((timed-out-text (concatenate 'string "Timed out waiting for service " full-service-name)))
+            (roslisp:ros-warn nil t timed-out-text))
+          nil)
+        (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:Hammertime :foo "")))
+          (roslisp:msg-slot-value value 'ok)
+          (print "Service call done")))))
 
 (defun init-exec()
   (init-exec-collision-scene)
@@ -419,6 +438,7 @@ Initialize the simulation:
       ((eql (first query) CL-USER::'|'turn'|) (achieve `(turn)))
       ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper ,action-desig)))
       ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone ,action-desig)))
+      ;((eql (first query) CL-USER::'|'hammertime'|) (achieve `(hammertime)))
       (t (print "No matching goal found")))))
 
 (defun write-features-to-desig (action-desig)
