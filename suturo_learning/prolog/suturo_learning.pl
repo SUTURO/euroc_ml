@@ -133,12 +133,67 @@ get_learningaction_sequence(LaS):-
 clean_name_of_action_in_tupel([X,Y],Output):-
 Y=(literal(type(_,Name))), Output=[X,Name].
 
+% Get state sequence list
+% Iterate over every action, get it's startTime and compute the 
+% valid state for that point in time
+% Generate a sequence out of it
+get_state_sequence_for_action_sequence(ASeq, SSeq):-
+  maplist(get_time_for_action_tupel, ASeq, TSeq),
+  maplist(get_states_for_timepoint,  TSeq, SSeq).
+
+% Helper for get_state_sequence_for_action_sequence 
+get_time_for_action_tupel([ActionID,_], Time):-
+  owl_has(ActionID,knowrob:'startTime',Time).
+  
+% Helper for get_state_sequence_for_action_sequence 
+get_states_for_timepoint(Timepoint, State):-
+  State = 'TestState'.
+
+json_output_all_experiment_data(Stream):-
+  % open('/tmp/learning_output.json', write, Stream),
+  write(Stream,'{'),
+  nl(Stream),
+  forall( l_get_robot_experiment(Experiment), json_output_for_experiment(Experiment, Stream) ),
+  write(Stream,'}'),
+  nl(Stream).
+  % close(Stream).
+
+% Demands a open stream. Will not close the Stream.
+% 
+% Output the actions,states,etc. for a given Experiment to a Stream
+json_output_for_experiment(Experiment,Stream):-
+  % Get data
+  get_learningaction_sequence_in_experiment(Experiment, LS), 
+  % print(LS),
+  get_state_sequence_for_action_sequence(LS, SSeq),
+  json_write(Stream,Experiment),
+  write(Stream,': { "states": '),
+  json_write(Stream, SSeq),
+  write(Stream,','),
+  nl(Stream),
+  write(Stream,'"actions": '),
+  json_write(Stream, LS),
+  write(Stream,','),
+  nl(Stream),
+  write(Stream, '"state_description": ["a","b","c","d","e"]'),
+  nl(Stream),
+  write(Stream,'}').
+
+
+
+
+  % % OVERALL JSON Layout:
+  % {
+  % "experiment-XXXX": 
+  %   { "states": ['1','2',....], "actions": ['GRAB',....], rewards: ['1',...] }
+  % }
+
 % extract_bool
 
-get_learningaction_name([_, Y], Name) :-
+get_learning_action_name([_, Y], Name) :-
     Y=(literal(type(_, Name))).
 
-get_action_name(X, Name) :-
+get_learning_action_name(X, Name) :-
     owl_has(X, knowrob:'goalContext', Str),
     Str=(literal(type(_, Action))),
     % parse the action name, Action may be something like (GRAB-SIDE ?OBJECT)
@@ -174,4 +229,8 @@ get_learningaction_sequence_name(LaS, IndexOfAction, Name):-
 %   P = 'http://knowrob.org/kb/knowrob.owl#goalContext',
 %   owl_has(La,P,Info).
 
-
+% Write relevant LOG info to JSON
+% for all logs l:
+%   extract feature-action-sequence from l
+%   write to json-file j
+%   write additional informations for every action to j

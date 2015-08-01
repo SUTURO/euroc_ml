@@ -415,7 +415,11 @@ Initialize the simulation:
   
 (defun try-solution (query)
   (let ((object nil)
-        (action-desig (make-designator 'action '(()) )))
+        (action-desig (make-designator 'action  `((objInHand ,featureObjectInHand)
+                                      (lastActionSuccesful ,featureLastActionSuccesful)
+;                                      (goalsSuccesful ,featureGoalsSuccesful)
+        ))))
+
     (write-features-to-desig action-desig)
     (cond
       ((eql (second query) CL-USER::'|'red_cube'|) (setf object red-cube-object-desig))
@@ -424,7 +428,7 @@ Initialize the simulation:
       ((eql (first query) CL-USER::'|'top_grab'|) (achieve `(grab-top ,action-desig ,object)))
       ((eql (first query) CL-USER::'|'side_grab'|) (achieve `(grab-side ,action-desig ,object)))
       ((eql (first query) CL-USER::'|'turn'|) (achieve `(turn)))
-      ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper)))
+      ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper ,action-desig)))
       ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone ,action-desig)))
       ;((eql (first query) CL-USER::'|'hammertime'|) (achieve `(hammertime)))
       (t (print "No matching goal found")))))
@@ -433,7 +437,8 @@ Initialize the simulation:
   (let ((new-desig (copy-designator (current-desig action-desig) :new-description 
                                     `((objInHand ,featureObjectInHand)
                                       (lastActionSuccesful ,featureLastActionSuccesful) 
-                                      (goalsSuccesful ,featureGoalsSuccesful)) ))) 
+;                                      (goalsSuccesful ,featureGoalsSuccesful)
+	)))) 
     (equate (current-desig action-desig) new-desig)))
 
 (defun turn ()
