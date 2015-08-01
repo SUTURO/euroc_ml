@@ -190,10 +190,10 @@ json_output_for_experiment(Experiment,Stream):-
 
 % extract_bool
 
-get_learningaction_name([_, Y], Name) :-
+get_learning_action_name([_, Y], Name) :-
     Y=(literal(type(_, Name))).
 
-get_action_name(X, Name) :-
+get_learning_action_name(X, Name) :-
     owl_has(X, knowrob:'goalContext', Str),
     Str=(literal(type(_, Action))),
     % parse the action name, Action may be something like (GRAB-SIDE ?OBJECT)
