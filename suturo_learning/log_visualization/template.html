@@ -56,67 +56,7 @@ Select Logfile:
 	currently_selected_log = 'default';
 
 	// Define the different experiments
-	experiments = [ 
-		
-		{ name: 'default', 
-		nodesArray: [{id: 1, label: 'Root State'},
-    {id: 2, label: 'State 2'},
-    {id: 3, label: 'State 3'},
-    {id: 4, label: 'State 4'},
-    {id: 5, label: 'State 5'},
-    {id: 6, label: 'Error',   shape: 'diamond', color: 'red'},
-    {id: 7, label: 'Success', shape: 'diamond', color: 'green'},
-		], 
-		edgesArray : [
-    {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 2, to: 4, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 2, to: 5, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 5, to: 6, arrows:'to', label:'Outcome', font: {align: 'top'}},
-    {from: 4, to: 7, arrows:'to', label:'Outcome', font: {align: 'top'}},
-		], 
-		nodeInformationArray: [
-			"default-1",
-			"default-2",
-			"default-3",
-			"default-4",
-			"default-5",
-			"default-6",
-			"default-7",
-		],
-		},
-
-		{ name: 'exp-foo', 
-		nodesArray: [{id: 1, label: 'LOL State'},
-    {id: 2, label: 'State 2'},
-    {id: 3, label: 'State 3'},
-    {id: 4, label: 'State 4'},
-    {id: 5, label: 'State 5'},
-    {id: 6, label: 'Error',   shape: 'diamond', color: 'red'},
-    {id: 7, label: 'Success', shape: 'diamond', color: 'green'},
-		], 
-		edgesArray : [
-    {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 2, to: 4, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 2, to: 5, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 5, to: 6, arrows:'to', label:'Outcome', font: {align: 'top'}},
-    {from: 4, to: 7, arrows:'to', label:'Outcome', font: {align: 'top'}},
-		],
-		nodeInformationArray: [
-			"exp-foo-1",
-			"exp-foo-2",
-			"exp-foo-3",
-			"exp-foo-4",
-			"exp-foo-5",
-			"exp-foo-6",
-			"exp-foo-7",
-		],
-		},
-
-		];
-
-
+  --PLACEHOLDER_REPLACE_WITH_ACTUAL_DATA--
 
 	// NodeTypeEnum = {
 	// 	STATE : 0,
