@@ -14,7 +14,7 @@ if [ $# -eq 0 ]
 	if ! [ $? -eq 0 ]; then
 	    exit 0
 	fi
-	mongoexport --db $MUH --collection logged_designators --out logged_designators.json
-	mongoexport --db $MUH --collection system.indexes --out system.indexes.json
-	mongoexport --db $MUH --collection tf --out tf.json
+	mongodump --db $MUH --collection logged_designators 
+	mongodump --db $MUH --collection system.indexes 
+	mongodump --db $MUH --collection tf 
 fi
