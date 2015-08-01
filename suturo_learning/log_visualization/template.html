@@ -51,6 +51,32 @@ Select Logfile:
 	<p id="nodedetails">Click on a node to get more information about the context</p></div>
 
 <script type="text/javascript">
+
+	var nodeIds, shadowState, nodesArray, nodes, edgesArray, edges, network, experiments;
+
+	// Define the different experiments
+	experiments = [ 
+		{ name: 'all', 
+		nodesArray: [{id: 1, label: 'Root State'},
+    {id: 2, label: 'State 2'},
+    {id: 3, label: 'State 3'},
+    {id: 4, label: 'State 4'},
+    {id: 5, label: 'State 5'},
+    {id: 6, label: 'Error',   shape: 'diamond', color: 'red'},
+    {id: 7, label: 'Success', shape: 'diamond', color: 'green'},
+		], 
+		edgesArray : [
+    {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 2, to: 4, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 2, to: 5, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 5, to: 6, arrows:'to', label:'Outcome', font: {align: 'top'}},
+    {from: 4, to: 7, arrows:'to', label:'Outcome', font: {align: 'top'}},
+		] }
+		];
+
+
+
 	// NodeTypeEnum = {
 	// 	STATE : 0,
 	// 	ERROR : 1,
@@ -72,56 +98,61 @@ Select Logfile:
 		return output;
   }
 
-  // create an array with nodes
-  var nodes = new vis.DataSet([
-    {id: 1, label: 'Root State'},
-    {id: 2, label: 'State 2'},
-    {id: 3, label: 'State 3'},
-    {id: 4, label: 'State 4'},
-    {id: 5, label: 'State 5'},
-    {id: 6, label: 'Error',   shape: 'diamond', color: 'red'},
-    {id: 7, label: 'Success', shape: 'diamond', color: 'green'},
-  ]);
+	function startNetwork() {
+		// // this list is kept to remove a random node.. we do not add node 1 here because it's used for changes
+		// nodeIds = [2, 3, 4, 5];
+		// shadowState = false;
 
-  // create an array with edges
-  var edges = new vis.DataSet([
-    {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 2, to: 4, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 2, to: 5, arrows:'to', label:'Action', font: {align: 'top'}},
-    {from: 5, to: 6, arrows:'to', label:'Outcome', font: {align: 'top'}},
-    {from: 4, to: 7, arrows:'to', label:'Outcome', font: {align: 'top'}},
-  ]);
+		nodesArray = experiments[0]['nodesArray'];
+		edgesArray = experiments[0]['edgesArray'];
+		nodes = new vis.DataSet(nodesArray);
+		edges = new vis.DataSet(edgesArray);
+	
+		// // create an array with edges
+		// edgesArray = [
+    // {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
+    // {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
+    // {from: 2, to: 4, arrows:'to', label:'Action', font: {align: 'top'}},
+    // {from: 2, to: 5, arrows:'to', label:'Action', font: {align: 'top'}},
+    // {from: 5, to: 6, arrows:'to', label:'Outcome', font: {align: 'top'}},
+    // {from: 4, to: 7, arrows:'to', label:'Outcome', font: {align: 'top'}},
+		// ];
+	
+		// create a network
+		var container = document.getElementById('mynetwork');
+		var data = {
+				nodes: nodes,
+				edges: edges
+		};
+		// var options = {};
+	  var options = {
+	    layout: {
+	        hierarchical:{
+	            direction: "UD",
+	            sortMethod: "directed"
+	        }
+	    }
+	  };
+		network = new vis.Network(container, data, options);
 
-  // create a network
-  var container = document.getElementById('mynetwork');
-  var data = {
-    nodes: nodes,
-    edges: edges
-  };
-  var options = {
-    layout: {
-        hierarchical:{
-            direction: "UD",
-            sortMethod: "directed"
-        }
-    }
-  };
-  var network = new vis.Network(container, data, options);
+	  network.on("click", function (params) {
+	        params.event = "[original event]";
+	        // document.getElementById('nodedetails').innerHTML = '<h2>Click event:</h2>' + JSON.stringify(params, null, 4);
+					if(params.nodes.length > 0){
+				  	var nodeId = params.nodes[0];
+				  	document.getElementById('nodedetails').innerHTML = document.getElementById(nodeId).value;
+					}
+					else
+					{
+						// User clicked somewhere in the canvas, but didn't hit a node
+				  	document.getElementById('nodedetails').innerHTML = "";
+					}
+	    });
+	}
 
-  network.on("click", function (params) {
-        params.event = "[original event]";
-        // document.getElementById('nodedetails').innerHTML = '<h2>Click event:</h2>' + JSON.stringify(params, null, 4);
-				if(params.nodes.length > 0){
-			  	var nodeId = params.nodes[0];
-			  	document.getElementById('nodedetails').innerHTML = document.getElementById(nodeId).value;
-				}
-				else
-				{
-					// User clicked somewhere in the canvas, but didn't hit a node
-			  	document.getElementById('nodedetails').innerHTML = "";
-				}
-    });
+	
+	// Start the network
+	startNetwork();
 
   // DOM is loaded ....
   window.onload = function() {
