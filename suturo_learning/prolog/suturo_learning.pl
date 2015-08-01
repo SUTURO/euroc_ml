@@ -110,6 +110,13 @@ l_get_entities_of_type(X,Type):-
 l_get_task_success(X,Success):-
   owl_has(X,knowrob:'taskSuccess',Success).
 
+% Get robot experiment name
+% The Experiment should be bound with a knowrob:'RobotExperiment'
+get_robot_experiment_name(Experiment,Name):-
+  % l_get_robot_experiment(Experiment),
+  owl_has(Experiment,'http://knowrob.org/kb/knowrob.owl#experimentName',X),
+  X = literal(type(_,Name)).
+
 % LEARNINGACTIONS will now be defined as the achieved CRAM Goals
 get_learningactions_in_experiment(Experiment, La):-
   l_get_robot_experiment(Experiment),
