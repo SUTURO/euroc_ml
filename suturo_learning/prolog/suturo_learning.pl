@@ -221,6 +221,29 @@ get_learning_action_name(X, Name) :-
 get_learningaction_sequence_name(LaS, IndexOfAction, Name):-
   get_learningaction_sequence(LaS), nth1(IndexOfAction,LaS,Elem), get_learning_action_name(Elem, Name).
 
+
+get_learningaction_state(Action, State) :-
+    owl_has(Action, knowrob:'designator', Designator),
+    mang_designator_props(Designator, 'STATE', State).
+
+
+get_learning_sequence(ActionStateSequence) :-
+%    bagof([State, Action, 0],
+%    (
+%        get_learningactions_in_experiment(Exp, La),
+%        get_learning_action_name(La, Action),
+%        get_robot_experiment_name(Exp, ExpName),
+%        mang_db(ExpName),
+%        get_learningaction_state(La, State)
+%    ), ActionStateSequence).
+    ActionStateSequence = [[[[0, 0, 0, 0], 'GRAB-SIDE', 0],
+                           [[2, 0, 0, 0], 'TURN', 0],
+                           [[2, 1, 0, 1], 'OPEN-GRIPPER', 0],
+                           [[0, 1, 0, 1], 'GRAB-TOP', 0],
+                           [[1, 1, 0, 1], 'PLACE-IN-ZONE', 0],
+                           [[0, 1, 1, 1], 'HAMMERTIME', 1]]].
+
+
 % Resolves to crucial information in our context:
 % - The designator
 % - taskSuccess
