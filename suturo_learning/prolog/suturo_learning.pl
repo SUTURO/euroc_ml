@@ -146,7 +146,12 @@ Y=(literal(type(_,Name))), Output=[X,Name].
 % Generate a sequence out of it
 get_state_sequence_for_action_sequence(ASeq, SSeq):-
   maplist(get_time_for_action_tupel, ASeq, TSeq),
-  maplist(get_states_for_timepoint,  TSeq, SSeq).
+  % append the timepoint for the endtime of the last action
+  last(ASeq,Elem),
+  Elem=[LastAction,_], 
+  owl_has(LastAction, 'http://knowrob.org/kb/knowrob.owl#endTime',LastActionEndTime),
+  append(ASeq,[LastActionEndTime],CompleteActionTimepointList),
+  maplist(get_states_for_timepoint,  CompleteActionTimepointList, SSeq).
 
 % Helper for get_state_sequence_for_action_sequence 
 get_time_for_action_tupel([ActionID,_], Time):-
