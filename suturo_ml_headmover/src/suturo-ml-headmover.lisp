@@ -385,11 +385,11 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
 (defun call-service-contact ()
   (let
       ((full-service-name "Suturo/Ml/Contactdetector"))
-    (print (concatenate 'string "calling service: " service-name))
+    (print (concatenate 'string "calling service: " full-service-name))
     (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
         (progn
           (let 
-              ((timed-out-text (concatenate 'string "Timed out waiting for service " service-name)))
+              ((timed-out-text (concatenate 'string "Timed out waiting for service " full-service-name)))
             (roslisp:ros-warn nil t timed-out-text))
           nil)
         (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :object1 "LWR"
