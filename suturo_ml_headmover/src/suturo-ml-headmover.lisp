@@ -166,8 +166,8 @@ The sum of the point as geometry_msgs/Point
   (init-exec)
 
   (with-process-modules
-    (hammertime)
-    (execute-prolog-solutions)))
+    (execute-prolog-solutions))
+    (hammertime))
 
 (defun yaml-cb (msg)
   "
@@ -206,6 +206,7 @@ Grabs the given object from the side
     (equate (current-desig ?action) new-desig)
     (perform (current-desig ?action))
     (handle-object-in-hand-feature ?object)
+    (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
     (setf featureLastActionSuccesful 1)))
 
 (defun handle-object-in-hand-feature(object-desig)
@@ -271,7 +272,10 @@ Grabs the given object from the top
 "
   (print "TURNING")
   (turn)
-  (setf featureGoalTurnedSuccesful 1))
+  (let ((contact (call-service-contact)))
+    (if contact
+        (setf featureGoalTurnedSuccesful 0)
+        (setf featureGoalTurnedSuccesful 1))))
 
 (defun hammertime()
 "
@@ -279,7 +283,7 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
 "
   (print "STOP! HAMMERTIME!")
   (let
-    ((full-service-name "suturo/hammertime"))
+    ((full-service-name "/suturo/hammertime"))
     (print (concatenate 'string "calling service: " full-service-name))
     (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
         (progn
@@ -377,7 +381,20 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
                                                                                                                                       :POSITION (msg-slot-value zone 'target_position))))))))
 
    ))) 
-  
+ 
+(defun call-service-contact ()
+  (let
+      ((full-service-name "Suturo/Ml/Contactdetector"))
+    (print (concatenate 'string "calling service: " full-service-name))
+    (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
+        (progn
+          (let 
+              ((timed-out-text (concatenate 'string "Timed out waiting for service " full-service-name)))
+            (roslisp:ros-warn nil t timed-out-text))
+          nil)
+        (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :object1 "LWR"
+                                                                                                              :object2 "red_sphere")))
+          (roslisp:msg-slot-value value 'inContact))))) 
                 
 
 (defun call-service-state (service-name taskdata)
@@ -419,7 +436,8 @@ Initialize the simulation:
   (let ((goals (first (first (json-prolog:prolog-simple-1 "get_planned_goals(G)")))))
     (loop for goal in goals do
       (if (typep goal 'list) 
-          (try-solution goal)))))
+          (try-solution goal))))
+  (hammertime))
   
 (defun try-solution (query)
   (let ((object nil)
