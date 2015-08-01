@@ -206,7 +206,7 @@ Grabs the given object from the side
     (equate (current-desig ?action) new-desig)
     (perform (current-desig ?action))
     (handle-object-in-hand-feature ?object)
-    (setf lastObjectGrabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
+    (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
     (setf featureLastActionSuccesful 1)))
 
 (defun handle-object-in-hand-feature(object-desig)
