@@ -443,19 +443,11 @@ Initialize the simulation:
 
 (defun write-features-to-desig (action-desig)
   (let ((new-desig (copy-designator (current-desig action-desig) :new-description 
-                                    `((make-msg "suturo_head_mover_msgs/SuturoMLState"
-                                                                        (featureList) `(,(make-msg "suturo_head_mover_msgs/SuturoMLFeature"
-                                                                                                   (featureName) "objectInHand" 
-                                                                                                   (value) featureObjectInHand) 
-                                                                                         ,(make-msg "suturo_head_mover_msgs/SuturoMLFeature"
-                                                                                                   (featureName) "lastActionSuccesful" 
-                                                                                                   (value) featureLastActionSuccesful)
-                                                                                         ,(make-msg "suturo_head_mover_msgs/SuturoMLFeature"
-                                                                                                   (featureName) "goalPlacedInZoneSuccesful" 
-                                                                                                   (value) featureGoalPlacedInZoneSuccesful)
-                                                                                         ,(make-msg "suturo_head_mover_msgs/SuturoMLFeature"
-                                                                                                   (featureName) "featureGoalTurnedSuccesful" 
-                                                                                                   (value) featureObjectInHand))))))) 
+                                    `((state ,`#(,featureObjectInHand 
+                                                 ,featureLastActionSuccesful
+                                                 ,featureGoalPlacedInZoneSuccesful
+                                                 ,featureGoalTurnedSuccesful))))))
+    (print new-desig)
     (equate (current-desig action-desig) new-desig)))
 
 (defun turn ()

@@ -53,7 +53,8 @@
     #:goalsSuccesful
     #:put-down
     #:features
-    #:scan-map)
+    #:scan-map
+    #:state)
   (:documentation
    "* Description
 This package contains steps to execute the tasks of the euroc challenge i.e:
