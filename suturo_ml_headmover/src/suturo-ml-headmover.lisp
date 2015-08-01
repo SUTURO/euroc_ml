@@ -161,8 +161,8 @@ The sum of the point as geometry_msgs/Point
   (init-exec)
 
   (with-process-modules
-    (hammertime)
-    (execute-prolog-solutions)))
+    (execute-prolog-solutions))
+    (hammertime))
 
 (defun yaml-cb (msg)
   "
@@ -271,7 +271,7 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
 "
   (print "STOP! HAMMERTIME!")
   (let
-    ((full-service-name "suturo/hammertime"))
+    ((full-service-name "/suturo/hammertime"))
     (print (concatenate 'string "calling service: " full-service-name))
     (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
         (progn
