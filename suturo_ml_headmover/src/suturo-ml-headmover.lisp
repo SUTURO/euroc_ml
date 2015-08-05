@@ -39,7 +39,7 @@
 (defparameter +service-name-move-hand+ "/suturo/manipulation/move_relative")
 
 (defparameter featureObjectInHand 0)
-(defparameter featureLastActionSuccesful 0)
+(defparameter featureLastActionSuccesful 1)
 (defparameter featureGoalPlacedInZoneSuccesful 0)
 (defparameter featureGoalTurnedSuccesful 0)
 
@@ -403,7 +403,7 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
 
 (defun call-service-next-action ()
   (let
-      ((full-service-name "SuturoMlNexAction"))
+      ((full-service-name "SuturoMlHeadNextAction"))
     (print (concatenate 'string "calling service: " full-service-name))
     (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
         (progn
@@ -411,12 +411,16 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
               ((timed-out-text (concatenate 'string "Timed out waiting for service " full-service-name)))
             (roslisp:ros-warn nil t timed-out-text))
           nil)
-        (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :state (state->SuturoMlState))))
+        (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlNextAction :state (state->SuturoMlState))))
           (roslisp:msg-slot-value value 'action)))))
 
 (defun state->SuturoMlState ()
   (make-msg "suturo_head_mover_msgs/SuturoMlState" 
-            :featureList `#(,featureobjectinhand ,featurelastactionsuccesful ,featuregoalplacedinzonesuccesful ,featuregoalturnedsuccesful)))
+                (featureList) (make-array 4 :initial-contents `(,featureobjectinhand 
+                                                                ,featurelastactionsuccesful 
+                                                                ,featuregoalplacedinzonesuccesful 
+                                                                ,featuregoalturnedsuccesful))))
+            
   
 
 (defun call-service-state (service-name taskdata)
@@ -453,9 +457,10 @@ Initialize the simulation:
         (executeLoop T))
     (loop do
       (setf goal (msg-slot-value (call-service-next-action) 'action))
-      (if (string= goal "hammertime")
+      (print goal)
+      (if (string= goal "HAMMERTIME")
           (setf executeLoop nil)
-          (try-solution (cl-utilities::split-sequence #\Space (msg-slot-value goal 'action))))
+          (try-solution (cl-utilities::split-sequence #\Space goal)))
       while executeLoop)))
   
 (defun try-solution (query)
@@ -465,14 +470,14 @@ Initialize the simulation:
 ;                                      (goalsSuccesful ,featureGoalsSuccesful)
         ))))
     (cond
-      ((eql (second query) CL-USER::'|'red_cube'|) (setf object red-cube-object-desig))
-      ((eql (second query) CL-USER::'|'blue_handle'|) (setf object blue-handle-object-desig)))
+      ((string= (second query) "red_cube") (setf object red-cube-object-desig))
+      ((string= (second query) "blue_handle") (setf object blue-handle-object-desig)))
     (cond
-      ((eql (first query) CL-USER::'|'top_grab'|) (achieve `(grab-top ,action-desig ,object)))
-      ((eql (first query) CL-USER::'|'side_grab'|) (achieve `(grab-side ,action-desig ,object)))
-      ((eql (first query) CL-USER::'|'turn'|) (achieve `(turn ,action-desig)))
-      ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper ,action-desig)))
-      ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone ,action-desig)))
+      ((string= (first query) "GRAB-TOP") (achieve `(grab-top ,action-desig ,object)))
+      ((string= (first query) "GRAB-SIDE") (achieve `(grab-side ,action-desig ,object)))
+      ((string= (first query) "TURN") (achieve `(turn ,action-desig)))
+      ((string= (first query) "OPEN-GRIPPER") (achieve `(open-gripper ,action-desig)))
+      ((string= (first query) "PLACE-IN-ZONE") (achieve `(place-in-zone ,action-desig)))
       (t (print "No matching goal found")))))
 
 (defun write-features-to-desig (action-desig)
