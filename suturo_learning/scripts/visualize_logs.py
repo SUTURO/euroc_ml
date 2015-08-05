@@ -119,12 +119,13 @@ def js_representation_for_experiment(ExperimentObject):
 			'GOAL was: YYY-7. State: ZZZ. t=12345678',
                         """;
     result += """ ],
-                edgeInformationHashTable: {
-                    "1-2": "test1",
-                    "2-3": "test2",
-                    "3-4": "test3",
-                    "4-5": "test4",
-                    "5-6": "test5",
+                edgeInformationHashTable: {"""
+    action_id = 1
+    for a in ExperimentObject.actions:
+        action_name = a[1]
+        result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
+        action_id += 1
+    result += """
                  }
 		},
                 """;
