@@ -45,6 +45,7 @@ class SuturoMlHeadLearner(object):
         q = self.prolog.query("suturo_learning:get_learning_sequence(A)")
         print("start learning")
         for sol in q.solutions():
+	    print sol
             for a,b in sol.iteritems():
                 for policy in b:
                     self.q = self.learner.learn(policy)

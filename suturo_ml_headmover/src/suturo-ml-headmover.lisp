@@ -202,14 +202,15 @@ Grabs the given object from the side
 (defun grab-object (?object)
   (let ((new-desig (make-designator 'action `((to grasp)
                                               (obj ,?object))))) 
-        (with-failure-handling
-            ((cram-plan-failures:manipulation-failure (e)
-                (declare (ignore e))
-                (setf featureLastActionSuccesful 0)))
-            (perform new-desig)
-            (handle-object-in-hand-feature ?object)
-            (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
-            (setf featureLastActionSuccesful 1))))
+    (with-failure-handling
+        ((cram-plan-failures:manipulation-failure (e)
+                                                  (declare (ignore e))
+                                                  (setf featureLastActionSuccesful 0)
+                                                  (return)))
+      (perform new-desig)
+      (handle-object-in-hand-feature ?object)
+      (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
+      (setf featureLastActionSuccesful 1))))
 
 (defun handle-object-in-hand-feature(object-desig)
   (cond
