@@ -146,7 +146,12 @@ Y=(literal(type(_,Name))), Output=[X,Name].
 % Generate a sequence out of it
 get_state_sequence_for_action_sequence(ASeq, SSeq):-
   maplist(get_time_for_action_tupel, ASeq, TSeq),
-  maplist(get_states_for_timepoint,  TSeq, SSeq).
+  % append the timepoint for the endtime of the last action
+  last(ASeq,Elem),
+  Elem=[LastAction,_], 
+  owl_has(LastAction, 'http://knowrob.org/kb/knowrob.owl#endTime',LastActionEndTime),
+  append(ASeq,[LastActionEndTime],CompleteActionTimepointList),
+  maplist(get_states_for_timepoint,  CompleteActionTimepointList, SSeq).
 
 % Helper for get_state_sequence_for_action_sequence 
 get_time_for_action_tupel([ActionID,_], Time):-
@@ -220,6 +225,29 @@ get_learning_action_name(X, Name) :-
 % Index begins at 1
 get_learningaction_sequence_name(LaS, IndexOfAction, Name):-
   get_learningaction_sequence(LaS), nth1(IndexOfAction,LaS,Elem), get_learning_action_name(Elem, Name).
+
+
+get_learningaction_state(Action, State) :-
+    owl_has(Action, knowrob:'designator', Designator),
+    mang_designator_props(Designator, 'STATE', State).
+
+
+get_learning_sequence(ActionStateSequence) :-
+%    bagof([State, Action, 0],
+%    (
+%        get_learningactions_in_experiment(Exp, La),
+%        get_learning_action_name(La, Action),
+%        get_robot_experiment_name(Exp, ExpName),
+%        mang_db(ExpName),
+%        get_learningaction_state(La, State)
+%    ), ActionStateSequence).
+    ActionStateSequence = [[[[0, 0, 0, 0], 'GRAB-SIDE', 0],
+                           [[2, 0, 0, 0], 'TURN', 0],
+                           [[2, 1, 0, 1], 'OPEN-GRIPPER', 0],
+                           [[0, 1, 0, 1], 'GRAB-TOP', 0],
+                           [[1, 1, 0, 1], 'PLACE-IN-ZONE', 0],
+                           [[0, 1, 1, 1], 'HAMMERTIME', 1]]].
+
 
 % Resolves to crucial information in our context:
 % - The designator
