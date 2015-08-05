@@ -1,0 +1,228 @@
+<!doctype html>
+<html>
+<head>
+  <title>Network | Basic usage</title>
+
+  <script type="text/javascript" src="node_modules/vis/dist/vis.js"></script>
+  <script type="text/javascript" src="jquery-2.1.4.min.js"></script>
+  <link href="node_modules/vis/dist/vis.css" rel="stylesheet" type="text/css" />
+
+  <style type="text/css">
+    #mynetwork {
+      width: 600px;
+      height: 600px;
+      border: 1px solid lightgray;
+      float: left;
+    }
+    #nodedetailarea {
+			background: #CCE0F5;
+			float:left;
+			width: 400px;
+			height: 600px;
+			/* margin: 4px; */
+		}
+
+		#nodedetails p{
+			margin: 4px;
+		}
+
+		html *
+		{
+			font-size: 1em !important;
+			color: #000 !important;
+			font-family: Sans-Serif, Monospace !important;
+		}
+  </style>
+</head>
+<body>
+<h1>MemoryViz - Visualizing Robot Action Memories</h1>
+<!-- <p> -->
+<!--   Log visualization  -->
+<!-- </p> -->
+Select Logfile: 
+<select id="log_selector">
+  <option value="default">default</option>
+  <option value="exp-foo">exp-foo</option>
+</select> 
+<br>
+
+<div id="mynetwork"></div>
+<div id="nodedetailarea"><p><b>Detailed information</b></p>
+	<p id="nodedetails">Click on a node to get more information about the context</p></div>
+
+<script type="text/javascript">
+
+	var nodeIds, shadowState, nodesArray, nodes, edgesArray, edges, network, experiments, currently_selected_log;
+	currently_selected_log = 'default';
+
+	// Define the different experiments
+	experiments = [ 
+		
+		{ name: 'default', 
+		nodesArray: [{id: 1, label: 'Root State'},
+    {id: 2, label: 'State 2'},
+    {id: 3, label: 'State 3'},
+    {id: 4, label: 'State 4'},
+    {id: 5, label: 'State 5'},
+    {id: 6, label: 'Error',   shape: 'diamond', color: 'red'},
+    {id: 7, label: 'Success', shape: 'diamond', color: 'green'},
+		], 
+		edgesArray : [
+    {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 2, to: 4, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 2, to: 5, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 5, to: 6, arrows:'to', label:'Outcome', font: {align: 'top'}},
+    {from: 4, to: 7, arrows:'to', label:'Outcome', font: {align: 'top'}},
+		], 
+		nodeInformationArray: [
+			"default-1",
+			"default-2",
+			"default-3",
+			"default-4",
+			"default-5",
+			"default-6",
+			"default-7",
+		],
+		},
+
+		{ name: 'exp-foo', 
+		nodesArray: [{id: 1, label: 'LOL State'},
+    {id: 2, label: 'State 2'},
+    {id: 3, label: 'State 3'},
+    {id: 4, label: 'State 4'},
+    {id: 5, label: 'State 5'},
+    {id: 6, label: 'Error',   shape: 'diamond', color: 'red'},
+    {id: 7, label: 'Success', shape: 'diamond', color: 'green'},
+		], 
+		edgesArray : [
+    {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 2, to: 4, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 2, to: 5, arrows:'to', label:'Action', font: {align: 'top'}},
+    {from: 5, to: 6, arrows:'to', label:'Outcome', font: {align: 'top'}},
+    {from: 4, to: 7, arrows:'to', label:'Outcome', font: {align: 'top'}},
+		],
+		nodeInformationArray: [
+			"exp-foo-1",
+			"exp-foo-2",
+			"exp-foo-3",
+			"exp-foo-4",
+			"exp-foo-5",
+			"exp-foo-6",
+			"exp-foo-7",
+		],
+		},
+
+		];
+
+
+
+	// NodeTypeEnum = {
+	// 	STATE : 0,
+	// 	ERROR : 1,
+	// 	SUCCESS : 2
+	// }
+	function statusNodeText(name,featureList,timestamp)
+  {
+		var output = "Statename: " + name + "<br>\n";  
+		output += "Features: " + featureList + "<br>\n";
+		output += "Timestamp: " + timestamp + "<br>\n";
+		output += "CRAMContext: TODO? Show stuff that happened until 'now' <br>\n";
+		return output;
+  }
+
+	function errorNodeText(errorcontext,timestamp)
+  {
+		var output = "Error Context: " + errorcontext + "<br>\n";
+		output += "Timestamp: " + timestamp + "<br>\n";
+		return output;
+  }
+
+	// Search for objects in a list, based on the 'name'
+	// if obj.name in list equals 'name', the method returns
+	// the index of the first object with the given name 
+	// If no object can be found, it returns -1
+	function search(name,arr){
+		for(var i=0; i<arr.length; i++) {
+			if (arr[i]['name'] == name) return i;
+		}
+		return -1;
+	}
+
+	function startNetwork() {
+		// // this list is kept to remove a random node.. we do not add node 1 here because it's used for changes
+		// nodeIds = [2, 3, 4, 5];
+		// shadowState = false;
+
+		// Select the data based on the global variable currently_selected_log
+		var experiment_idx = search(currently_selected_log, experiments);
+		if(experiment_idx < 0)
+		{
+			alert("Can't find experiment data - Check the name attribute of your loaded data. Cancelling visualization");
+			return;
+		}
+		
+
+		nodesArray = experiments[experiment_idx]['nodesArray'];
+		edgesArray = experiments[experiment_idx]['edgesArray'];
+		nodes = new vis.DataSet(nodesArray);
+		edges = new vis.DataSet(edgesArray);
+	
+		// create a network
+		var container = document.getElementById('mynetwork');
+		var data = {
+				nodes: nodes,
+				edges: edges
+		};
+		// var options = {};
+	  var options = {
+	    layout: {
+	        hierarchical:{
+	            direction: "UD",
+	            sortMethod: "directed"
+	        }
+	    }
+	  };
+		network = new vis.Network(container, data, options);
+
+	  network.on("click", function (params) {
+	        params.event = "[original event]";
+	        // document.getElementById('nodedetails').innerHTML = '<h2>Click event:</h2>' + JSON.stringify(params, null, 4);
+					if(params.nodes.length > 0){
+				  	var nodeId = params.nodes[0];
+						var experiment_idx = search(currently_selected_log, experiments);
+						if(experiment_idx < 0)
+						{
+							alert("Can't find experiment data - Check the name attribute of your loaded data. Cancelling visualization");
+							return;
+						}
+						var nodeInformation = experiments[experiment_idx]["nodeInformationArray"][nodeId-1];
+				  	// document.getElementById('nodedetails').innerHTML = document.getElementById(nodeId).value;
+				  	document.getElementById('nodedetails').innerHTML = nodeInformation;
+					}
+					else
+					{
+						// User clicked somewhere in the canvas, but didn't hit a node
+				  	document.getElementById('nodedetails').innerHTML = "";
+					}
+	    });
+	}
+
+	
+	// Start the network
+	startNetwork();
+
+  // DOM is loaded ....
+  window.onload = function() {
+    // jquery click handler
+    $('#log_selector').change(function(){ 
+        var value = $(this).val();
+				currently_selected_log = value;
+        // value will hold the name of the experiment, or 'default' (which is WiP)
+				startNetwork();
+        });
+  };
+</script>
+</body>
+</html>
