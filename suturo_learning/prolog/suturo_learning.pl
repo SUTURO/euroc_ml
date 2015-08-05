@@ -268,7 +268,7 @@ get_learningaction_reward(State, Reward) :-
         -> % plan is ok
             Reward = 1
         ; % we are right in the middle
-            Reward = 0
+            Reward = -1
     ).
          
 
