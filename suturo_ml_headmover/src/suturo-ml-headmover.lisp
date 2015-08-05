@@ -155,15 +155,15 @@ The sum of the point as geometry_msgs/Point
             (print "funcall")
             (defparameter my-task task)
             (funcall (symbol-function (read-from-string (format nil "exec:~a" task))))
-            (print "funcall done")
-            (achieve `(hammertime))))))))
+            (print "funcall done")))))))
 
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
   (print "FUUUU BAR")
   (init-exec)
   (with-process-modules
-    (execute-prolog-solutions)))
+    (execute-prolog-solutions)
+    (achieve `(hammertime))))
 
 (defun yaml-cb (msg)
   "

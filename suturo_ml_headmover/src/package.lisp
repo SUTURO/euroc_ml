@@ -40,6 +40,7 @@
     #:move-arm-cam
     #:pose-name
     #:classify-object
+    #:hammertime
     #:focus-object
     #:open-gripper
     #:position
