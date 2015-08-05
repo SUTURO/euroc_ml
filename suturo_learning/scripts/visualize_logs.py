@@ -99,7 +99,7 @@ def js_representation_for_experiment(ExperimentObject):
     action_id = 1
     for a in ExperimentObject.actions:
         action_name = a[1]
-        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', font: {align: 'top'}},"
+        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', font: {align: 'horizontal'}},"
         action_id += 1
     # {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
     # {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
@@ -110,13 +110,13 @@ def js_representation_for_experiment(ExperimentObject):
     result += """ ],
 		nodeInformationArray: [""";
     result += """
-			'exp-foo-1',
-			'exp-foo-2',
-			'exp-foo-3',
-			'exp-foo-4',
-			'exp-foo-5',
-			'exp-foo-6',
-			'exp-foo-7',
+                        'GOAL was: YYY-1. State: ZZZ. t=12345678',
+			'GOAL was: YYY-2. State: ZZZ. t=12345678',
+			'GOAL was: YYY-3. State: ZZZ. t=12345678',
+			'GOAL was: YYY-4. State: ZZZ. t=12345678',
+			'GOAL was: YYY-5. State: ZZZ. t=12345678',
+			'GOAL was: YYY-6. State: ZZZ. t=12345678',
+			'GOAL was: YYY-7. State: ZZZ. t=12345678',
                         """;
     result += """ ],
 		},
