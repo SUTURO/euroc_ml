@@ -1,6 +1,7 @@
 :- module(suturo_learning, [
 	get_planned_goals/1,
-    get_actions_for_object/2
+    get_actions_for_object/2,
+    get_learning_sequence/1
 ]).
 
 :- use_module(library(http/json)).
@@ -202,10 +203,11 @@ json_output_for_experiment(Experiment,Stream):-
 
 % extract_bool
 
-get_learning_action_name([_, Y], Name) :-
+get_learningaction_name([_, Y], Name) :-
     Y=(literal(type(_, Name))).
+    
 
-get_learning_action_name(X, Name) :-
+get_learningaction_name(X, Name) :-
     owl_has(X, knowrob:'goalContext', Str),
     Str=(literal(type(_, Action))),
     % parse the action name, Action may be something like (GRAB-SIDE ?OBJECT)
@@ -218,54 +220,63 @@ get_learning_action_name(X, Name) :-
     nth1(2, L2, Tmp2),
     % split the ")"
     atomic_list_concat(L3, ')', Tmp2),
-    nth1(1, L3, Name). 
+    nth1(1, L3, ActionName),
+    % get the object acted on
+    (owl_has(X, knowrob:'object', ObjectDesig)
+        -> (mang_designator_props(ObjectDesig, 'OBJECT-NAME', ObjectName),
+            string_concat(ActionName, ' ', TmpName),
+            string_concat(TmpName, ObjectName, Name)
+        );(
+            Name = ActionName
+        )
+    ).
+        
 
 % Extract the name of an action from a learning action sequence generated
 % by get_learningaction_sequence
 % Index begins at 1
 get_learningaction_sequence_name(LaS, IndexOfAction, Name):-
-  get_learningaction_sequence(LaS), nth1(IndexOfAction,LaS,Elem), get_learning_action_name(Elem, Name).
+  get_learningaction_sequence(LaS),
+  nth1(IndexOfAction,LaS,Elem),
+  get_learningaction_name(Elem, Name).
 
 
 get_learningaction_state(Action, State) :-
-    owl_has(Action, knowrob:'designator', Designator),
-    mang_designator_props(Designator, 'STATE', State).
+    owl_has(Action, knowrob:'currentState', StateDesignator),
+    findall(Value, (
+        mang_designator_props(StateDesignator, [Prop], Value),
+        % Filter all properties beginning with "_"
+        atom_chars(Prop, PropChars),
+        PropChars = [X|_],
+        X \= '_'), State).
+        
 
+get_learningaction_reward(State, Reward) :-
+    % check for lastActionSuccessful
+    nth1(2, State, LastAction),
+    LastAction = '0.0'
+    -> % last action failed
+        Reward = -1
+    ;( % check for all goals
+        nth1(3, State, Placed),
+        nth1(4, State, Turned),
+        (Placed = '1.0', Turned = '1.0')
+        -> % plan is ok
+            Reward = 1
+        ; % we are right in the middle
+            Reward = 0
+    ).
+         
 
 get_learning_sequence(ActionStateSequence) :-
-%    bagof([State, Action, 0],
-%    (
-%        get_learningactions_in_experiment(Exp, La),
-%        get_learning_action_name(La, Action),
-%        get_robot_experiment_name(Exp, ExpName),
-%        mang_db(ExpName),
-%        get_learningaction_state(La, State)
-%    ), ActionStateSequence).
-    ActionStateSequence = [[[[0, 0, 0, 0], 'GRAB-SIDE', 0],
-                           [[2, 0, 0, 0], 'TURN', 0],
-                           [[2, 1, 0, 1], 'OPEN-GRIPPER', 0],
-                           [[0, 1, 0, 1], 'GRAB-TOP', 0],
-                           [[1, 1, 0, 1], 'PLACE-IN-ZONE', 0],
-                           [[0, 1, 1, 1], 'HAMMERTIME', 1]]].
+    bagof(ASS, (
+        findall([State, Action, Reward], (
+            get_learningactions_in_experiment(Exp, La),
+            get_robot_experiment_name(Exp, ExpName),
+            mang_db(ExpName),
+            get_learningaction_name(La, Action),
+            get_learningaction_state(La, State),
+            get_learningaction_reward(State, Reward)
+        ), ASS)
+    ), ActionStateSequence).
 
-
-% Resolves to crucial information in our context:
-% - The designator
-% - taskSuccess
-% - endTime
-% - startTime
-% - goalContext
-% learningaction_info(La,P,Info):-
-%   get_learningactions(La),
-%   P = 'http://knowrob.org/kb/knowrob.owl#designator';
-%   P = 'http://knowrob.org/kb/knowrob.owl#taskSuccess';
-%   P = 'http://knowrob.org/kb/knowrob.owl#endTime';
-%   P = 'http://knowrob.org/kb/knowrob.owl#startTime';
-%   P = 'http://knowrob.org/kb/knowrob.owl#goalContext',
-%   owl_has(La,P,Info).
-
-% Write relevant LOG info to JSON
-% for all logs l:
-%   extract feature-action-sequence from l
-%   write to json-file j
-%   write additional informations for every action to j
