@@ -15,7 +15,10 @@ class Learner(object):
     def tranform_policy(self, policy):
         p = []
         for s, a, r in policy:
-            p.append((tuple(s),str(a),r))
+            state = []
+            for elem in s:
+                state.append(float(elem))
+            p.append((tuple(state),str(a),r))
         return p
 
 class SarsaLambdaLearner(Learner):
