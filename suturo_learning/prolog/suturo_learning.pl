@@ -191,6 +191,10 @@ json_output_for_experiment(Experiment,Stream):-
   nl(Stream),
   write(Stream,'}').
 
+get_robot_experiment_task_success(X) :-
+  true.
+  % once(X\='foo').
+  % once().
 
 
 
