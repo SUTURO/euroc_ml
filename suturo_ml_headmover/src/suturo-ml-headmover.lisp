@@ -202,10 +202,14 @@ Grabs the given object from the side
 (defun grab-object (?object)
   (let ((new-desig (make-designator 'action `((to grasp)
                                               (obj ,?object))))) 
-    (perform new-desig)
-    (handle-object-in-hand-feature ?object)
-    (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
-    (setf featureLastActionSuccesful 1)))
+        (with-failure-handling
+            ((cram-plan-failures:manipulation-failure (e)
+                (declare (ignore e))
+                (setf featureLastActionSuccesful 0)))
+            (perform new-desig)
+            (handle-object-in-hand-feature ?object)
+            (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
+            (setf featureLastActionSuccesful 1))))
 
 (defun handle-object-in-hand-feature(object-desig)
   (cond
@@ -244,9 +248,17 @@ Grabs the given object from the top
           (setf new-desig (make-designator 'action `((to put-down)
                                                      (obj ,(current-desig object-grabbed))
                                                      (at ,target-location))))
-          (perform new-desig)
-          (setf featureObjectInHand FEATURE_NONE_IN_HAND)
-          (setf featureGoalPlacedInZoneSuccesful 1)))))
+          (let ((result (perform new-desig)))
+            (if result
+                (progn
+                  (if (eq featureObjectInHand 1)
+                      (setf featureGoalPlacedInZoneSuccesful 1)
+                      (setf featureGoalPlacedInZoneSuccesful 0))
+                  (setf featureObjectInHand FEATURE_NONE_IN_HAND)
+                  (setf featureLastActionSuccesful 1))
+                (progn
+                  (setf featureGoalPlacedInZoneSuccesful 0)
+                  (setf featureLastActionSuccesful 0))))))))
         
 
 (def-goal (achieve (open-gripper))
@@ -259,6 +271,7 @@ Grabs the given object from the top
   (let ((new-desig (make-designator 'action `((to open-gripper) (position 0.0)))))
     (write-features-to-node)
     (perform new-desig)
+    (setf featureLastActionSuccesful 1)
     (setf featureObjectInHand FEATURE_NONE_IN_HAND)))
 
 (def-goal (achieve (turn))
@@ -272,8 +285,11 @@ Grabs the given object from the top
   (turn)
   (let ((contact (call-service-contact)))
     (if contact
-        (setf featureGoalTurnedSuccesful 0)
-        (setf featureGoalTurnedSuccesful 1))))
+        (setf featureLastActionSuccesful 0)
+        (setf featureLastActionSuccesful 1)))
+  (if (eq featureObjectInHand 2)
+        (setf featureGoalTurnedSuccesful 1 )
+        (setf featureGoalTurnedSuccesful 0)))
 
 (defun hammertime()
 "
