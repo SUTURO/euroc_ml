@@ -21,16 +21,16 @@ class SuturoMlHeadLearner(object):
         self.learner = SarsaLambdaLearner()
         self.q = self.learner.get_q()
         # self.actions = filter(lambda x: x[0].startswith('Const'), [(a,s) for a,s in vars(SuturoMlAction).iteritems()])
-        self.actions = ["GRAB-SIDE BLUE_HANDLE",
-                        "GRAB-SIDE RED_CUBE",
+        self.actions = ["GRAB-SIDE blue_handle",
+                        "GRAB-SIDE red_cube",
                         "TURN",
                         "OPEN-GRIPPER",
-                        "GRAB-TOP BLUE_HANDLE",
-                        "GRAB-TOP RED_CUBE",
+                        "GRAB-TOP blue_handle",
+                        "GRAB-TOP red_cube",
                         "PLACE-IN-ZONE",
                         "HAMMERTIME"]
-        # self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, .0)
-        self.policyMaker = ReverseGreedyPolicy(self.q, self.actions)
+        self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, .0)
+        # self.policyMaker = ReverseGreedyPolicy(self.q, self.actions)
         self.prolog = Prolog()
         print("SuturoMlHeadLearnerPolicyFeeder started.")
 

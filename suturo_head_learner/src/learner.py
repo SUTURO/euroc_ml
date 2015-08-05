@@ -3,7 +3,7 @@ from collections import defaultdict
 __author__ = 'suturo'
 
 class Learner(object):
-    def __init__(self, q_init_value=10):
+    def __init__(self, q_init_value=1):
         self.q = defaultdict(lambda : q_init_value)
 
     def learn(self, feedPolicyRequest):
@@ -33,8 +33,9 @@ class SarsaLambdaLearner(Learner):
         print policy
         for i, (s,a,r) in enumerate(policy):
             if i == len(policy) -1:
-                break
-            next_state, next_action, egal = policy[i+1]
+                next_state, next_action = s,a
+            else:
+                next_state, next_action, egal = policy[i+1]
             delta = r + self.gamma * self.q[(next_state,next_action)] - self.q[(s,a)]
             self.e[(s, a)] = self.e[(s, a)] + 1
             for (s1,a1) in self.e.iterkeys():
