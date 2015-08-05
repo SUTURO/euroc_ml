@@ -99,7 +99,7 @@ def js_representation_for_experiment(ExperimentObject):
     action_id = 1
     for a in ExperimentObject.actions:
         action_name = a[1]
-        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', font: {align: 'horizontal'}},"
+        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', id: '" + str(action_id)+"-"+str(action_id+1) + "', font: {align: 'horizontal'}},"
         action_id += 1
     # {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
     # {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
@@ -119,6 +119,13 @@ def js_representation_for_experiment(ExperimentObject):
 			'GOAL was: YYY-7. State: ZZZ. t=12345678',
                         """;
     result += """ ],
+                edgeInformationHashTable: {
+                    "1-2": "test1",
+                    "2-3": "test2",
+                    "3-4": "test3",
+                    "4-5": "test4",
+                    "5-6": "test5",
+                 }
 		},
                 """;
     return result;
