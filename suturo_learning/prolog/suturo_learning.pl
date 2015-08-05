@@ -241,13 +241,42 @@ get_learning_sequence(ActionStateSequence) :-
 %        mang_db(ExpName),
 %        get_learningaction_state(La, State)
 %    ), ActionStateSequence).
-    ActionStateSequence = [[[[0, 0, 0, 0], 'GRAB-SIDE', 0],
-                           [[2, 0, 0, 0], 'TURN', 0],
-                           [[2, 1, 0, 1], 'OPEN-GRIPPER', 0],
-                           [[0, 1, 0, 1], 'GRAB-TOP', 0],
-                           [[1, 1, 0, 1], 'PLACE-IN-ZONE', 0],
-                           [[0, 1, 1, 1], 'HAMMERTIME', 1]]].
+    ActionStateSequence = [[[[0, 1, 0, 0], 'GRAB-SIDE BLUE_HANDLE', 0],
+                            [[2, 1, 0, 0], 'TURN', 0],
+                            [[2, 1, 0, 1], 'OPEN-GRIPPER', 0],
+                            [[0, 1, 0, 1], 'GRAB-TOP RED_CUBE', 0],
+                            [[1, 1, 0, 1], 'PLACE-IN-ZONE', 0],
+                            [[0, 1, 1, 1], 'HAMMERTIME', 1]]
 
+                           %% [[[0, 0, 0, 0], 'TURN', 0],
+                           %%  [[0, 0, 0, 0], 'GRAB-SIDE BLUE_HANDLE', 0],
+                           %%  [[0, 0, 0, 0], 'GRAB-SIDE RED_CUBE', 0],
+                           %%  [[0, 0, 0, 0], 'OPEN-GRIPPER', 0],
+                           %%  [[0, 0, 0, 0], 'GRAB-TOP BLUE_HANDLE', 0],
+                           %%  [[0, 0, 0, 0], 'GRAB-TOP RED_CUBE', 0],
+                           %%  [[0, 0, 0, 0], 'PLACE-IN-ZONE', 0],
+                           %%  [[0, 0, 0, 0], 'HAMMERTIME', -1]],
+
+                           %% [
+                           %%  [[0, 0, 0, 0], 'GRAB-TOP BLUE_HANDLE', 0],
+                           %%  [[2, 0, 0, 0], 'TURN', 0],
+                           %%  [[2, 0, 0, 0], 'GRAB-SIDE BLUE_HANDLE', 0],
+                           %%  [[2, 0, 0, 0], 'GRAB-SIDE RED_CUBE', 0],
+                           %%  [[0, 0, 0, 0], 'OPEN-GRIPPER', 0],
+                           %%  [[0, 0, 0, 0], 'GRAB-TOP RED_CUBE', 0],
+                           %%  [[0, 0, 0, 0], 'PLACE-IN-ZONE', 0],
+                           %%  [[2, 0, 0, 0], 'HAMMERTIME', -1]
+                           %% ],
+
+                           %% [[[0, 0, 0, 0], 'TURN', 0],
+                           %%  [[0, 0, 0, 0], 'GRAB-SIDE BLUE_HANDLE', 0],
+                           %%  [[0, 0, 0, 0], 'GRAB-SIDE RED_CUBE', 0],
+                           %%  [[0, 0, 0, 0], 'OPEN-GRIPPER', 0],
+                           %%  [[0, 0, 0, 0], 'GRAB-TOP BLUE_HANDLE', 0],
+                           %%  [[0, 0, 0, 0], 'GRAB-TOP RED_CUBE', 0],
+                           %%  [[0, 0, 0, 0], 'PLACE-IN-ZONE', 0],
+                            %% [[0, 0, 0, 0], 'HAMMERTIME', -1]]
+                            ].
 
 % Resolves to crucial information in our context:
 % - The designator
