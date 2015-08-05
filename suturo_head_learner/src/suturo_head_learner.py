@@ -6,7 +6,7 @@ from suturo_head_mover_msgs.srv._SuturoMlNextAction import SuturoMlNextAction, S
     SuturoMlNextActionResponse
 from learner import SarsaLambdaLearner
 from policy import GreedyPolicy
-from json_prolog import Prolog
+from json_prolog.json_prolog import Prolog
 from policy import EpsilonGreedyPolicy
 from policy import ReverseGreedyPolicy
 
@@ -31,6 +31,7 @@ class SuturoMlHeadLearner(object):
                         "HAMMERTIME"]
         self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, .0)
         # self.policyMaker = ReverseGreedyPolicy(self.q, self.actions)
+        rospy.wait_for_service('json_prolog/simple_query')
         self.prolog = Prolog()
         print("SuturoMlHeadLearnerPolicyFeeder started.")
 
@@ -54,9 +55,7 @@ class SuturoMlHeadLearner(object):
 
 
 if __name__ == '__main__':
-    rospy.init_node("SuturoMLHeadLearnerPolicyFeederNode", anonymous=True)
-    # contact_sub = rospy.Subscriber("/gazebo/contacts", SuturoMlFeedPolicy, callback)
-    # s = rospy.Service('SuturoMLHeadLearnerPolicyFeeder', CheckContact, muh)
+    rospy.init_node("SuturoMlHeadLearner", anonymous=True)
     muh = SuturoMlHeadLearner()
     muh.doTheShit()
     rospy.spin()
