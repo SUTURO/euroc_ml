@@ -156,7 +156,7 @@ The sum of the point as geometry_msgs/Point
             (defparameter my-task task)
             (funcall (symbol-function (read-from-string (format nil "exec:~a" task))))
             (print "funcall done")
-            (hammertime)))))))
+            (achieve `(hammertime))))))))
 
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
@@ -216,6 +216,10 @@ Grabs the given object from the side
       ((string= (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id) "red_cube") (setf featureObjectInHand FEATURE_RED_CUBE_IN_HAND))
       ((string= (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id) "blue_handle") (setf featureObjectInHand FEATURE_BLUE_HANDLE_IN_HAND))
       (t (setf featureObjectInHand FEATURE_NONE_IN_HAND))))
+
+(def-goal (achieve (hammertime))
+    (write-features-to-node)
+    (hammertime))
 
 (def-goal (achieve (place-in-zone))
 " 
