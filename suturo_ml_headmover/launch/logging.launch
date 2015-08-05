@@ -10,4 +10,7 @@
 
   <!-- Topic logging -->
   <node name="topic_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="$(arg logged_topics)" />
+
+  <!-- start learner -->
+  <node name="SuturoMlHeadLearner" pkg="suturo_head_learner" type="suturo_head_learner.py" />
 </launch>

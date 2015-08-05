@@ -14,6 +14,7 @@
 
 import roslib; roslib.load_manifest('json_prolog')
 import rospy
+import time
 import rospkg
 from json_prolog import json_prolog
 
@@ -93,14 +94,30 @@ def js_representation_for_experiment(ExperimentObject):
     # {id: 6, label: 'Error',   shape: 'diamond', color: 'red'},
     # {id: 7, label: 'Success', shape: 'diamond', color: 'green'},
 
+    if ExperimentObject.overall_success:
+        result += "{id: 999, label: 'Success', shape: 'diamond', color: 'green'},"
+    else:
+        result += "{id: 998, label: 'Error',   shape: 'diamond', color: 'red'},"
+
+
     result +=	"""], 
 		edgesArray : [""";
 
     action_id = 1
     for a in ExperimentObject.actions:
         action_name = a[1]
-        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', font: {align: 'horizontal'}},"
+        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', id: '" + str(action_id)+"-"+str(action_id+1) + "', font: {align: 'horizontal'}},"
         action_id += 1
+
+    # Set overall task outcome from last action
+
+    outcome_node_id = 998 # No Success
+    if ExperimentObject.overall_success:
+        outcome_node_id = 999 # Success
+    
+    result += "{from: " + str(action_id) + ", to: " + str(outcome_node_id) + ", arrows:'to', label:'Outcome', id: '" + str(action_id)+"-"+str(outcome_node_id) + "', font: {align: 'horizontal'}},"
+
+
     # {from: 1, to: 3, arrows:'to', label:'Action', font: {align: 'top'}},
     # {from: 1, to: 2, arrows:'to', label:'Action', font: {align: 'top'}},
     # {from: 2, to: 4, arrows:'to', label:'Action', font: {align: 'top'}},
@@ -119,6 +136,14 @@ def js_representation_for_experiment(ExperimentObject):
 			'GOAL was: YYY-7. State: ZZZ. t=12345678',
                         """;
     result += """ ],
+                edgeInformationHashTable: {"""
+    action_id = 1
+    for a in ExperimentObject.actions:
+        action_name = a[1]
+        result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
+        action_id += 1
+    result += """
+                 }
 		},
                 """;
     return result;
@@ -131,11 +156,12 @@ class Experiment(object):
     #     self.states = []
     #     self.actions = []
 
-    def __init__(self, name="", states=[], actions=[]):
+    def __init__(self, name="", states=[], actions=[], overall_success=True):
         super(Experiment, self).__init__()
         self.name = name
         self.states = states
         self.actions = actions
+        self.overall_success = overall_success
 
     def __str__(self):
         return "Name: " + self.name + ", actions=" + str(self.actions) + ", states = " + str(self.states)
@@ -147,6 +173,10 @@ def load_data():
     experimentObjects = []
 
     prolog = json_prolog.Prolog()
+
+    # query = prolog.query("suturo_learning:get_robot_experiment_task_success(foo)")
+    # query.finish()
+
     query = prolog.query("suturo_learning:l_get_robot_experiment(Experiment)")
             # , )
 
@@ -167,7 +197,26 @@ def load_data():
             extracted_data.name = solution['ExperimentName']
             extracted_data.actions = solution['LS']
             extracted_data.states = solution['SSeq']
+            extracted_data.overall_success = True
         query.finish() 
+        time.sleep(1)
+        print "sleep done"
+
+        # Get the result for the given experiment
+        query = prolog.query("suturo_learning:get_robot_experiment_task_success('"+experiment+"')")
+        if query.solutions():
+            extracted_data.overall_success = True
+            # print "XXXX - True"
+        else:
+            extracted_data.overall_success = True
+            # print "XXXX - False"
+
+        query.finish()
+        # if isinstance(prolog.once("suturo_learning:get_robot_experiment_task_success('"+experiment+"')"),dict):
+        #     print "True"
+        # else:
+        #     print "False"
+
 
   # get_learningaction_sequence_in_experiment(Experiment, LS), 
   # get_state_sequence_for_action_sequence(LS, SSeq),

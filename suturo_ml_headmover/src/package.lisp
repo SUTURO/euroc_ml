@@ -54,6 +54,7 @@
     #:put-down
     #:features
     #:scan-map
+    #:turn
     #:state)
   (:documentation
    "* Description

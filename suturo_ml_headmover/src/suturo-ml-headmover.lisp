@@ -39,7 +39,7 @@
 (defparameter +service-name-move-hand+ "/suturo/manipulation/move_relative")
 
 (defparameter featureObjectInHand 0)
-(defparameter featureLastActionSuccesful 0)
+(defparameter featureLastActionSuccesful 1)
 (defparameter featureGoalPlacedInZoneSuccesful 0)
 (defparameter featureGoalTurnedSuccesful 0)
 
@@ -156,18 +156,14 @@ The sum of the point as geometry_msgs/Point
             (defparameter my-task task)
             (funcall (symbol-function (read-from-string (format nil "exec:~a" task))))
             (print "funcall done")
-            (when cram-beliefstate::*logging-enabled*
-              (ros-info (task-selector) "Saving log files...")
-              (cram-beliefstate:extract-files))))))))
+            (hammertime)))))))
 
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
   (print "FUUUU BAR")
   (init-exec)
-
   (with-process-modules
-    (execute-prolog-solutions))
-    );(hammertime))
+    (execute-prolog-solutions)))
 
 (defun yaml-cb (msg)
   "
@@ -217,13 +213,14 @@ Grabs the given object from the side
       ((string= (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id) "blue_handle") (setf featureObjectInHand FEATURE_BLUE_HANDLE_IN_HAND))
       (t (setf featureObjectInHand FEATURE_NONE_IN_HAND))))
 
-(def-goal (achieve (place-in-zone ?action))
+(def-goal (achieve (place-in-zone))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
   (print "PLACING IN ZONE")
+  (write-features-to-node)
   (let ((new-desig nil)
         (object-grabbed
           (cond 
@@ -244,26 +241,24 @@ Grabs the given object from the top
            (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'Z)
            (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'W))
           )))))) 
-          (setf new-desig (copy-designator (current-desig ?action) :new-description `((to put-down)
-                                                                                      (obj ,(current-desig object-grabbed))
-                                                                                      (at ,target-location))))
-          (equate (current-desig ?action) new-desig)
-          (perform (current-desig ?action))
+          (setf new-desig (make-designator 'action `((to put-down)
+                                                     (obj ,(current-desig object-grabbed))
+                                                     (at ,target-location))))
+          (perform new-desig)
           (setf featureObjectInHand FEATURE_NONE_IN_HAND)
           (setf featureGoalPlacedInZoneSuccesful 1)))))
         
 
-(def-goal (achieve (open-gripper ?action))
+(def-goal (achieve (open-gripper))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
   (print "OPENING GRIPPER")
-  (let ((new-desig (copy-designator (current-desig ?action) :new-description `((to open-gripper)
-                                                                               (position 0.0)))))
-    (equate (current-desig ?action) new-desig)
-    (perform (current-desig ?action))
+  (let ((new-desig (make-designator 'action `((to open-gripper) (position 0.0)))))
+    (write-features-to-node)
+    (perform new-desig)
     (setf featureObjectInHand FEATURE_NONE_IN_HAND)))
 
 (def-goal (achieve (turn))
@@ -273,6 +268,7 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "TURNING")
+  (write-features-to-node)
   (turn)
   (let ((contact (call-service-contact)))
     (if contact
@@ -284,6 +280,9 @@ Grabs the given object from the top
 Kills all ROS-Nodes - including the euroc simulator and this plan and associated nodes
 "
   (print "STOP! HAMMERTIME!")
+  (when cram-beliefstate::*logging-enabled*
+    (ros-info (task-selector) "Saving log files...")
+    (cram-beliefstate:extract-files))
   (let
     ((full-service-name "/suturo/hammertime"))
     (print (concatenate 'string "calling service: " full-service-name))
@@ -388,7 +387,7 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
  
 (defun call-service-contact ()
   (let
-      ((full-service-name "Suturo/Ml/Contactdetector"))
+      ((full-service-name "SuturoMlContactdetector"))
     (print (concatenate 'string "calling service: " full-service-name))
     (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
         (progn
@@ -399,15 +398,30 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
         (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :object1 "LWR"
                                                                                                               :object2 "red_sphere")))
           (roslisp:msg-slot-value value 'inContact))))) 
-                
+
+(defun call-service-next-action ()
+  (let
+      ((full-service-name "SuturoMlHeadNextAction"))
+    (print (concatenate 'string "calling service: " full-service-name))
+    (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
+        (progn
+          (let 
+              ((timed-out-text (concatenate 'string "Timed out waiting for service " full-service-name)))
+            (roslisp:ros-warn nil t timed-out-text))
+          nil)
+        (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlNextAction :state (state->SuturoMlState))))
+          (roslisp:msg-slot-value value 'action)))))
+
+(defun state->SuturoMlState ()
+  (make-msg "suturo_head_mover_msgs/SuturoMlState" 
+                (featureList) (make-array 4 :initial-contents `(,featureobjectinhand 
+                                                                ,featurelastactionsuccesful 
+                                                                ,featuregoalplacedinzonesuccesful 
+                                                                ,featuregoalturnedsuccesful))))
+            
+  
 
 (defun call-service-state (service-name taskdata)
-  "
-Calls the service of the given service-name. Every state service has to accept an object of suturo_startup_msgs-srv:TaskDataService.
-* Arguments
-- service-name :: The name of a state service has to start with suturo/startup/. This argument needs the last part of the service name e.g: suturo/startup/myAwesomeService -> myAwesomeService.
-- taskdata :: The suturo_startup_msgs-msgs:Taskdata object that should be send to the service
-"
   (let
       ((full-service-name (concatenate 'string "suturo/startup/" service-name)))
     (print (concatenate 'string "calling service: " service-name))
@@ -437,23 +451,27 @@ Initialize the simulation:
 
 (defun execute-prolog-solutions()
   ""
-  (let ((goals (first (first (json-prolog:prolog-simple-1 "get_planned_goals(G)")))))
-    (loop for goal in goals do
-      (if (typep goal 'list) 
-          (try-solution goal)))))
+  (let ((goal nil)
+        (executeLoop T))
+    (loop do
+      (setf goal (msg-slot-value (call-service-next-action) 'action))
+      (print goal)
+      (if (string= goal "HAMMERTIME")
+          (setf executeLoop nil)
+          (try-solution (cl-utilities::split-sequence #\Space goal)))
+      while executeLoop)))
   
 (defun try-solution (query)
   (let ((object nil))
     (cond
-      ((eql (second query) CL-USER::'|'red_cube'|) (setf object red-cube-object-desig))
-      ((eql (second query) CL-USER::'|'blue_handle'|) (setf object blue-handle-object-desig)))
+      ((string= (second query) "red_cube") (setf object red-cube-object-desig))
+      ((string= (second query) "blue_handle") (setf object blue-handle-object-desig)))
     (cond
-      ((eql (first query) CL-USER::'|'top_grab'|) (achieve `(grab-top ,object)))
-      ((eql (first query) CL-USER::'|'side_grab'|) (achieve `(grab-side ,object)))
-      ((eql (first query) CL-USER::'|'turn'|) (achieve `(turn)))
-      ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper)))
-      ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone)))
-      ;((eql (first query) CL-USER::'|'hammertime'|) (achieve `(hammertime)))
+      ((string= (first query) "GRAB-TOP") (achieve `(grab-top ,object)))
+      ((string= (first query) "GRAB-SIDE") (achieve `(grab-side ,object)))
+      ((string= (first query) "TURN") (achieve `(turn)))
+      ((string= (first query) "OPEN-GRIPPER") (achieve `(open-gripper)))
+      ((string= (first query) "PLACE-IN-ZONE") (achieve `(place-in-zone)))
       (t (print "No matching goal found")))))
 
 (defun write-object-to-node (object-desig)

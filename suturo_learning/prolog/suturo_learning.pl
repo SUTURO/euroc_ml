@@ -192,6 +192,10 @@ json_output_for_experiment(Experiment,Stream):-
   nl(Stream),
   write(Stream,'}').
 
+get_robot_experiment_task_success(X) :-
+  true.
+  % once(X\='foo').
+  % once().
 
 
 
@@ -254,12 +258,12 @@ get_learningaction_state(Action, State) :-
 get_learningaction_reward(State, Reward) :-
     % check for lastActionSuccessful
     nth1(2, State, LastAction),
+    nth1(3, State, Placed),
+    nth1(4, State, Turned),
     LastAction = '0.0'
     -> % last action failed
         Reward = -1
-    ;( % check for all goals
-        nth1(3, State, Placed),
-        nth1(4, State, Turned),
+    ;(
         (Placed = '1.0', Turned = '1.0')
         -> % plan is ok
             Reward = 1
