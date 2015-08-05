@@ -167,7 +167,7 @@ The sum of the point as geometry_msgs/Point
 
   (with-process-modules
     (execute-prolog-solutions))
-    (hammertime))
+    );(hammertime))
 
 (defun yaml-cb (msg)
   "
@@ -175,36 +175,38 @@ Callback for the function [[parse-yaml]]. Sets the variable environment:*yaml*.
 "
   (setf environment:*yaml* msg))
 
-(def-goal (achieve (grab-top ?action ?object))
+(def-goal (achieve (grab-top ?object))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
   (print "GRABBING_TOP")
+  (write-features-to-node)
+  (write-object-to-node ?object)
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 1))))) 
     (equate ?object new-desig))
-  (grab-object ?action ?object))
+  (grab-object ?object))
 
 
-(def-goal (achieve (grab-side ?action ?object))
+(def-goal (achieve (grab-side ?object))
 " 
 Grabs the given object from the side
 * Arguments
 - ?objects :: The object that should be grabed
 "
   (print "GRABBING_SIDE")
+  (write-features-to-node)
+  (write-object-to-node ?object)
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 2))))) 
     (equate ?object new-desig))
-  (grab-object ?action ?object))
+  (grab-object ?object))
 
 
-(defun grab-object (?action ?object)
-  (let ((new-desig (copy-designator (current-desig ?action) :new-description 
-                                    `((to grasp)
-                                      (obj ,?object))))) 
-    (equate (current-desig ?action) new-desig)
-    (perform (current-desig ?action))
+(defun grab-object (?object)
+  (let ((new-desig (make-designator 'action `((to grasp)
+                                              (obj ,?object))))) 
+    (perform new-desig)
     (handle-object-in-hand-feature ?object)
     (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
     (setf featureLastActionSuccesful 1)))
@@ -355,7 +357,8 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
       (cond 
         ((string= (msg-slot-value zone 'expected_object) "red_cube") (setf red-cube-object-desig
                                                                             (make-designator 'object 
-                                                                                             `((collision-object ,red-cube-collision)
+                                                                                             `((object-name ,(msg-slot-value zone 'expected_object))
+                                                                                               (collision-object ,red-cube-collision)
                                                                                                (target-zone ,(make-msg "geometry_msgs/PoseStamped"
                                                                                                                        (:FRAME_ID :HEADER) "/map"
                                                                                                                        (:STAMP :HEADER) (roslisp:ros-time) 
@@ -368,7 +371,8 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
                                                                                                                                       :POSITION (msg-slot-value zone 'target_position))))))))
         ((string= (msg-slot-value zone 'expected_object) "blue_handle") (setf blue-handle-object-desig
                                                                             (make-designator 'object 
-                                                                                             `((collision-object ,blue-handle-collision)
+                                                                                             `((object-name ,(msg-slot-value zone 'expected_object))
+                                                                                               (collision-object ,blue-handle-collision)
                                                                                                (target-zone ,(make-msg "geometry_msgs/PoseStamped"
                                                                                                                        (:FRAME_ID :HEADER) "/map"
                                                                                                                        (:STAMP :HEADER) (roslisp:ros-time) 
@@ -436,40 +440,31 @@ Initialize the simulation:
   (let ((goals (first (first (json-prolog:prolog-simple-1 "get_planned_goals(G)")))))
     (loop for goal in goals do
       (if (typep goal 'list) 
-          (try-solution goal))))
-  (hammertime))
+          (try-solution goal)))))
   
 (defun try-solution (query)
-  (let ((object nil)
-        (action-desig (make-designator 'action  `((objInHand ,featureObjectInHand)
-                                      (lastActionSuccesful ,featureLastActionSuccesful)
-;                                      (goalsSuccesful ,featureGoalsSuccesful)
-        ))))
-
-    (write-features-to-desig action-desig)
+  (let ((object nil))
     (cond
       ((eql (second query) CL-USER::'|'red_cube'|) (setf object red-cube-object-desig))
       ((eql (second query) CL-USER::'|'blue_handle'|) (setf object blue-handle-object-desig)))
     (cond
-      ((eql (first query) CL-USER::'|'top_grab'|) (achieve `(grab-top ,action-desig ,object)))
-      ((eql (first query) CL-USER::'|'side_grab'|) (achieve `(grab-side ,action-desig ,object)))
+      ((eql (first query) CL-USER::'|'top_grab'|) (achieve `(grab-top ,object)))
+      ((eql (first query) CL-USER::'|'side_grab'|) (achieve `(grab-side ,object)))
       ((eql (first query) CL-USER::'|'turn'|) (achieve `(turn)))
-      ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper ,action-desig)))
-      ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone ,action-desig)))
+      ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper)))
+      ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone)))
       ;((eql (first query) CL-USER::'|'hammertime'|) (achieve `(hammertime)))
       (t (print "No matching goal found")))))
 
-(defun write-features-to-desig (action-desig)
-;    (cram-beliefstate::alter-node `((state ,`#(,featureObjectInHand 
-;                             ,featureLastActionSuccesful
-;                             ,featureGoalPlacedInZoneSuccesful
-;                             ,featureGoalTurnedSuccesful)))))
-    (let ((new-desig (copy-designator (current-desig action-desig) :new-description 
-                                    `((state ,`#(,featureObjectInHand 
-                                                 ,featureLastActionSuccesful
-                                                 ,featureGoalPlacedInZoneSuccesful
-                                                 ,featureGoalTurnedSuccesful))))))
-    (cram-beliefstate::add-designator-to-active-node new-desig)))
+(defun write-object-to-node (object-desig)
+  (cram-beliefstate::add-designator-to-active-node object-desig :annotation "object"))
+
+(defun write-features-to-node ()
+  (let ((new-desig (make-designator 'action `((objectInHand ,featureObjectInHand) 
+                                              (lastActionSuccesful ,featureLastActionSuccesful)
+                                              (placedInZone ,featureGoalPlacedInZoneSuccesful)
+                                              (turned ,featureGoalTurnedSuccesful)))))
+    (cram-beliefstate::add-designator-to-active-node new-desig :annotation "current-state")))
 
 (defun turn ()
   "
