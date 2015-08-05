@@ -155,10 +155,7 @@ The sum of the point as geometry_msgs/Point
             (print "funcall")
             (defparameter my-task task)
             (funcall (symbol-function (read-from-string (format nil "exec:~a" task))))
-            (print "funcall done")
-            (when cram-beliefstate::*logging-enabled*
-              (ros-info (task-selector) "Saving log files...")
-              (cram-beliefstate:extract-files))))))))
+            (print "funcall done")))))))
 
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
@@ -282,6 +279,9 @@ Grabs the given object from the top
 Kills all ROS-Nodes - including the euroc simulator and this plan and associated nodes
 "
   (print "STOP! HAMMERTIME!")
+  (when cram-beliefstate::*logging-enabled*
+    (ros-info (task-selector) "Saving log files...")
+    (cram-beliefstate:extract-files))
   (let
     ((full-service-name "/suturo/hammertime"))
     (print (concatenate 'string "calling service: " full-service-name))
@@ -395,15 +395,22 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
         (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :object1 "LWR"
                                                                                                               :object2 "red_sphere")))
           (roslisp:msg-slot-value value 'inContact))))) 
-                
+
+(defun call-service-next-action ()
+  (let
+      ((full-service-name "Suturo/Ml/Contactdetector"))
+    (print (concatenate 'string "calling service: " full-service-name))
+    (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
+        (progn
+          (let 
+              ((timed-out-text (concatenate 'string "Timed out waiting for service " full-service-name)))
+            (roslisp:ros-warn nil t timed-out-text))
+          nil)
+        (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :object1 "LWR"
+                                                                                                              :object2 "red_sphere")))
+          (roslisp:msg-slot-value value 'inContact)))))
 
 (defun call-service-state (service-name taskdata)
-  "
-Calls the service of the given service-name. Every state service has to accept an object of suturo_startup_msgs-srv:TaskDataService.
-* Arguments
-- service-name :: The name of a state service has to start with suturo/startup/. This argument needs the last part of the service name e.g: suturo/startup/myAwesomeService -> myAwesomeService.
-- taskdata :: The suturo_startup_msgs-msgs:Taskdata object that should be send to the service
-"
   (let
       ((full-service-name (concatenate 'string "suturo/startup/" service-name)))
     (print (concatenate 'string "calling service: " service-name))
@@ -433,11 +440,11 @@ Initialize the simulation:
 
 (defun execute-prolog-solutions()
   ""
+  
   (let ((goals (first (first (json-prolog:prolog-simple-1 "get_planned_goals(G)")))))
     (loop for goal in goals do
       (if (typep goal 'list) 
-          (try-solution goal))))
-  (hammertime))
+          (try-solution goal)))))
   
 (defun try-solution (query)
   (let ((object nil)
@@ -456,7 +463,7 @@ Initialize the simulation:
       ((eql (first query) CL-USER::'|'turn'|) (achieve `(turn)))
       ((eql (first query) CL-USER::'|'open_gripper'|) (achieve `(open-gripper ,action-desig)))
       ((eql (first query) CL-USER::'|'place_in_zone'|) (achieve `(place-in-zone ,action-desig)))
-      ;((eql (first query) CL-USER::'|'hammertime'|) (achieve `(hammertime)))
+      ((eql (first query) CL-USER::'|'hammertime'|) (hammertime))
       (t (print "No matching goal found")))))
 
 (defun write-features-to-desig (action-desig)
