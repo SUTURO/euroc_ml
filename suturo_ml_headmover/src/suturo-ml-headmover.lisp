@@ -495,11 +495,18 @@ Initialize the simulation:
         (executeLoop T))
     (loop do
       (setf goal (msg-slot-value (call-service-next-action) 'action))
-      (print goal)
       (setf *current-episode-length* (+ *current-episode-length* 1))
-      (if (or (eq *current-episode-length* MAX_EPISODE_LENGTH) (check-end-state))
-          (setf executeLoop nil)
-          (try-solution (cl-utilities::split-sequence #\Space goal)))
+      (if (eq *current-episode-length* MAX_EPISODE_LENGTH)
+          (progn
+            (print "MAX EPISODE LENGTH REACHED - RESETTING")
+            (setf executeLoop nil))
+          (if (check-end-state)
+            (progn
+                (print "END OF PLAN REACHED - RESETTING")
+                (setf executeLoop nil))
+            (progn
+                (print goal)
+                (try-solution (cl-utilities::split-sequence #\Space goal)))))
       while executeLoop)))
   
 (defun try-solution (query)
