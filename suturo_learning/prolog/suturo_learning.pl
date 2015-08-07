@@ -120,7 +120,7 @@ get_robot_experiment_name(Experiment,Name):-
 
 % LEARNINGACTIONS will now be defined as the achieved CRAM Goals
 get_learningactions_in_experiment(Experiment, La):-
-  l_get_robot_experiment(Experiment),!,
+  l_get_robot_experiment(Experiment),
   l_get_sub_actions(Experiment,La),
   l_get_type_of_entity(La,'http://knowrob.org/kb/knowrob.owl#CRAMAchieve').
 
@@ -255,8 +255,8 @@ get_learningaction_state(Action, Name, State) :-
         X \= '_'), State).
         
 get_learningaction_states(Action, Before, After) :-
-    get_learningaction_state(Action, knowrob:'stateBefore', Before),
-    get_learningaction_state(Action, knowrob:'stateAfter', After).
+    get_learningaction_state(Action, 'http://knowrob.org/kb/knowrob.owl#stateBefore', Before),
+    get_learningaction_state(Action, 'http://knowrob.org/kb/knowrob.owl#stateAfter', After).
 
 
 get_learningaction_reward(_, _, After, Reward) :-
