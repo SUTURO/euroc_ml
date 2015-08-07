@@ -245,8 +245,8 @@ get_learningaction_sequence_name(LaS, IndexOfAction, Name):-
   get_learningaction_name(Elem, Name).
 
 
-get_learningaction_state(Action, State) :-
-    owl_has(Action, knowrob:'currentState', StateDesignator),
+get_learningaction_state(Action, Name, State) :-
+    owl_has(Action, Name, StateDesignator),
     findall(Value, (
         mang_designator_props(StateDesignator, [Prop], Value),
         % Filter all properties beginning with "_"
@@ -254,33 +254,36 @@ get_learningaction_state(Action, State) :-
         PropChars = [X|_],
         X \= '_'), State).
         
+get_learningaction_states(Action, Before, After) :-
+    get_learningaction_state(Action, knowrob:'stateBefore', Before),
+    get_learningaction_state(Action, knowrob:'stateAfter', After).
 
-get_learningaction_reward(State, Reward) :-
+
+get_learningaction_reward(_, _, After, Reward) :-
     % check for lastActionSuccessful
-    nth1(2, State, LastAction),
-    nth1(3, State, Placed),
-    nth1(4, State, Turned),
-    LastAction = '0.0'
-    -> % last action failed
-        Reward = -1
-    ;(
-        (Placed = '1.0', Turned = '1.0')
-        -> % plan is ok
-            Reward = 1
-        ; % we are right in the middle
-            Reward = -1
+    nth1(2, After, LastAction),
+    nth1(3, After, Placed),
+    nth1(4, After, Turned),
+    (LastAction = '0.0'
+        % last action failed
+        -> Reward = -1
+        ;(Placed = '1.0', Turned = '1.0')
+            % termination state
+            -> Reward = 1
+            % anything else
+            ; Reward = -1
     ).
          
 
 get_learning_sequence(ActionStateSequence) :-
     bagof(ASS, (
-        findall([State, Action, Reward], (
+        findall([StateBefore, Action, StateAfter, Reward], (
             get_learningactions_in_experiment(Exp, La),
             get_robot_experiment_name(Exp, ExpName),
             mang_db(ExpName),
             get_learningaction_name(La, Action),
-            get_learningaction_state(La, State),
-            get_learningaction_reward(State, Reward)
+            get_learningaction_states(La, StateBefore, StateAfter),
+            get_learningaction_reward(StateBefore, Action, StateAfter, Reward)
         ), ASS)
     ), ActionStateSequence).
 

@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+
+<package>
+  
+  <name>semrec</name>
+  <version>0.7.3</version>
+  <description>Semantic Hierarchy Recorder system allowing detailed execution time logging of autonomously performed robot plans on cognitive agents</description>
+  
+  <maintainer email="winkler@cs.uni-bremen.de">Jan Winkler</maintainer>
+  
+  <license>BSD</license>
+  
+  <url type="website">https://www.github.com/code-iai/ros-semrec</url>
+  <url type="website">http://www.cram-system.org/doc/logging/beliefstate</url>
+  
+  <author email="winkler@cs.uni-bremen.de">Jan Winkler</author>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>roslib</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>designator_integration_cpp</build_depend>
+  <build_depend>designator_integration_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>interactive_markers</build_depend>
+  <build_depend>visualization_msgs</build_depend>
+  
+  <run_depend>roslib</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>designator_integration_cpp</run_depend>
+  <run_depend>designator_integration_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>interactive_markers</run_depend>
+  <run_depend>visualization_msgs</run_depend>
+  
+</package>

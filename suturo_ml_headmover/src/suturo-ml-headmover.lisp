@@ -156,7 +156,7 @@ The sum of the point as geometry_msgs/Point
             (defparameter my-task task)
             (funcall (symbol-function (read-from-string (format nil "exec:~a" task))))
             (print "funcall done")
-            (hammertime)))))))
+            (achieve `(hammertime))))))))
 
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
@@ -178,11 +178,12 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "GRABBING_TOP")
-  (write-features-to-node)
+  (write-features-to-node :end 0)
   (write-object-to-node ?object)
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 1))))) 
     (equate ?object new-desig))
   (grab-object ?object))
+  (write-features-to-node :end 1)
 
 
 (def-goal (achieve (grab-side ?object))
@@ -192,31 +193,35 @@ Grabs the given object from the side
 - ?objects :: The object that should be grabed
 "
   (print "GRABBING_SIDE")
-  (write-features-to-node)
+  (write-features-to-node :end 0)
   (write-object-to-node ?object)
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 2))))) 
     (equate ?object new-desig))
   (grab-object ?object))
-
+  (write-freatures-to-node :end 1)
 
 (defun grab-object (?object)
   (let ((new-desig (make-designator 'action `((to grasp)
                                               (obj ,?object))))) 
-        (with-failure-handling
-            ((cram-plan-failures:manipulation-failure (e)
-                (declare (ignore e))
-                (setf featureLastActionSuccesful 0)
-               (return)))
-            (perform new-desig)
-            (handle-object-in-hand-feature ?object)
-            (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
-            (setf featureLastActionSuccesful 1))))
+    (with-failure-handling
+        ((cram-plan-failures:manipulation-failure (e)
+                                                  (declare (ignore e))
+                                                  (setf featureLastActionSuccesful 0)
+                                                  (return)))
+      (perform new-desig)
+      (handle-object-in-hand-feature ?object)
+      (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
+      (setf featureLastActionSuccesful 1))))
 
 (defun handle-object-in-hand-feature(object-desig)
   (cond
       ((string= (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id) "red_cube") (setf featureObjectInHand FEATURE_RED_CUBE_IN_HAND))
       ((string= (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id) "blue_handle") (setf featureObjectInHand FEATURE_BLUE_HANDLE_IN_HAND))
       (t (setf featureObjectInHand FEATURE_NONE_IN_HAND))))
+
+(def-goal (achieve (hammertime))
+    (write-features-to-node)
+    (hammertime))
 
 (def-goal (achieve (place-in-zone))
 " 
@@ -225,7 +230,7 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "PLACING IN ZONE")
-  (write-features-to-node)
+  (write-features-to-node :end 0)
   (let ((new-desig nil)
         (object-grabbed
           (cond 
@@ -259,7 +264,8 @@ Grabs the given object from the top
                   (setf featureLastActionSuccesful 1))
                 (progn
                   (setf featureGoalPlacedInZoneSuccesful 0)
-                  (setf featureLastActionSuccesful 0))))))))
+                  (setf featureLastActionSuccesful 0)))))))
+    (write-features-to-node :end 1))
         
 
 (def-goal (achieve (open-gripper))
@@ -269,11 +275,12 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "OPENING GRIPPER")
+  (write-features-to-node :end 0)
   (let ((new-desig (make-designator 'action `((to open-gripper) (position 0.0)))))
-    (write-features-to-node)
     (perform new-desig)
     (setf featureLastActionSuccesful 1)
-    (setf featureObjectInHand FEATURE_NONE_IN_HAND)))
+    (setf featureObjectInHand FEATURE_NONE_IN_HAND))
+  (write-features-to-node :end 1))
 
 (def-goal (achieve (turn))
 " 
@@ -282,7 +289,7 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "TURNING")
-  (write-features-to-node)
+  (write-features-to-node :end 0)
   (turn)
   (let ((contact (call-service-contact)))
     (if contact
@@ -291,6 +298,7 @@ Grabs the given object from the top
   (if (eq featureObjectInHand 2)
         (setf featureGoalTurnedSuccesful 1 )
         (setf featureGoalTurnedSuccesful 0)))
+  (write-features-to-node :end 1)
 
 (defun hammertime()
 "
