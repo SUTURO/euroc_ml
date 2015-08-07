@@ -1,0 +1,8 @@
+*.json
+*.idea
+*.png
+*.pyc
+*.pkl
+*.pdf
+*.dot
+Datasets

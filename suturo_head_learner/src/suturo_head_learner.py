@@ -18,8 +18,6 @@ class SuturoMlHeadLearner(object):
         self.feedSrv = rospy.Service('SuturoMlHeadNextAction', SuturoMlNextAction, self.nextActionCallback)
         self.policy = []
         # self.q = defaultdict(lambda : 10)
-        self.learner = SarsaLambdaLearner()
-        self.q = self.learner.get_q()
         # self.actions = filter(lambda x: x[0].startswith('Const'), [(a,s) for a,s in vars(SuturoMlAction).iteritems()])
         self.actions = ["GRAB-SIDE blue_handle",
                         "GRAB-SIDE red_cube",
@@ -30,6 +28,8 @@ class SuturoMlHeadLearner(object):
                         "PLACE-IN-ZONE",
                         "HAMMERTIME"]
         self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, .0)
+        self.learner = SarsaLambdaLearner(self.policyMaker)
+        self.q = self.learner.get_q()
         # self.policyMaker = ReverseGreedyPolicy(self.q, self.actions)
         rospy.wait_for_service('json_prolog/simple_query')
         self.prolog = Prolog()

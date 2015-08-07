@@ -178,11 +178,12 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "GRABBING_TOP")
-  (write-features-to-node)
+  (write-features-to-node :end 0)
   (write-object-to-node ?object)
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 1))))) 
     (equate ?object new-desig))
   (grab-object ?object))
+  (write-features-to-node :end 1)
 
 
 (def-goal (achieve (grab-side ?object))
@@ -192,12 +193,12 @@ Grabs the given object from the side
 - ?objects :: The object that should be grabed
 "
   (print "GRABBING_SIDE")
-  (write-features-to-node)
+  (write-features-to-node :end 0)
   (write-object-to-node ?object)
   (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 2))))) 
     (equate ?object new-desig))
   (grab-object ?object))
-
+  (write-freatures-to-node :end 1)
 
 (defun grab-object (?object)
   (let ((new-desig (make-designator 'action `((to grasp)
@@ -229,7 +230,7 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "PLACING IN ZONE")
-  (write-features-to-node)
+  (write-features-to-node :end 0)
   (let ((new-desig nil)
         (object-grabbed
           (cond 
@@ -263,7 +264,8 @@ Grabs the given object from the top
                   (setf featureLastActionSuccesful 1))
                 (progn
                   (setf featureGoalPlacedInZoneSuccesful 0)
-                  (setf featureLastActionSuccesful 0))))))))
+                  (setf featureLastActionSuccesful 0)))))))
+    (write-features-to-node :end 1))
         
 
 (def-goal (achieve (open-gripper))
@@ -273,11 +275,12 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "OPENING GRIPPER")
+  (write-features-to-node :end 0)
   (let ((new-desig (make-designator 'action `((to open-gripper) (position 0.0)))))
-    (write-features-to-node)
     (perform new-desig)
     (setf featureLastActionSuccesful 1)
-    (setf featureObjectInHand FEATURE_NONE_IN_HAND)))
+    (setf featureObjectInHand FEATURE_NONE_IN_HAND))
+  (write-features-to-node :end 1))
 
 (def-goal (achieve (turn))
 " 
@@ -286,7 +289,7 @@ Grabs the given object from the top
 - ?objects :: The object that should be grabed
 "
   (print "TURNING")
-  (write-features-to-node)
+  (write-features-to-node :end 0)
   (turn)
   (let ((contact (call-service-contact)))
     (if contact
@@ -295,6 +298,7 @@ Grabs the given object from the top
   (if (eq featureObjectInHand 2)
         (setf featureGoalTurnedSuccesful 1 )
         (setf featureGoalTurnedSuccesful 0)))
+  (write-features-to-node :end 1)
 
 (defun hammertime()
 "
@@ -498,13 +502,14 @@ Initialize the simulation:
 (defun write-object-to-node (object-desig)
   (cram-beliefstate::add-designator-to-active-node object-desig :annotation "object"))
 
-(defun write-features-to-node ()
+(defun write-features-to-node (&key end)
   (let ((new-desig (make-designator 'action `((objectInHand ,featureObjectInHand) 
                                               (lastActionSuccesful ,featureLastActionSuccesful)
                                               (placedInZone ,featureGoalPlacedInZoneSuccesful)
                                               (turned ,featureGoalTurnedSuccesful)))))
-    (cram-beliefstate::add-designator-to-active-node new-desig :annotation "current-state")))
-
+    (if (or (eq end nil) (eq end 0))
+        (cram-beliefstate::add-designator-to-active-node new-desig :annotation "state-before")
+        (cram-beliefstate::add-designator-to-active-node new-desig :annotation "state-after"))))
 (defun turn ()
   "
   Grasp the given object and lift it
