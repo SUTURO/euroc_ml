@@ -502,13 +502,14 @@ Initialize the simulation:
 (defun write-object-to-node (object-desig)
   (cram-beliefstate::add-designator-to-active-node object-desig :annotation "object"))
 
-(defun write-features-to-node ()
+(defun write-features-to-node (&key end)
   (let ((new-desig (make-designator 'action `((objectInHand ,featureObjectInHand) 
                                               (lastActionSuccesful ,featureLastActionSuccesful)
                                               (placedInZone ,featureGoalPlacedInZoneSuccesful)
                                               (turned ,featureGoalTurnedSuccesful)))))
-    (cram-beliefstate::add-designator-to-active-node new-desig :annotation "current-state")))
-
+    (if (or (eq end nil) (eq end 0))
+        (cram-beliefstate::add-designator-to-active-node new-desig :annotation "state-before")
+        (cram-beliefstate::add-designator-to-active-node new-desig :annotation "state-after"))))
 (defun turn ()
   "
   Grasp the given object and lift it
