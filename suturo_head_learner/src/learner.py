@@ -14,7 +14,7 @@ class Learner(object):
 
     def tranform_policy(self, policy):
         p = []
-        for s, a, r, ns in policy:
+        for s, a, ns, r in policy:
             state = []
             for elem in s:
                 state.append(float(elem))
