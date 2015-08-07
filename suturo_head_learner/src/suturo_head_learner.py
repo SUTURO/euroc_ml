@@ -1,14 +1,10 @@
 #!/usr/bin/env python
-from collections import defaultdict
 import rospy
-from suturo_head_mover_msgs.msg._SuturoMlAction import SuturoMlAction
 from suturo_head_mover_msgs.srv._SuturoMlNextAction import SuturoMlNextAction, SuturoMlNextActionRequest, \
     SuturoMlNextActionResponse
 from learner import SarsaLambdaLearner
-from policy import GreedyPolicy
 from json_prolog.json_prolog import Prolog
 from policy import EpsilonGreedyPolicy
-from policy import ReverseGreedyPolicy
 
 __author__ = 'ichumuh'
 
