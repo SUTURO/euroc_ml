@@ -16,9 +16,12 @@ class Learner(object):
         p = []
         for s, a, ns, r in policy:
             state = []
+            nstate=[]
             for elem in s:
                 state.append(float(elem))
-            p.append((tuple(state), str(a), r, float(ns)))
+            for elem in ns:
+                nstate.append(float(elem))
+            p.append((tuple(state), str(a), r, tuple(nstate)))
         return p
 
 class SarsaLambdaLearner(Learner):
@@ -41,7 +44,7 @@ class SarsaLambdaLearner(Learner):
                 next_action = self.policy.getNextAction(ns)
                 next_state = ns
             else:
-                next_state, next_action, egal = policy[i+1]
+                next_state, next_action, egal, egal = policy[i+1]
             delta = r + self.gamma * self.q[(next_state,next_action)] - self.q[(s,a)]
             self.e[(s, a)] = self.e[(s, a)] + 1
             for (s1,a1) in self.e.iterkeys():
