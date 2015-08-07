@@ -23,6 +23,7 @@ class SuturoMlHeadLearner(object):
                         "GRAB-TOP red_cube",
                         "PLACE-IN-ZONE",
                         "HAMMERTIME"]
+        self.q = None
         self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, .0)
         self.learner = SarsaLambdaLearner(self.policyMaker)
         self.q = self.learner.get_q()
@@ -41,7 +42,7 @@ class SuturoMlHeadLearner(object):
         q = self.prolog.query("suturo_learning:get_learning_sequence(A)")
         print("start learning")
         for sol in q.solutions():
-	    print sol
+            print sol
             for a,b in sol.iteritems():
                 for policy in b:
                     self.q = self.learner.learn(policy)
