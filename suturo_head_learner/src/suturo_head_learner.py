@@ -21,8 +21,7 @@ class SuturoMlHeadLearner(object):
                         "OPEN-GRIPPER",
                         "GRAB-TOP blue_handle",
                         "GRAB-TOP red_cube",
-                        "PLACE-IN-ZONE",
-                        "HAMMERTIME"]
+                        "PLACE-IN-ZONE"]
         self.q = None
         self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, .0)
         self.learner = SarsaLambdaLearner(self.policyMaker)
