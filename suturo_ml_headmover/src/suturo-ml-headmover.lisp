@@ -28,7 +28,9 @@
 (defvar FEATURE_RED_CUBE_IN_HAND 1)
 (defvar FEATURE_BLUE_HANDLE_IN_HAND 2)
 (defvar FEATURE_NONE_IN_HAND 0)
+(defvar MAX_EPISODE_LENGTH 10)
 
+(defparameter *current-episode-length* 0)
 (defparameter red-cube nil)
 (defparameter red-cube-collision nil)
 (defparameter red-cube-object-desig nil)
@@ -160,6 +162,14 @@ The sum of the point as geometry_msgs/Point
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
   (print "FUUUU BAR")
+  ; Reset the state + episode length
+  (setf *current-episode-length* 0)
+  (setf featureObjInHand FEATURE_NONE_IN_HAND)
+  (setf featureLastActionSuccesful 1)
+  (setf featureGoalPlacedInZoneSuccesful 0)
+  (setf featureGoalTurnedSuccesful 0)
+  
+  ; execute the plan
   (init-exec)
   (with-process-modules
     (execute-prolog-solutions)
@@ -474,6 +484,11 @@ Initialize the simulation:
   (publish-objects-to-collision-scene))
 
 
+(defun check-end-state ()
+    (if (and (eq featureGoalPlacedInZoneSuccesful 1) (eq featureGoalTurnedSuccesful 1))
+        T
+        nil))
+
 (defun execute-prolog-solutions()
   ""
   (let ((goal nil)
@@ -481,7 +496,8 @@ Initialize the simulation:
     (loop do
       (setf goal (msg-slot-value (call-service-next-action) 'action))
       (print goal)
-      (if (string= goal "HAMMERTIME")
+      (setf *current-episode-length* (+ *current-episode-length* 1))
+      (if (or (eq *current-episode-length* MAX_EPISODE_LENGTH) (check-end-state))
           (setf executeLoop nil)
           (try-solution (cl-utilities::split-sequence #\Space goal)))
       while executeLoop)))
