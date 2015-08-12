@@ -47,8 +47,25 @@ class SuturoMlHeadLearner(object):
                     self.q = self.learner.learn(policy)
                     self.policyMaker.updateQ(self.q)
         print("learning done.\n new q: \n")
+        muh = []
         for a,b in self.q.iteritems():
-            print a, "  ", b
+            muh.append((a, b))
+
+        def cmpmuh(x,y):
+            for i in range(len(x[0][0])):
+                if x[0][0][i] > y[0][0][i]:
+                    return 1
+                elif x[0][0][i] < y[0][0][i]:
+                    return -1
+            if x[0][1] > y[0][1]:
+                return 1
+            elif x[0][1] < y[0][1]:
+                return -1
+            return 0
+
+        muh.sort(cmp=cmpmuh)
+        for a in muh:
+            print a
 
 
 if __name__ == '__main__':
