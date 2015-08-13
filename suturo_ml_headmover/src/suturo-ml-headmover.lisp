@@ -164,7 +164,7 @@ The sum of the point as geometry_msgs/Point
   (print "FUUUU BAR")
   ; Reset the state + episode length
   (setf *current-episode-length* 0)
-  (setf featureObjInHand FEATURE_NONE_IN_HAND)
+  (setf featureObjectInHand FEATURE_NONE_IN_HAND)
   (setf featureLastActionSuccesful 1)
   (setf featureGoalPlacedInZoneSuccesful 0)
   (setf featureGoalTurnedSuccesful 0)
