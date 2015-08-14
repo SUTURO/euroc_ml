@@ -96,7 +96,7 @@
                                           `#(,(roslisp:make-msg 
                                              "shape_msgs/SolidPrimitive" 
                                              (type) 1 
-                                             (dimensions) #(0.048 0.048 0.20)) ) ;0.12
+                                             (dimensions) #(0.048 0.048 0.12)) ) ;0.12
                                           `#(,(roslisp:make-msg 
                                              "geometry_msgs/Pose" 
                                              (position) (roslisp:make-msg 
