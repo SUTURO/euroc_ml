@@ -269,9 +269,9 @@ get_learningaction_reward(_, _, After, Reward) :-
         -> Reward = -1
         ;(Placed = '1.0', Turned = '1.0')
             % termination state
-            -> Reward = 1
+            -> Reward = 10
             % anything else
-            ; Reward = -1
+            ; Reward = 0
     ).
          
 

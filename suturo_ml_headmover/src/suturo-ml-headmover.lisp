@@ -143,25 +143,22 @@ The sum of the point as geometry_msgs/Point
       (unless (wait-for-service +service-name-start-simulator+ +timeout-service+)
         (ros-error (task-selector) "Service ~a timed out." +service-name-start-simulator+)
         (fail))
-      (ros-info (task-selector) "Starting simulator...")
+      (ros-info SUTURO-ML-HEADMOVER "Starting simulator...")
       (let* ((ret (call-service +service-name-start-simulator+
                                             'euroc_c2_msgs-srv:StartSimulator
                                             :user_id "suturo"
                                             :scene_name tsk))
-             (_ (ros-info (task-selector) "Task starter return: ~a" ret))
              (task-description (slot-value ret 'euroc_c2_msgs-srv:description_yaml)))
+        (ros-debug SUTURO-ML-HEADMOVER  "Task starter return: ~a" ret)
         (publish-msg *yaml-pub* :data task-description)
         (let ((task (remove #\  (get-param "/task_description/public_description/task_name" tsk)))) ; whitespace sensitive!
-          (ros-info (task-selector) "Starting plan ~a..." task)
+          (ros-info SUTURO-ML-HEADMOVER "Starting plan ~a..." task)
           (unwind-protect
-            (print "funcall")
-            (defparameter my-task task)
-            (funcall (symbol-function (read-from-string (format nil "exec:~a" task))))
-            (print "funcall done")))))))
+               (defparameter my-task task)
+            (funcall (symbol-function (read-from-string (format nil "exec:~a" task))))))))))
 
 (def-top-level-cram-function head_mover ()
   "Top level plan for task 1 of the euroc challenge"
-  (print "FUUUU BAR")
   ; Reset the state + episode length
   (setf *current-episode-length* 0)
   (setf featureObjectInHand FEATURE_NONE_IN_HAND)
@@ -187,12 +184,13 @@ Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
-  (print "GRABBING_TOP")
+  (ros-debug SUTURO-ML-HEADMOVER "GRABBING_TOP")
   (write-features-to-node 0)
-  (write-object-to-node ?object)
-  (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 1))))) 
+  (setf featureLastActionSuccesful 0)
+  (let ((new-desig (copy-designator (current-desig ?object) :new-description `((prefer-grasp-position 1))))) 
     (equate ?object new-desig))
-  (grab-object ?object)
+  (write-object-to-node (current-desig ?object))
+  (grab-object (current-desig ?object))
   (write-features-to-node 1))
 
 
@@ -202,26 +200,28 @@ Grabs the given object from the side
 * Arguments
 - ?objects :: The object that should be grabed
 "
-  (print "GRABBING_SIDE")
+  (ros-debug SUTURO-ML-HEADMOVER "GRABBING_SIDE")
   (write-features-to-node 0)
-  (write-object-to-node ?object)
-  (let ((new-desig (copy-designator ?object :new-description `((prefer-grasp-position 2))))) 
+  (setf featureLastActionSuccesful 0)
+  (let ((new-desig (copy-designator (current-desig ?object) :new-description `((prefer-grasp-position 2))))) 
     (equate ?object new-desig))
-  (grab-object ?object)
+  (write-object-to-node (current-desig ?object))
+  (grab-object (current-desig ?object))
   (write-features-to-node 1))
 
 (defun grab-object (?object)
-  (let ((new-desig (make-designator 'action `((to grasp)
+  (if (eq featureObjectInHand FEATURE_NONE_IN_HAND)
+    (let ((new-desig (make-designator 'action `((to grasp)
                                               (obj ,?object))))) 
-    (with-failure-handling
-        ((cram-plan-failures:manipulation-failure (e)
-                                                  (declare (ignore e))
-                                                  (setf featureLastActionSuccesful 0)
-                                                  (return)))
-      (perform new-desig)
-      (handle-object-in-hand-feature ?object)
-      (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
-      (setf featureLastActionSuccesful 1))))
+      (with-failure-handling
+          ((cram-plan-failures:manipulation-failure (e)
+                                                    (declare (ignore e))
+                                                    (setf featureLastActionSuccesful 0)
+                                                    (return)))
+        (perform new-desig)
+        (handle-object-in-hand-feature ?object)
+        (setf last-object-grabbed (msg-slot-value (desig-prop-value ?object 'cram-designator-properties:collision-object) 'id ))
+        (setf featureLastActionSuccesful 1)))))
 
 (defun handle-object-in-hand-feature(object-desig)
   (cond
@@ -229,38 +229,36 @@ Grabs the given object from the side
       ((string= (msg-slot-value (desig-prop-value object-desig 'cram-designator-properties:collision-object) 'id) "blue_handle") (setf featureObjectInHand FEATURE_BLUE_HANDLE_IN_HAND))
       (t (setf featureObjectInHand FEATURE_NONE_IN_HAND))))
 
-;(def-goal (achieve (hammertime))
-;    (write-features-to-node)
-;    (hammertime))
-
 (def-goal (achieve (place-in-zone))
 " 
 Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
-  (print "PLACING IN ZONE")
+  (ros-debug SUTURO-ML-HEADMOVER "PLACING IN ZONE")
   (write-features-to-node 0)
-  (let ((new-desig nil)
-        (object-grabbed
-          (cond 
-            ((string= last-object-grabbed "red_cube") red-cube-object-desig)
-            ((string= last-object-grabbed "blue_handle") blue-handle-object-desig)
-            (t nil))))
+  (setf featureLastActionSuccesful 0)
+  (let* ((new-desig nil)
+         (object-grabbed
+           (cond 
+             ((string= last-object-grabbed "red_cube") (current-desig red-cube-object-desig))
+             ((string= last-object-grabbed "blue_handle") (current-desig blue-handle-object-desig))
+             (t nil))))
+    (ros-debug SUTURO-ML-HEADMOVER "obj: ~a\n" object-grabbed)
     (if object-grabbed
         (let ((target-location (make-designator 'location `((pose ,(cl-tf:make-pose-stamped 
-          (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'HEADER) 'FRAME_ID)
-          (ros-time) 
-          (cl-transforms:make-3d-vector 
-           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'POSITION) 'X)
-           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'POSITION) 'Y)
-           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'POSITION) 'Z))
-          (cl-transforms:make-quaternion 
-           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'X)
-           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'Y)
-           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'Z)
-           (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'W))
-          )))))) 
+                                                                    (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'HEADER) 'FRAME_ID)
+                                                                    (ros-time) 
+                                                                    (cl-transforms:make-3d-vector 
+                                                                     (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'POSITION) 'X)
+                                                                     (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'POSITION) 'Y)
+                                                                     (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'POSITION) 'Z))
+                                                                    (cl-transforms:make-quaternion 
+                                                                     (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'X)
+                                                                     (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'Y)
+                                                                     (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'Z)
+                                                                     (msg-slot-value (msg-slot-value (msg-slot-value (desig-prop-value (current-desig object-grabbed) 'cram-designator-properties:target-zone) 'POSE) 'ORIENTATION) 'W))
+                                                                    )))))) 
           (setf new-desig (make-designator 'action `((to put-down)
                                                      (obj ,(current-desig object-grabbed))
                                                      (at ,target-location))))
@@ -275,7 +273,7 @@ Grabs the given object from the top
                 (progn
                   (setf featureGoalPlacedInZoneSuccesful 0)
                   (setf featureLastActionSuccesful 0)))))))
-    (write-features-to-node 1))
+  (write-features-to-node 1))
         
 
 (def-goal (achieve (open-gripper))
@@ -284,8 +282,9 @@ Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
-  (print "OPENING GRIPPER")
+  (ros-debug SUTURO-ML-HEADMOVER "OPENING GRIPPER")
   (write-features-to-node  0)
+  (setf featureLastActionSuccesful 0)
   (let ((new-desig (make-designator 'action `((to open-gripper) (position 0.0)))))
     (perform new-desig)
     (setf featureLastActionSuccesful 1)
@@ -298,8 +297,9 @@ Grabs the given object from the top
 * Arguments
 - ?objects :: The object that should be grabed
 "
-  (print "TURNING")
+  (ros-debug SUTURO-ML-HEADMOVER "TURNING")
   (write-features-to-node 0)
+  (setf featureLastActionSuccesful 0)
   (turn)
   (let ((contact (call-service-contact)))
     (if contact
@@ -314,13 +314,13 @@ Grabs the given object from the top
 "
 Kills all ROS-Nodes - including the euroc simulator and this plan and associated nodes
 "
-  (print "STOP! HAMMERTIME!")
+  (ros-debug SUTURO-ML-HEADMOVER "STOP! HAMMERTIME!")
   (when cram-beliefstate::*logging-enabled*
-    (ros-info (task-selector) "Saving log files...")
+    (ros-info SUTURO-ML-HEADMOVER "Saving log files...")
     (cram-beliefstate:extract-files))
   (let
     ((full-service-name "/suturo/hammertime"))
-    (print (concatenate 'string "calling service: " full-service-name))
+    (ros-debug SUTURO-ML-HEADMOVER "calling service: ~a" full-service-name)
     (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
         (progn
           (let 
@@ -329,7 +329,7 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
           nil)
         (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:Hammertime :foo "")))
           (roslisp:msg-slot-value value 'ok)
-          (print "Service call done")))))
+          (ros-debug SUTURO-ML-HEADMOVER "Service call done")))))
 
 (defun init-exec()
   (init-exec-collision-scene)
@@ -402,7 +402,8 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
                                                                                                                                       (:X :ORIENTATION) 0
                                                                                                                                       (:Y :ORIENTATION) 0
                                                                                                                                       (:Y :ORIENTATION) 0
-                                                                                                                                      :POSITION (msg-slot-value zone 'target_position))))))))
+                                                                                                                                      :POSITION (msg-slot-value zone 'target_position))))
+                                                                                               (grasp-position nil)))))
         ((string= (msg-slot-value zone 'expected_object) "blue_handle") (setf blue-handle-object-desig
                                                                             (make-designator 'object 
                                                                                              `((object-name ,(msg-slot-value zone 'expected_object))
@@ -416,14 +417,15 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
                                                                                                                                       (:X :ORIENTATION) 0
                                                                                                                                       (:Y :ORIENTATION) 0
                                                                                                                                       (:Y :ORIENTATION) 0
-                                                                                                                                      :POSITION (msg-slot-value zone 'target_position))))))))
+                                                                                                                                      :POSITION (msg-slot-value zone 'target_position))))
+                                                                                               (grasp-position nil)))))
 
-   ))) 
+   )))
  
 (defun call-service-contact ()
   (let
       ((full-service-name "SuturoMlContactdetector"))
-    (print (concatenate 'string "calling service: " full-service-name))
+    (ros-debug SUTURO-ML-HEADMOVER "calling service: ~a" full-service-name)
     (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
         (progn
           (let 
@@ -437,7 +439,7 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
 (defun call-service-next-action ()
   (let
       ((full-service-name "SuturoMlHeadNextAction"))
-    (print (concatenate 'string "calling service: " full-service-name))
+    (ros-debug SUTURO-ML-HEADMOVER "calling service: ~a" full-service-name)
     (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
         (progn
           (let 
@@ -459,7 +461,7 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
 (defun call-service-state (service-name taskdata)
   (let
       ((full-service-name (concatenate 'string "suturo/startup/" service-name)))
-    (print (concatenate 'string "calling service: " service-name))
+    (ros-debug SUTURO-ML-HEADMOVER "calling service: ~a" service-name)
     (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
         (progn
           (let 
@@ -498,41 +500,43 @@ Initialize the simulation:
       (setf *current-episode-length* (+ *current-episode-length* 1))
       (if (eq *current-episode-length* MAX_EPISODE_LENGTH)
           (progn
-            (print "MAX EPISODE LENGTH REACHED - RESETTING")
+            (ros-info SUTURO-ML-HEADMOVER "MAX EPISODE LENGTH REACHED - RESETTING")
             (setf executeLoop nil))
           (if (check-end-state)
             (progn
-                (print "END OF PLAN REACHED - RESETTING")
+                (ros-info SUTURO-ML-HEADMOVER "END OF PLAN REACHED - RESETTING")
                 (setf executeLoop nil))
             (progn
-                (print goal)
+                (ros-info SUTURO-ML-HEADMOVER t goal)
                 (try-solution (cl-utilities::split-sequence #\Space goal)))))
       while executeLoop)))
   
 (defun try-solution (query)
   (let ((object nil))
     (cond
-      ((string= (second query) "red_cube") (setf object red-cube-object-desig))
-      ((string= (second query) "blue_handle") (setf object blue-handle-object-desig)))
+      ((string= (second query) "red_cube") (setf object (current-desig red-cube-object-desig)))
+      ((string= (second query) "blue_handle") (setf object (current-desig blue-handle-object-desig))))
     (cond
       ((string= (first query) "GRAB-TOP") (achieve `(grab-top ,object)))
       ((string= (first query) "GRAB-SIDE") (achieve `(grab-side ,object)))
       ((string= (first query) "TURN") (achieve `(turn)))
       ((string= (first query) "OPEN-GRIPPER") (achieve `(open-gripper)))
       ((string= (first query) "PLACE-IN-ZONE") (achieve `(place-in-zone)))
-      (t (print "No matching goal found")))))
+      (t (ros-error nil t "No matching goal found")))))
 
 (defun write-object-to-node (object-desig)
-  (cram-beliefstate::add-designator-to-active-node object-desig :annotation "object"))
+  (cram-beliefstate::add-designator-to-active-node (current-desig object-desig) :annotation "object"))
 
 (defun write-features-to-node (end)
   (let ((new-desig (make-designator 'action `((objectInHand ,featureObjectInHand) 
                                               (lastActionSuccesful ,featureLastActionSuccesful)
                                               (placedInZone ,featureGoalPlacedInZoneSuccesful)
                                               (turned ,featureGoalTurnedSuccesful)))))
+    (ros-debug SUTURO-ML-HEADMOVER "Current State: ~a" new-desig)
     (if (or (eq end nil) (eq end 0))
         (cram-beliefstate::add-designator-to-active-node new-desig :annotation "state-before")
         (cram-beliefstate::add-designator-to-active-node new-desig :annotation "state-after"))))
+
 (defun turn ()
   "
   Grasp the given object and lift it
@@ -543,15 +547,13 @@ Initialize the simulation:
       (let ((timed-out-text (concatenate 'string "Times out waiting for service" +service-name-move-hand+)))
         (roslisp:ros-warn nil t timed-out-text)
         (cpl-impl:fail 'cram-plan-failures:manipulation-failure))
-      (progn
-        (let* ((response (roslisp:call-service +service-name-move-hand+ 
-                                               'suturo_manipulation_msgs-srv:MoveRelative
-                                               :relative_goal (make-msg "geometry_msgs/TwistStamped"
-                                                                        (twist) (make-msg "geometry_msgs/Twist"
-                                                                                          (linear) (make-msg "geometry_msgs/Vector3"
-                                                                                                              (y) 0.0)
-                                                                                          (angular) (make-msg "geometry_msgs/Vector3"
-                                                                                                              (z) 3.1415926))))))
-          (print (roslisp:msg-slot-value response 'result))))))
+      (roslisp:call-service +service-name-move-hand+ 
+                            'suturo_manipulation_msgs-srv:MoveRelative
+                            :relative_goal (make-msg "geometry_msgs/TwistStamped"
+                                                     (twist) (make-msg "geometry_msgs/Twist"
+                                                                       (linear) (make-msg "geometry_msgs/Vector3"
+                                                                                          (y) 0.0)
+                                                                       (angular) (make-msg "geometry_msgs/Vector3"
+                                                                                           (z) 3.1415926))))))
 
 

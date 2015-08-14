@@ -3,7 +3,7 @@
   <arg name="logged_topics" default="/tf /logged_designators /logged_images_out/compressed" />
 
   <!-- CRAM Logging -->
-  <node name="semrec_ros" pkg="semrec" type="semrec" output="screen" />
+  <node name="semrec_ros" pkg="semrec" type="semrec" />
 
   <!-- Compress logged images for mongodb storage... -->
   <node name="image_compression" pkg="image_transport" type="republish" args="raw in:=/logged_images out:=/logged_images_out" />
@@ -11,6 +11,4 @@
   <!-- Topic logging -->
   <node name="topic_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="$(arg logged_topics)" />
 
-  <!-- start learner -->
-  <node name="SuturoMlHeadLearner" pkg="suturo_head_learner" type="suturo_head_learner.py" />
 </launch>

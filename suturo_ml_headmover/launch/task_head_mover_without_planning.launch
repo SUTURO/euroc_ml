@@ -1,15 +1,17 @@
 <launch>
+  <!-- include custom configration -->
+  <env name="ROSCONSOLE_CONFIG_FILE" value="$(find suturo_ml_headmover)/config/rosconsole.conf" /> 
 
   <!-- Run only task variation 1 by default -->
   <arg name="task" default="head_mover" />
-  <arg name="disable_prolog" default="false" />
+  <arg name="disable_learning" default="false" />
   <arg name="disable_logging" default="false" />
 
   <!-- Let the /clock topic use the simulatioon time instead of real time. This param has to be set to true before we start other nodes! -->
   <param name="use_sim_time" type="bool" value="true" />
 
   <!-- Start learning -->
-  <include unless="$(arg disable_prolog)" file="$(find suturo_learning)/launch/json_prolog.launch" />
+  <include unless="$(arg disable_learning)" file="$(find suturo_ml_headmover)/launch/learning.launch" />
 
   <!-- Start manipulation -->
   <include file="$(find euroc_launch)/launch/manipulation.launch" />
@@ -31,7 +33,7 @@
   <param name="task_variation" value="$(arg task)" />
   <rosparam command="load" file="$(find suturo_ml_headmover)/launch/$(arg task).yml" ns="/task_description" />
 
-<!-- Start logging -->
+  <!-- Start logging -->
   <include unless="$(arg disable_logging)" file="$(find suturo_ml_headmover)/launch/logging.launch" />
 
   <node pkg="gazebo_publisher" name="gazebo_contact_publisher" type="gazebo_contact_publisher" output="screen" />  
