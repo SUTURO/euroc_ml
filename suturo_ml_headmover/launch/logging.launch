@@ -1,6 +1,6 @@
 <launch>
   <!-- Log specified topics -->
-  <arg name="logged_topics" default="/tf /logged_designators /logged_images_out/compressed" />
+  <arg name="logged_topics" default="/tf /logged_designators" />
 
   <!-- CRAM Logging -->
   <node name="semrec_ros" pkg="semrec" type="semrec" />

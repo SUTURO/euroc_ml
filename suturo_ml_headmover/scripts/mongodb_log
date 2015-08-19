@@ -1,11 +1,9 @@
 #!/bin/sh
-
+# FUUUUUU!!! FUCKING TIMING SHIT!!!
+sleep 5
 DB_NAME=`ls -1 ~/sr_experimental_data | tail -n 1`
 
-if [ -z "$DB_NAME_ID" ]; then
-  DB_NAME_ID="1"
-fi
-
-# DB_NAME=$DB_NAME_ID
-# echo $DB_NAME
+echo TEST
+echo $DB_NAME
+echo TEST_DONE
 exec rosrun mongodb_log mongodb_log --mongodb-name $DB_NAME --mongodb-host=$MONGO_PORT_27017_TCP_ADDR $@
