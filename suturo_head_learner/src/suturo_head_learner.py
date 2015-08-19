@@ -15,7 +15,7 @@ class SuturoMlHeadLearner(object):
 
     def __init__(self):
         self.feedSrv = rospy.Service('SuturoMlHeadNextAction', SuturoMlNextAction, self.nextActionCallback)
-        self.policyPringPub = rospy.Publisher('SuturoMlPolicy', String, queue_size=10)
+        self.policyPringPub = rospy.Publisher('SuturoMlPolicy', String, queue_size=10, latch=True)
         self.policy = []
         # self.q = defaultdict(lambda : 10)
         # self.actions = filter(lambda x: x[0].startswith('Const'), [(a,s) for a,s in vars(SuturoMlAction).iteritems()])
