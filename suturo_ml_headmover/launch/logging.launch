@@ -5,9 +5,6 @@
   <!-- CRAM Logging -->
   <node name="semrec_ros" pkg="semrec" type="semrec" />
 
-  <!-- Compress logged images for mongodb storage... -->
-  <node name="image_compression" pkg="image_transport" type="republish" args="raw in:=/logged_images out:=/logged_images_out" />
-
   <!-- Topic logging -->
   <node name="topic_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="$(arg logged_topics)" />
 
