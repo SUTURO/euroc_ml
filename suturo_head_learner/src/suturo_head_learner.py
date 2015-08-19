@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from collections import defaultdict
+from copy import deepcopy
 import rospy
 from std_msgs.msg._String import String
 from suturo_head_mover_msgs.srv._SuturoMlNextAction import SuturoMlNextAction, SuturoMlNextActionRequest, \
@@ -49,36 +51,43 @@ class SuturoMlHeadLearner(object):
                     self.q = self.learner.learn(policy)
                     self.policyMaker.updateQ(self.q)
         print("learning done.\n new q: \n")
+
+        ppp = defaultdict(lambda : ((0,0),))
+        tmp_q = deepcopy(self.q)
+        for s in self.q.iterkeys():
+            state = s[0]
+            for a in self.actions:
+                b = tmp_q[(state,a)]
+                if ppp[state][0][1] == b and not ppp[state].__contains__((a,b)):
+                    ppp[state] = ppp[state] + ((a,b),)
+                elif ppp[state][0][1] < b:
+                    ppp[state] = ((a,b),)
+
+        # for a,b in self.q.iteritems():
+        #     print a,b
         muh = []
-        for a,b in self.q.iteritems():
+        for a,b in ppp.iteritems():
             muh.append((a, b))
 
         def cmpmuh(x,y):
-            for i in range(len(x[0][0])):
-                if x[0][0][i] > y[0][0][i]:
+            for i in range(len(x[0])):
+                if x[0][i] > y[0][i]:
                     return 1
-                elif x[0][0][i] < y[0][0][i]:
+                elif x[0][i] < y[0][i]:
                     return -1
-            if x[0][1] > y[0][1]:
+            if x[1][1] > y[1][1]:
                 return 1
-            elif x[0][1] < y[0][1]:
+            elif x[1][1] < y[1][1]:
                 return -1
             return 0
 
         muh.sort(cmp=cmpmuh)
-        ppp = []
-        tmp = None
+        msg = ""
         for a in muh:
-            if tmp is None:
-                tmp = a
-                continue
-            else:
-                if a[0] == tmp[0] and a[2] > tmp[2]:
-                    tmp = a
-                else:
-                    ppp.append(tmp)
-                    tmp = None
             print a
+            msg += str(a[0]) +"\n" +str(a[1]) + "\n\n"
+        s = String(msg)
+        self.policyPringPub.publish(s)
 
     def pub_policy(self):
         pass

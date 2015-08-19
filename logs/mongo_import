@@ -11,7 +11,7 @@ if [ $# -eq 0 ]
 	# if ! [ $? -eq 0 ]; then
 	    # exit 0
 	# fi
-	cp -r $1 ~/sr_experimental/
+	cp -r $1 ~/sr_experimental_data/
 	cd $1
 	if ! [ $? -eq 0 ]; then
 	    exit 0
