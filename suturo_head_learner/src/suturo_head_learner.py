@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
 from copy import deepcopy
+from optparse import OptionParser
 import rospy
 from std_msgs.msg._String import String
 from suturo_head_mover_msgs.srv._SuturoMlNextAction import SuturoMlNextAction, SuturoMlNextActionRequest, \
@@ -13,7 +14,7 @@ __author__ = 'ichumuh'
 
 class SuturoMlHeadLearner(object):
 
-    def __init__(self):
+    def __init__(self, epsilon):
         self.feedSrv = rospy.Service('SuturoMlHeadNextAction', SuturoMlNextAction, self.nextActionCallback)
         self.policyPringPub = rospy.Publisher('SuturoMlPolicy', String, queue_size=10, latch=True)
         self.policy = []
@@ -27,7 +28,7 @@ class SuturoMlHeadLearner(object):
                         "GRAB-TOP red_cube",
                         "PLACE-IN-ZONE"]
         self.q = None
-        self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, .0)
+        self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, epsilon)
         self.learner = SarsaLambdaLearner(self.policyMaker)
         self.q = self.learner.get_q()
         # self.policyMaker = ReverseGreedyPolicy(self.q, self.actions)
@@ -95,6 +96,10 @@ class SuturoMlHeadLearner(object):
 
 if __name__ == '__main__':
     rospy.init_node("SuturoMlHeadLearner", anonymous=True)
-    muh = SuturoMlHeadLearner()
+    parser = OptionParser()
+    parser.add_option("--epsilon", dest="epsilon", default=0., type="float")
+    (options, args) = parser.parse_args()
+    # print "asdasd ", options.alpha
+    muh = SuturoMlHeadLearner(options.epsilon)
     muh.doTheShit()
     rospy.spin()

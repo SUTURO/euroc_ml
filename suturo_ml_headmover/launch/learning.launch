@@ -3,5 +3,5 @@
   <include file="$(find suturo_learning)/launch/json_prolog.launch" />
 
   <!-- start learner -->
-  <node name="SuturoMlHeadLearner" pkg="suturo_head_learner" type="suturo_head_learner.py" output="screen" />
+  <node name="SuturoMlHeadLearner" pkg="suturo_head_learner" type="suturo_head_learner.py" args="--epsilon=0.0" output="screen" />
 </launch>

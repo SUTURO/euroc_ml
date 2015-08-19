@@ -1,4 +1,5 @@
 import random
+import rospy
 
 __author__ = 'suturo'
 
@@ -30,6 +31,7 @@ class EpsilonGreedyPolicy(Policy):
 
     def __init__(self, q, actions, epsilon=.1):
         super(EpsilonGreedyPolicy,self).__init__(q, actions)
+        rospy.loginfo("Epsilon Greedy = "+str(epsilon))
         self.epsilon = epsilon
 
     def getNextAction2(self, state):
