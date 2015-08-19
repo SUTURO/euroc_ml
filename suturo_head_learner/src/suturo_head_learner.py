@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import rospy
+from std_msgs.msg._String import String
 from suturo_head_mover_msgs.srv._SuturoMlNextAction import SuturoMlNextAction, SuturoMlNextActionRequest, \
     SuturoMlNextActionResponse
 from learner import SarsaLambdaLearner
@@ -12,6 +13,7 @@ class SuturoMlHeadLearner(object):
 
     def __init__(self):
         self.feedSrv = rospy.Service('SuturoMlHeadNextAction', SuturoMlNextAction, self.nextActionCallback)
+        self.policyPringPub = rospy.Publisher('SuturoMlPolicy', String, queue_size=10)
         self.policy = []
         # self.q = defaultdict(lambda : 10)
         # self.actions = filter(lambda x: x[0].startswith('Const'), [(a,s) for a,s in vars(SuturoMlAction).iteritems()])
@@ -64,8 +66,22 @@ class SuturoMlHeadLearner(object):
             return 0
 
         muh.sort(cmp=cmpmuh)
+        ppp = []
+        tmp = None
         for a in muh:
+            if tmp is None:
+                tmp = a
+                continue
+            else:
+                if a[0] == tmp[0] and a[2] > tmp[2]:
+                    tmp = a
+                else:
+                    ppp.append(tmp)
+                    tmp = None
             print a
+
+    def pub_policy(self):
+        pass
 
 
 if __name__ == '__main__':
