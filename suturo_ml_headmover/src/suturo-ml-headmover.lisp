@@ -101,7 +101,7 @@
                                              "geometry_msgs/Pose" 
                                              (position) (roslisp:make-msg 
                                                          "geometry_msgs/Point" 
-                                                         (x) 0.0 (y) 0.5 (z) 0.1) ;0.06
+                                                         (x) 0.0 (y) 0.5 (z) 0.06) ;0.06
                                              (orientation) (roslisp:make-msg 
                                                             "geometry_msgs/Quaternion" 
                                                             (x) 0.0 (y) 0.0 (z) 0.0 (w) 1.0)))
@@ -272,7 +272,8 @@ Grabs the given object from the top
                   (setf featureLastActionSuccesful 1))
                 (progn
                   (setf featureGoalPlacedInZoneSuccesful 0)
-                  (setf featureLastActionSuccesful 0)))))))
+                  (setf featureLastActionSuccesful 0))))
+	(setf last-object-grabbed nil))))
   (write-features-to-node 1))
         
 
