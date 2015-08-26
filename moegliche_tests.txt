@@ -1,0 +1,9 @@
+- Wurde der red_cube gegriffen?
+- Wurde der red_cube abgestelt?
+- Wurde das blue_handle gegriffen?
+- Wurde das blue_handle gedreht?
+- Hat die Kugel den Arm berührt?
+- War der Plan erfolgreich?
+(- Liegt der Ball auf dem Tisch?)
+- Sind Aktionen Fehlgeschlagen?
+- Wurden Aktionen ausgeführt die den Zustand nicht geändert haben?
