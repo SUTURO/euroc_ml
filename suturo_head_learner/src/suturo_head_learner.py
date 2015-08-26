@@ -28,7 +28,7 @@ class SuturoMlHeadLearner(object):
                         "PLACE-IN-ZONE"]
         self.q = None
         self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, .0)
-        self.learner = SarsaLambdaLearner(self.policyMaker)
+        self.learner = SarsaLambdaLearner(self.policyMaker, l=.5)
         self.q = self.learner.get_q()
         # self.policyMaker = ReverseGreedyPolicy(self.q, self.actions)
         rospy.wait_for_service('json_prolog/simple_query')
@@ -44,15 +44,14 @@ class SuturoMlHeadLearner(object):
     def doTheShit(self):
         q = self.prolog.query("suturo_learning:get_learning_sequence(A)")
         print("start learning")
-        for sol in q.solutions():
-            print sol
-            for a,b in sol.iteritems():
-                for policy in b:
-                    self.q = self.learner.learn(policy)
-                    self.policyMaker.updateQ(self.q)
-        print("learning done.\n new q: \n")
+        for solution in q.solutions():
+            # print sol
+            policy = solution["A"]
+            self.q = self.learner.learn(policy)
+            self.policyMaker.updateQ(self.q)
+        print("learning done.\n")
 
-        ppp = defaultdict(lambda : ((0,0),))
+        ppp = defaultdict(lambda : ((-999999999999,-999999999999),))
         tmp_q = deepcopy(self.q)
         for s in self.q.iterkeys():
             state = s[0]

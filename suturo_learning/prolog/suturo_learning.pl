@@ -120,7 +120,6 @@ get_robot_experiment_name(Experiment,Name):-
 
 % LEARNINGACTIONS will now be defined as the achieved CRAM Goals
 get_learningactions_in_experiment(Experiment, La):-
-  l_get_robot_experiment(Experiment),
   l_get_sub_actions(Experiment,La),
   l_get_type_of_entity(La,'http://knowrob.org/kb/knowrob.owl#CRAMAchieve').
 
@@ -259,31 +258,30 @@ get_learningaction_states(Action, Before, After) :-
     get_learningaction_state(Action, 'http://knowrob.org/kb/knowrob.owl#stateAfter', After).
 
 
-get_learningaction_reward(_, _, After, Reward) :-
+get_learningaction_reward(Before, _, After, Reward) :-
     % check for lastActionSuccessful
     nth1(2, After, LastAction),
-    nth1(3, After, Placed),
-    nth1(4, After, Turned),
-    (LastAction = '0.0'
+    nth1(3, After, PlacedAfter),
+    nth1(4, After, TurnedAfter),
+    nth1(3, Before, PlacedBefore),
+    nth1(4, Before, TurnedBefore),
+    (
         % last action failed
-        -> Reward = -1
-        ;(Placed = '1.0', Turned = '1.0')
-            % termination state
-            -> Reward = 10
-            % anything else
-            ; Reward = 0
+        LastAction = '0.0' -> Reward = -1
+        % termination state
+        ;((PlacedAfter = '1.0', PlacedBefore = '0.0'); (TurnedAfter = '1.0', TurnedBefore = '0.0')) -> Reward = 5
+        % anything else
+        ; Reward = 0
     ).
          
 
 get_learning_sequence(ActionStateSequence) :-
-    bagof(ASS, (
-        findall([StateBefore, Action, StateAfter, Reward], (
-            get_learningactions_in_experiment(Exp, La),
-            get_robot_experiment_name(Exp, ExpName),
-            mang_db(ExpName),
-            get_learningaction_name(La, Action),
-            get_learningaction_states(La, StateBefore, StateAfter),
-            get_learningaction_reward(StateBefore, Action, StateAfter, Reward)
-        ), ASS)
+    l_get_robot_experiment(Exp),
+    get_robot_experiment_name(Exp, ExpName),
+    mang_db(ExpName),
+    findall([StateBefore, Action, StateAfter, Reward], (
+        get_learningactions_in_experiment(Exp, La),
+        get_learningaction_name(La, Action),
+        get_learningaction_states(La, StateBefore, StateAfter),
+        get_learningaction_reward(StateBefore, Action, StateAfter, Reward)
     ), ActionStateSequence).
-
