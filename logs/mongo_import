@@ -1,4 +1,12 @@
 #!/bin/sh
+# Comment by PM, 
+# Wed Aug 26 12:26:48 UTC 2015
+# 
+# This script uses the $MONGO_PORT_27017_TCP_ADDR system variable, in order to
+# determine the host you want to connect to
+# This variable will be set in dockuro version 
+# with the git revision e9df5f042aa923bc5f0e7069c2806b5b7a39d975
+# and the latest containers you get, after an dockuro update
 
 if [ $# -eq 0 ]
   then
@@ -16,8 +24,8 @@ if [ $# -eq 0 ]
 	if ! [ $? -eq 0 ]; then
 	    exit 0
 	fi
-	mongorestore --collection logged_designators --db $1 dump/$1/logged_designators.bson
-	mongorestore --collection system.indexes --db $1 dump/$1/system.indexes.bson
-	mongorestore --collection tf --db $1 dump/$1/tf.bson
+	mongorestore --host $MONGO_PORT_27017_TCP_ADDR --collection logged_designators --db $1 dump/$1/logged_designators.bson
+	mongorestore --host $MONGO_PORT_27017_TCP_ADDR --collection system.indexes --db $1 dump/$1/system.indexes.bson
+	mongorestore --host $MONGO_PORT_27017_TCP_ADDR --collection tf --db $1 dump/$1/tf.bson
 	# mongorestore --collection tf --db exp-2015-08-01_11-33-33 dump/exp-2015-08-01_11-33-33/tf.bson
 fi

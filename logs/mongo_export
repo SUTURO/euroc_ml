@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# Comment by PM, 
+# Wed Aug 26 12:26:48 UTC 2015
+# 
+# This script uses the $MONGO_PORT_27017_TCP_ADDR system variable, in order to
+# determine the host you want to connect to
+# This variable will be set in dockuro version 
+# with the git revision e9df5f042aa923bc5f0e7069c2806b5b7a39d975
+# and the latest containers you get, after an dockuro update
+
 if [ $# -eq 0 ]
   then
     echo "example usage: ./mongo_export ../../sr_experimental_data/exp-2015-07-29_08-45-18"
@@ -14,7 +23,7 @@ if [ $# -eq 0 ]
 	if ! [ $? -eq 0 ]; then
 	    exit 0
 	fi
-	mongodump --db $MUH --collection logged_designators 
-	mongodump --db $MUH --collection system.indexes 
-	mongodump --db $MUH --collection tf 
+	mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection logged_designators 
+	mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection system.indexes 
+	mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection tf 
 fi
