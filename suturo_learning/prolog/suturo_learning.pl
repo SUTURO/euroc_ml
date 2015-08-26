@@ -275,8 +275,8 @@ get_learningaction_reward(Before, _, After, Reward) :-
     ).
          
 
-get_learning_sequence(ActionStateSequence) :-
-    l_get_robot_experiment(Exp),
+% Exp MUST be true in l_get_robot_experiment(Exp)
+get_learning_sequence_w_exp(Exp,ActionStateSequence) :-
     get_robot_experiment_name(Exp, ExpName),
     mang_db(ExpName),
     findall([StateBefore, Action, StateAfter, Reward], (
@@ -285,3 +285,17 @@ get_learning_sequence(ActionStateSequence) :-
         get_learningaction_states(La, StateBefore, StateAfter),
         get_learningaction_reward(StateBefore, Action, StateAfter, Reward)
     ), ActionStateSequence).
+
+
+get_learning_sequence(ActionStateSequence) :-
+    l_get_robot_experiment(Exp),
+    get_learning_sequence_w_exp(Exp,ActionStateSequence).
+    % get_robot_experiment_name(Exp, ExpName),
+    % mang_db(ExpName),
+    % findall([StateBefore, Action, StateAfter, Reward], (
+    %     get_learningactions_in_experiment(Exp, La),
+    %     get_learningaction_name(La, Action),
+    %     get_learningaction_states(La, StateBefore, StateAfter),
+    %     get_learningaction_reward(StateBefore, Action, StateAfter, Reward)
+    % ), ActionStateSequence).
+
