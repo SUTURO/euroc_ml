@@ -105,7 +105,7 @@ def js_representation_for_experiment(ExperimentObject):
 
     action_id = 1
     for a in ExperimentObject.actions:
-        action_name = a[1]
+        action_name = a
         result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', id: '" + str(action_id)+"-"+str(action_id+1) + "', font: {align: 'horizontal'}},"
         action_id += 1
 
@@ -189,14 +189,28 @@ def load_data():
     # Fetch data for RobotExperiments
     for experiment in experimentNames:
         extracted_data = Experiment()
-        query = prolog.query("suturo_learning:get_robot_experiment_name('"+experiment+"',ExperimentName), suturo_learning:get_learningaction_sequence_in_experiment('"+experiment+"', LS), suturo_learning:get_state_sequence_for_action_sequence(LS, SSeq)")
+        # query = prolog.query("suturo_learning:get_robot_experiment_name('"+experiment+"',ExperimentName), suturo_learning:get_learningaction_sequence_in_experiment('"+experiment+"', LS), suturo_learning:get_state_sequence_for_action_sequence(LS, SSeq)")
+        query = prolog.query("suturo_learning:get_robot_experiment_name('"+experiment+"',ExperimentName), suturo_learning:get_learning_sequence_w_exp('"+experiment+"', LS)")
         # TODO: Only first result
         # print "Found " + len(query.solutions()) + " solutions"
         for solution in query.solutions():
             print 'Found Data for Experiment. ExperimentName= %s' % (solution['ExperimentName'])
             extracted_data.name = solution['ExperimentName']
-            extracted_data.actions = solution['LS']
-            extracted_data.states = solution['SSeq']
+            # extracted_data.actions = solution['LS']
+            # Extract the Data from the computed LearningSequence
+            extracted_data.actions = []
+            extracted_data.states = []
+
+            for entry in solution['LS']:
+
+                extracted_data.actions.append( entry[1] )
+                extracted_data.states.append( str(entry[0]).replace("'","") )
+            # Add the last state, that is valid 
+            # after executing the last action
+            extracted_data.states.append( str( (solution['LS'][-1])[2]).replace("'","") )
+
+                
+            # extracted_data.states = solution['SSeq']
             extracted_data.overall_success = True
         query.finish() 
         time.sleep(1)
