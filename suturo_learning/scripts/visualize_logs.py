@@ -104,8 +104,8 @@ def js_representation_for_experiment(ExperimentObject):
 		edgesArray : [""";
 
     action_id = 1
-    for a in ExperimentObject.actions:
-        action_name = a
+    for action_name in ExperimentObject.actions:
+        # action_name = a
         result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', id: '" + str(action_id)+"-"+str(action_id+1) + "', font: {align: 'horizontal'}},"
         action_id += 1
 
@@ -126,20 +126,46 @@ def js_representation_for_experiment(ExperimentObject):
     # {from: 4, to: 7, arrows:'to', label:'Outcome', font: {align: 'top'}},
     result += """ ],
 		nodeInformationArray: [""";
-    result += """
-                        'GOAL was: YYY-1. State: ZZZ. t=12345678',
-			'GOAL was: YYY-2. State: ZZZ. t=12345678',
-			'GOAL was: YYY-3. State: ZZZ. t=12345678',
-			'GOAL was: YYY-4. State: ZZZ. t=12345678',
-			'GOAL was: YYY-5. State: ZZZ. t=12345678',
-			'GOAL was: YYY-6. State: ZZZ. t=12345678',
-			'GOAL was: YYY-7. State: ZZZ. t=12345678',
-                        """;
+    for s in ExperimentObject.states:
+        # print s
+        obj_in_hand = s[1]
+        if obj_in_hand == "1":
+            obj_in_hand = "Red cube"
+        elif obj_in_hand == "2":
+            obj_in_hand = "Blue Handle"
+        else:
+            obj_in_hand = "None"
+
+        last_action_successful = "false"
+        red_cube_placed = "false"
+        blue_handle_placed = "false"
+        if s[4] == "1":
+            last_action_successful = "true"
+        if s[7] == "1":
+            red_cube_placed = "true"
+        if s[10] == "1":
+            blue_handle_placed = "true"
+
+        result += "'State is: "+s+"<br>"
+        result += "Object in Hand: "+ obj_in_hand +"<br>"
+        result += "Last Action successful: "+ last_action_successful +"<br>"
+        result += "Red cube already placed: "+ red_cube_placed +"<br>"
+        result += "Blue Handle already placed: "+ blue_handle_placed +"',"
+
+    # result += """
+    #                     'GOAL was: YYY-1. State: ZZZ. t=12345678',
+			# 'GOAL was: YYY-2. State: ZZZ. t=12345678',
+			# 'GOAL was: YYY-3. State: ZZZ. t=12345678',
+			# 'GOAL was: YYY-4. State: ZZZ. t=12345678',
+			# 'GOAL was: YYY-5. State: ZZZ. t=12345678',
+			# 'GOAL was: YYY-6. State: ZZZ. t=12345678',
+			# 'GOAL was: YYY-7. State: ZZZ. t=12345678',
+    #                     """;
     result += """ ],
                 edgeInformationHashTable: {"""
     action_id = 1
-    for a in ExperimentObject.actions:
-        action_name = a[1]
+    for action_name in ExperimentObject.actions:
+        # action_name = a
         result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
         action_id += 1
     result += """
@@ -202,12 +228,21 @@ def load_data():
             extracted_data.states = []
 
             for entry in solution['LS']:
+                states = entry[0]
+                # Get the first digit out of the state.
+                # This gets rid of the dot and everything that follows
+                clean_states = map(lambda s: str(s[0]), states)
+                print "New states"
+                print clean_states
+                # print states[0]
 
                 extracted_data.actions.append( entry[1] )
-                extracted_data.states.append( str(entry[0]).replace("'","") )
+                extracted_data.states.append( str(clean_states).replace("'","") )
             # Add the last state, that is valid 
             # after executing the last action
-            extracted_data.states.append( str( (solution['LS'][-1])[2]).replace("'","") )
+            clean_state = map(lambda s: str(s[0]), (solution['LS'][-1])[2])
+            # extracted_data.states.append( str( (solution['LS'][-1])[2]).replace("'","") )
+            extracted_data.states.append( str( clean_state ).replace("'",""))
 
                 
             # extracted_data.states = solution['SSeq']
