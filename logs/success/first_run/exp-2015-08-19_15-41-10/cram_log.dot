@@ -1,0 +1,59 @@
+digraph plangraph_6yVsnFtDGMU87Wnk {
+  node_w5kuXU3SJEQoMZnv [shape=doublecircle, style=bold, label="top-level"];
+
+  node_iabjd671f765sOAD [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{HEAD_MOVER|{time-start | 0}|{time-end | 0}}"];
+  edge [color="green", label=""];
+  node_w5kuXU3SJEQoMZnv -> node_iabjd671f765sOAD;
+
+  node_IEu6iDrKy5XsHfiy [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{WITH-FAILURE-HANDLING|{time-start | 0}|{time-end | 0}|{CLAUSE | PLAN-FAILURE}|{CLAUSE | ERROR}}"];
+  edge [color="green", label=""];
+  node_iabjd671f765sOAD -> node_IEu6iDrKy5XsHfiy;
+
+  node_JdUczOQv1W7FcjRo [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{REPLACEABLE-FUNCTION-HEAD_MOVER|{time-start | 0}|{time-end | 0}}"];
+  edge [color="green", label=""];
+  node_IEu6iDrKy5XsHfiy -> node_JdUczOQv1W7FcjRo;
+
+  node_KJXs24MAK4ANvMxA [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{ANONYMOUS-TOP-LEVEL|{time-start | 1}|{time-end | 0}}"];
+  edge [color="green", label=""];
+  node_JdUczOQv1W7FcjRo -> node_KJXs24MAK4ANvMxA;
+
+  node_EbbtGYd5M0D0xXz6 [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{WITH-FAILURE-HANDLING|{time-start | 1}|{time-end | 24}|{CLAUSE | PLAN-FAILURE}|{CLAUSE | ERROR}}"];
+  edge [color="green", label=""];
+  node_KJXs24MAK4ANvMxA -> node_EbbtGYd5M0D0xXz6;
+
+  node_bjP6ihoBqqQqMjRP [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{GOAL-ACHIEVE|{time-start | 2}|{time-end | 24}|{NAME | ACHIEVE}|{PATTERN | (TURN)}|{DECLARATIONS | NIL}}"];
+  edge [color="green", label=""];
+  node_EbbtGYd5M0D0xXz6 -> node_bjP6ihoBqqQqMjRP;
+
+  node_2kqtF3scZNDMfzV2 [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{GOAL-ACHIEVE|{time-start | 24}|{time-end | 32}|{NAME | ACHIEVE}|{PATTERN | (TURN)}|{DECLARATIONS | NIL}}"];
+  edge [color="green", label=""];
+  node_EbbtGYd5M0D0xXz6 -> node_2kqtF3scZNDMfzV2;
+
+  node_2jwHJOd8BdCLXdnz [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{GOAL-ACHIEVE|{time-start | 32}|{time-end | 40}|{NAME | ACHIEVE}|{PATTERN | (TURN)}|{DECLARATIONS | NIL}}"];
+  edge [color="green", label=""];
+  node_EbbtGYd5M0D0xXz6 -> node_2jwHJOd8BdCLXdnz;
+
+  node_wMRrYKtCufq6CIk0 [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{GOAL-ACHIEVE|{time-start | 40}|{time-end | 48}|{NAME | ACHIEVE}|{PATTERN | (TURN)}|{DECLARATIONS | NIL}}"];
+  edge [color="green", label=""];
+  node_EbbtGYd5M0D0xXz6 -> node_wMRrYKtCufq6CIk0;
+
+  node_XzOjj4VHHWwZHNLR [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{GOAL-ACHIEVE|{time-start | 48}|{time-end | 54}|{NAME | ACHIEVE}|{PATTERN | (TURN)}|{DECLARATIONS | NIL}}"];
+  edge [color="green", label=""];
+  node_EbbtGYd5M0D0xXz6 -> node_XzOjj4VHHWwZHNLR;
+
+  node_AmOE0me0RwFHr32Q [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{GOAL-ACHIEVE|{time-start | 54}|{time-end | 64}|{NAME | ACHIEVE}|{PATTERN | (TURN)}|{DECLARATIONS | NIL}}"];
+  edge [color="green", label=""];
+  node_EbbtGYd5M0D0xXz6 -> node_AmOE0me0RwFHr32Q;
+
+  node_CyrtiTGaz6LgMYqS [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{GOAL-ACHIEVE|{time-start | 64}|{time-end | 74}|{NAME | ACHIEVE}|{PATTERN | (TURN)}|{DECLARATIONS | NIL}}"];
+  edge [color="green", label=""];
+  node_EbbtGYd5M0D0xXz6 -> node_CyrtiTGaz6LgMYqS;
+
+  node_NSMNBhslvdRx6xNZ [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{GOAL-ACHIEVE|{time-start | 74}|{time-end | 85}|{NAME | ACHIEVE}|{PATTERN | (TURN)}|{DECLARATIONS | NIL}}"];
+  edge [color="green", label=""];
+  node_EbbtGYd5M0D0xXz6 -> node_NSMNBhslvdRx6xNZ;
+
+  node_mxNl6h8v9OelqPmV [shape=Mrecord, style=filled, fillcolor="#ddffdd", label="{GOAL-ACHIEVE|{time-start | 85}|{time-end | 95}|{NAME | ACHIEVE}|{PATTERN | (TURN)}|{DECLARATIONS | NIL}}"];
+  edge [color="green", label=""];
+  node_EbbtGYd5M0D0xXz6 -> node_mxNl6h8v9OelqPmV;
+}

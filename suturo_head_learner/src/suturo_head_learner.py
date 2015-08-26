@@ -31,6 +31,7 @@ class SuturoMlHeadLearner(object):
         self.policyMaker = EpsilonGreedyPolicy(self.q, self.actions, epsilon)
         self.learner = SarsaLambdaLearner(self.policyMaker, l=lambda_)
         self.q = self.learner.get_q()
+        self.policyMaker.updateQ(self.q)
         # self.policyMaker = ReverseGreedyPolicy(self.q, self.actions)
         rospy.wait_for_service('json_prolog/simple_query')
         self.prolog = Prolog()

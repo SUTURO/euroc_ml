@@ -302,14 +302,24 @@ Grabs the given object from the top
   (write-features-to-node 0)
   (setf featureLastActionSuccesful 0)
   (turn)
-  (let ((contact (call-service-contact)))
-    (if contact
+  (let ((hand-contact nil) 
+        (ground-contact nil) 
+        (counter (get-universal-time))
+        (newcounter 0)
+        (time-is-up nil))
+    (loop do       
+      (setf hand-contact (call-service-contact))
+      (setf ground-contact (call-service-contact-with-ground))
+      (setf newcounter (get-universal-time))
+      (setf time-is-up (> (- newcounter counter) 10))
+          while (not (or hand-contact ground-contact time-is-up)))
+    (if (or hand-contact time-is-up)
         (setf featureLastActionSuccesful 0)
-        (setf featureLastActionSuccesful 1)))
-  (if (eq featureObjectInHand 2)
+        (setf featureLastActionSuccesful 1))
+    (if (eq featureObjectInHand 2)
         (setf featureGoalTurnedSuccesful 1 )
         (setf featureGoalTurnedSuccesful 0))
-  (write-features-to-node  1))
+    (write-features-to-node 1)))
 
 (defun hammertime()
 "
@@ -435,7 +445,21 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
           nil)
         (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :object1 "LWR"
                                                                                                               :object2 "red_sphere")))
-          (roslisp:msg-slot-value value 'inContact))))) 
+          (roslisp:msg-slot-value value 'inContact)))))
+
+(defun call-service-contact-with-ground ()
+  (let
+      ((full-service-name "SuturoMlContactdetector"))
+    (ros-debug SUTURO-ML-HEADMOVER "calling service: ~a" full-service-name)
+    (if (not (roslisp:wait-for-service full-service-name +timeout-service+))
+        (progn
+          (let 
+              ((timed-out-text (concatenate 'string "Timed out waiting for service " full-service-name)))
+            (roslisp:ros-warn nil t timed-out-text))
+          nil)
+        (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :object1 "euroc_c2_table"
+                                                                                                              :object2 "red_sphere")))
+          (roslisp:msg-slot-value value 'inContact)))))
 
 (defun call-service-next-action ()
   (let
