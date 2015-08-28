@@ -72,6 +72,36 @@ stuff_to_write_end="""
 		];
 """
 
+def construct_node_information_array_compact(StateList):
+    result = """ ],
+		nodeInformationArray: [""";
+    for s in StateList:
+        # print s
+        obj_in_hand = s[1]
+        if obj_in_hand == "1":
+            obj_in_hand = "Red cube"
+        elif obj_in_hand == "2":
+            obj_in_hand = "Blue Handle"
+        else:
+            obj_in_hand = "None"
+
+        last_action_successful = "false"
+        red_cube_placed = "false"
+        blue_handle_placed = "false"
+        if s[4] == "1":
+            last_action_successful = "true"
+        if s[7] == "1":
+            red_cube_placed = "true"
+        if s[10] == "1":
+            blue_handle_placed = "true"
+
+        result += "'State is: "+s+"<br>"
+        result += "Object in Hand: "+ obj_in_hand +"<br>"
+        result += "Last Action successful: "+ last_action_successful +"<br>"
+        result += "Red cube already placed: "+ red_cube_placed +"<br>"
+        result += "Blue Handle already placed: "+ blue_handle_placed +"',"
+    return result
+
 def construct_node_information_array(ExperimentObject):
     result = """ ],
 		nodeInformationArray: [""";
@@ -140,11 +170,11 @@ def compact_js_representation_for_experiment(ExperimentObject):
                 # There is an open loop. Use the root id as edge source
                 if root_loop_state_id != None:
                     # Fetch edge description for the n-1 first nodes
-                    new_edges.append([ root_loop_state_id, edge_description, root_loop_state_id+1])
+                    new_edges.append([ root_loop_state_id+1, edge_description, root_loop_state_id+2])
                 else:
                     # Fetch edge description for the n-1 first nodes
                     next_node_id = len(new_states)-1
-                    new_edges.append([ next_node_id, edge_description, next_node_id+1])
+                    new_edges.append([ next_node_id+1, edge_description, next_node_id+2])
 
             # Mark, that there is no open loop currently
             root_loop_state_id = None
@@ -152,7 +182,7 @@ def compact_js_representation_for_experiment(ExperimentObject):
             # Skip looping state, but add action description to loop edge
             if root_loop_state_id == None:
                 root_loop_state_id = len(new_states) # Get last root id
-                new_edges.append([ root_loop_state_id, edge_description, root_loop_state_id])
+                new_edges.append([ root_loop_state_id+1, edge_description, root_loop_state_id+1])
             else:
                 # The loop goes on, add the edge description to the latest loop
                 modified_edge = new_edges[-1]
@@ -168,7 +198,7 @@ def compact_js_representation_for_experiment(ExperimentObject):
 		nodesArray: [""";
    
     # Write visualization code
-    state_id = 0
+    state_id = 1
     for s in new_states:
         # print s
         result += "{id: " + str(state_id) + ", label: '" + str(s) + "'},"
@@ -200,7 +230,9 @@ def compact_js_representation_for_experiment(ExperimentObject):
     
     result += "{from: " + str(action_id) + ", to: " + str(outcome_node_id) + ", arrows:'to', label:'Outcome', id: '" + str(action_id)+"-"+str(outcome_node_id) + "', font: {align: 'horizontal'}},"
 
-    result += construct_node_information_array(ExperimentObject)
+
+
+    result += construct_node_information_array_compact(new_states)
     result += """ ],
                 edgeInformationHashTable: {"""
     # action_id = 1
