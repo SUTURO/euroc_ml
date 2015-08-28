@@ -7,3 +7,4 @@
 :- register_ros_package(suturo_learning).
 :- use_module(library(suturo_learning)).
 :- use_module(library(suturo_owls)).
+:- use_module(library(suturo_tests)).
