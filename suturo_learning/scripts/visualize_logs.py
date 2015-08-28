@@ -140,17 +140,18 @@ def compact_js_representation_for_experiment(ExperimentObject):
                 # There is an open loop. Use the root id as edge source
                 if root_loop_state_id != None:
                     # Fetch edge description for the n-1 first nodes
-                    new_edges.append([ root_loop_state_id, edge_description, i+1])
+                    new_edges.append([ root_loop_state_id, edge_description, root_loop_state_id+1])
                 else:
                     # Fetch edge description for the n-1 first nodes
-                    new_edges.append([ i, edge_description, i+1])
+                    next_node_id = len(new_states)-1
+                    new_edges.append([ next_node_id, edge_description, next_node_id+1])
 
             # Mark, that there is no open loop currently
             root_loop_state_id = None
         else:
             # Skip looping state, but add action description to loop edge
             if root_loop_state_id == None:
-                root_loop_state_id = i
+                root_loop_state_id = len(new_states) # Get last root id
                 new_edges.append([ root_loop_state_id, edge_description, root_loop_state_id])
             else:
                 # The loop goes on, add the edge description to the latest loop
@@ -163,10 +164,65 @@ def compact_js_representation_for_experiment(ExperimentObject):
     print new_state_infos
     print new_edges
 
-    pass
+    result = """ { name: '"""+ExperimentObject.name+"""', 
+		nodesArray: [""";
+   
+    # Write visualization code
+    state_id = 0
+    for s in new_states:
+        # print s
+        result += "{id: " + str(state_id) + ", label: '" + str(s) + "'},"
+        state_id+=1
+
+    if ExperimentObject.overall_success:
+        result += "{id: 999, label: 'Success', shape: 'diamond', color: 'green'},"
+    else:
+        result += "{id: 998, label: 'Error',   shape: 'diamond', color: 'red'},"
+
+    result +=	"""], 
+		edgesArray : [""";
+
+    action_id = 1
+    for edge in new_edges:
+        source_id = edge[0]
+        label = edge[1]
+        target_id = edge[2]
+
+        result += "{from: " + str(source_id) + ", to: " + str(target_id) + ", arrows:'to', label:'"+ str(label) +"', id: '" + str(source_id)+"-"+str(target_id) + "', font: {align: 'horizontal'}},"
+        # action_id += 1
+        # Always save the last action id
+        action_id = target_id
+
+    # Set overall task outcome from last action. Create a extra node for that
+    outcome_node_id = 998 # No Success
+    if ExperimentObject.overall_success:
+        outcome_node_id = 999 # Success
+    
+    result += "{from: " + str(action_id) + ", to: " + str(outcome_node_id) + ", arrows:'to', label:'Outcome', id: '" + str(action_id)+"-"+str(outcome_node_id) + "', font: {align: 'horizontal'}},"
+
+    result += construct_node_information_array(ExperimentObject)
+    result += """ ],
+                edgeInformationHashTable: {"""
+    # action_id = 1
+    # for action_name in ExperimentObject.actions:
+    #     # action_name = a
+    #     result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
+    #     action_id += 1
+    result += """
+                 }
+		},
+                """;
+
+    return result
 
 def js_representation_for_experiment(ExperimentObject):
-    compact_js_representation_for_experiment(ExperimentObject)
+    return compact_js_representation_for_experiment(ExperimentObject)
+
+
+    ######
+    # WARNING
+    # THIS CODE WILL NOT BE EXECUTED AND BE KEPT IN FOR DEBUGGING PURPOSES
+    ###### 
     """Recreate the js object from the given data, to write it to the visualization webpage sourcecode"""
     result = """ { name: '"""+ExperimentObject.name+"""', 
 		nodesArray: [""";
@@ -200,34 +256,6 @@ def js_representation_for_experiment(ExperimentObject):
     result += "{from: " + str(action_id) + ", to: " + str(outcome_node_id) + ", arrows:'to', label:'Outcome', id: '" + str(action_id)+"-"+str(outcome_node_id) + "', font: {align: 'horizontal'}},"
 
     result += construct_node_information_array(ExperimentObject)
-    # result += """ ],
-		# nodeInformationArray: [""";
-    # for s in ExperimentObject.states:
-    #     # print s
-    #     obj_in_hand = s[1]
-    #     if obj_in_hand == "1":
-    #         obj_in_hand = "Red cube"
-    #     elif obj_in_hand == "2":
-    #         obj_in_hand = "Blue Handle"
-    #     else:
-    #         obj_in_hand = "None"
-
-    #     last_action_successful = "false"
-    #     red_cube_placed = "false"
-    #     blue_handle_placed = "false"
-    #     if s[4] == "1":
-    #         last_action_successful = "true"
-    #     if s[7] == "1":
-    #         red_cube_placed = "true"
-    #     if s[10] == "1":
-    #         blue_handle_placed = "true"
-
-    #     result += "'State is: "+s+"<br>"
-    #     result += "Object in Hand: "+ obj_in_hand +"<br>"
-    #     result += "Last Action successful: "+ last_action_successful +"<br>"
-    #     result += "Red cube already placed: "+ red_cube_placed +"<br>"
-    #     result += "Blue Handle already placed: "+ blue_handle_placed +"',"
-
     result += """ ],
                 edgeInformationHashTable: {"""
     action_id = 1
