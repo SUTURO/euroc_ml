@@ -304,17 +304,17 @@ Grabs the given object from the top
   (turn)
   (when (eq featureobjectinhand 2)
     (let ((hand-contact nil) 
-          (ground-contact nil) 
+ ;        (blue-handle-contact nil) 
           (counter (get-universal-time))
           (newcounter 0)
           (time-is-up nil))
       (loop do       
         (setf hand-contact (call-service-contact))
-        (setf ground-contact (call-service-contact-with-ground))
+;        (setf blue-handle-contact (call-service-contact-with-blue-handle))
         (setf newcounter (get-universal-time))
         (setf time-is-up (> (- newcounter counter) 10))
-            while (not (or hand-contact ground-contact time-is-up)))
-      (if (and (not hand-contact) (not time-is-up))
+            while (not (or hand-contact time-is-up)))
+      (if (and (not hand-contact))
           (setf featureGoalTurnedSuccesful 1))))
     (setf featureLastActionSuccesful 1)
     (write-features-to-node 1))
@@ -445,7 +445,7 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
                                                                                                               :object2 "red_sphere")))
           (roslisp:msg-slot-value value 'inContact)))))
 
-(defun call-service-contact-with-ground ()
+(defun call-service-contact-with-blue-handle ()
   (let
       ((full-service-name "SuturoMlContactdetector"))
     (ros-debug SUTURO-ML-HEADMOVER "calling service: ~a" full-service-name)
@@ -455,7 +455,7 @@ Kills all ROS-Nodes - including the euroc simulator and this plan and associated
               ((timed-out-text (concatenate 'string "Timed out waiting for service " full-service-name)))
             (roslisp:ros-warn nil t timed-out-text))
           nil)
-        (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :object1 "euroc_c2_table"
+        (let ((value (roslisp:call-service full-service-name 'suturo_head_mover_msgs-srv:SuturoMlCheckContact :object1 "blue_handle"
                                                                                                               :object2 "red_sphere")))
           (roslisp:msg-slot-value value 'inContact)))))
 
@@ -573,10 +573,12 @@ Initialize the simulation:
       (roslisp:call-service +service-name-move-hand+ 
                             'suturo_manipulation_msgs-srv:MoveRelative
                             :relative_goal (make-msg "geometry_msgs/TwistStamped"
+                                                     (header) (make-msg "std_msgs/Header"
+                                                                        (frame_id) "odom_combined")
                                                      (twist) (make-msg "geometry_msgs/Twist"
                                                                        (linear) (make-msg "geometry_msgs/Vector3"
                                                                                           (y) 0.0)
                                                                        (angular) (make-msg "geometry_msgs/Vector3"
-                                                                                           (z) 3.1415926))))))
+                                                                                           (x) 3.1415926))))))
 
 
