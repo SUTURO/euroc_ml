@@ -49,9 +49,6 @@ function exportLog
 
     MUH=`echo $path | rev | cut -d'/' -f 1 | rev`
     GOAL="/home/suturo/catkin_ws/src/euroc/euroc_ml/logs"
-    echo $MONGO_PORT_27017_TCP_ADDR
-    echo $MUH
-    echo $path
     cp -r $path $GOAL
     if ! [ $? -eq 0 ]; then
         exit 0
