@@ -1,6 +1,6 @@
 <launch>
   <!-- Log specified topics -->
-  <arg name="logged_topics" default="/tf /logged_designators" />
+  <arg name="logged_topics" default="/tf /logged_designators /gazebo/contacts" />
 
   <!-- CRAM Logging -->
   <node name="semrec_ros" pkg="semrec" type="semrec" />
