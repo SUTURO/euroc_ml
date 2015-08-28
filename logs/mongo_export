@@ -9,21 +9,58 @@
 # with the git revision e9df5f042aa923bc5f0e7069c2806b5b7a39d975
 # and the latest containers you get, after an dockuro update
 
-if [ $# -eq 0 ]
-  then
-    echo "example usage: ./mongo_export ../../sr_experimental_data/exp-2015-07-29_08-45-18"
-  else
-	MUH=`echo $1 | rev | cut -d'/' -f 1 | rev`
-	GOAL="/home/suturo/catkin_ws/src/euroc/euroc_ml/logs"
-	cp -r $1 $GOAL
-	if ! [ $? -eq 0 ]; then
-	    exit 0
-	fi
-	cd $GOAL/$MUH
-	if ! [ $? -eq 0 ]; then
-	    exit 0
-	fi
-	mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection logged_designators 
-	mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection system.indexes 
-	mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection tf 
-fi
+optionR=0
+path=""
+
+function checkArguments
+{
+    if [ $# -eq 0 ]; then
+        echo "Usage [OPTION] [PATH]."
+        echo "If -r is not used, the full path is needed i.e /home/suturo/catkin_ws/src/euroc/sr_experimental_data/exp-2015-08-28_09-32-37"
+        echo "-r    Recursively exports the folders in the given parent i.e /home/suturo/catkin_ws/src/euroc/sr_experimental_data to export every log in sr_experimental_data"
+        exit
+    elif [ $# -eq 1 ]; then
+        path=$1
+    elif [ $# -eq 2 ] && [ "$1" == "-r" ]; then
+        optionR=1
+        path=$2
+    else
+        echo "Wrong usage"
+        exit
+    fi
+}
+
+function exportLogs
+{
+    if [ $1 -eq 0 ]; then
+        exportLog $2
+    else
+        for filename in $2/*; do
+            if [ -d $filename ]; then
+                exportLog $filename
+            fi
+        done
+    fi
+}
+
+function exportLog
+{
+    MUH=`echo $1 | rev | cut -d'/' -f 1 | rev`
+    GOAL="/home/suturo/catkin_ws/src/euroc/euroc_ml/logs"
+    echo $1
+    cp -r $1 $GOAL
+    if ! [ $? -eq 0 ]; then
+        exit 0
+    fi
+    cd $GOAL/$MUH
+    if ! [ $? -eq 0 ]; then
+        exit 0
+    fi
+    mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection logged_designators 
+    mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection system.indexes 
+    mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection tf 
+}
+
+checkArguments $@
+exportLogs $optionR $path
+
