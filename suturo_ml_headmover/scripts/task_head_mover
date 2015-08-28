@@ -3,7 +3,7 @@
 echo $$ > /tmp/ml_headmover_bashtoplevel.pid
 while true; do
     roslaunch suturo_ml_headmover task_head_mover.launch "$@" &
-    LAUNCH_PID = $!
+    LAUNCH_PID=$!
     echo "roslaunch suturo_ml_headmover task_head_mover.launch $@ &"
     echo "waiting for PID: $LAUNCH_PID"
     trap "kill $LAUNCH_PID; exit" SIGHUP SIGINT SIGTERM
