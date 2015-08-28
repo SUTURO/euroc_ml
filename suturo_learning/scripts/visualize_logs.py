@@ -72,8 +72,57 @@ stuff_to_write_end="""
 		];
 """
 
+def compact_js_representation_for_experiment(ExperimentObject):
+    print "Before cleanup"
+    print ExperimentObject.states
+    print ExperimentObject.actions
+
+    new_states = []
+    new_state_infos = []
+    new_edges = []
+
+    prev_state = None
+    state_id = 0
+    new_state_id = 0
+    root_loop_state_id = None 
+    for s in ExperimentObject.states:
+        if prev_state == None or prev_state != s:
+            # result += "{id: " + str(state_id) + ", label: '" + str(s) + "'},"
+            # state_id+=1
+            new_states.append(s)
+            # Fetch edge description for the n-1 first nodes
+            if state_id < len(ExperimentObject.states):
+                edge_description = ExperimentObject.actions[state_id]
+
+            new_edges.append([ state_id, edge_description, state_id+1])
+            # Mark, that there is no open loop currently
+            root_loop_state_id = None
+        else:
+            # Skip looping state, but add action description to loop edge
+            
+            if root_loop_state_id == None:
+                root_loop_state_id = state_id
+                new_edges.append([ root_loop_state_id, edge_description, root_loop_state_id])
+            else:
+                # The loop goes on, add the edge description to the latest loop
+                modified_edge = new_edges[-1]
+                if state_id < len(ExperimentObject.actions):
+                    edge_description = ExperimentObject.actions[state_id]
+                    # Fetch edge description for the n-1 first nodes
+                    modified_edge[1] += ", " + edge_description
+                    new_edges[-1] = modified_edge
+        prev_state = s
+        state_id += 1
+
+    print "After cleanup"
+    print new_states
+    print new_state_infos
+    print new_edges
+
+    pass
 
 def js_representation_for_experiment(ExperimentObject):
+    compact_js_representation_for_experiment(ExperimentObject)
     """Recreate the js object from the given data, to write it to the visualization webpage sourcecode"""
         # self.name = name
         # self.states = states
