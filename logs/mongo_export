@@ -45,10 +45,14 @@ function exportLogs
 
 function exportLog
 {
-    MUH=`echo $1 | rev | cut -d'/' -f 1 | rev`
+    path=${1%/} #prevent errors when path ends with / 
+
+    MUH=`echo $path | rev | cut -d'/' -f 1 | rev`
     GOAL="/home/suturo/catkin_ws/src/euroc/euroc_ml/logs"
-    echo $1
-    cp -r $1 $GOAL
+    echo $MONGO_PORT_27017_TCP_ADDR
+    echo $MUH
+    echo $path
+    cp -r $path $GOAL
     if ! [ $? -eq 0 ]; then
         exit 0
     fi
@@ -56,9 +60,9 @@ function exportLog
     if ! [ $? -eq 0 ]; then
         exit 0
     fi
-    mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection logged_designators 
-    mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection system.indexes 
-    mongodump --host $MONGO_PORT_27017_TCP_ADDR --db $MUH --collection tf 
+    mongodump -h $MONGO_PORT_27017_TCP_ADDR -d $MUH -c logged_designators 
+    mongodump -h $MONGO_PORT_27017_TCP_ADDR -d $MUH -c system.indexes 
+    mongodump -h $MONGO_PORT_27017_TCP_ADDR -d $MUH -c tf 
 }
 
 checkArguments $@
