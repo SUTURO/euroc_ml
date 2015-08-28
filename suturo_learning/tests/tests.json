@@ -1,0 +1,38 @@
+[
+    {
+        "name": "RedCubeGrabed",
+        "description": "Tests if the red_cube was grabed",
+        "query": "red_cube_grabed.",
+        "expected": {}
+    }, {
+        "name": "RedCubePlaced",
+        "description": "Tests if the red_cube was placed in it's target zone",
+        "query": "red_cube_placed.",
+        "expected": {}
+    }, {
+        "name": "BlueHandleGrabed",
+        "description": "Tests if the blue_handle was grabed",
+        "query": "blue_handle_grabed",
+        "expected": {}
+    }, {
+        "name": "BlueHandleTurned",
+        "description": "Tests if the blue_handle was turned",
+        "query": "blue_handle_turned",
+        "expected": {}
+    }, {
+        "name": "PlanSuccessful",
+        "description": "Tests if the plan hat solved the problem",
+        "query": "plan_successful.",
+        "expected": {}
+    }, {
+        "name": "AllActionsSuccessful",
+        "description": "Tests if all actions executed were successful",
+        "query": "all_actions_successful.",
+        "expected": {}
+    }, {
+        "name": "AllActionsUseful",
+        "description": "Tests if all actions have changed the state",
+        "query": "all_actions_useful.",
+        "expected": {}
+    }
+]

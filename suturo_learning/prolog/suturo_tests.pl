@@ -4,7 +4,8 @@
     blue_handle_grabed/0,
     blue_handle_turned/0,
     plan_successful/0,
-    all_actions_successful/0
+    all_actions_successful/0,
+    all_actions_useful/0
 ]).
 
 :- use_module(library(suturo_learning)).
@@ -38,10 +39,6 @@ plan_successful :-
         Turned = '1.0'
     )).
 
-action_successful(ASS) :-
-    nth0(2, ASS, StateAfter),
-    nth0(1, StateAfter, Success),
-    Success = '1.0'.
 
 all_actions_successful :-
     once((
@@ -49,6 +46,13 @@ all_actions_successful :-
         maplist(action_successful, Plan))
     ).
     
+
+all_actions_useful :-
+    once((
+        get_learning_sequence(Plan),
+        maplist(action_useful, Plan))
+    ).
+
 
 object_grabed(ObjectName) :-
     get_learning_sequence(Plan),
@@ -78,4 +82,15 @@ object_turned(ObjectId) :-
     Object = ObjectId,
     Success = '1.0'.
 
+
+action_successful(ASS) :-
+    nth0(2, ASS, StateAfter),
+    nth0(1, StateAfter, Success),
+    Success = '1.0'.
+
+
+action_useful(ASS) :-
+    nth0(0, ASS, StateBefore),
+    nth0(2, ASS, StateAfter),
+    StateBefore \= StateAfter.
 
