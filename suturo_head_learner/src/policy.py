@@ -3,6 +3,11 @@ import rospy
 
 __author__ = 'suturo'
 
+
+# Seed the Random generator
+random.seed()
+
+
 class Policy(object):
 
     def __init__(self, q, actions):
