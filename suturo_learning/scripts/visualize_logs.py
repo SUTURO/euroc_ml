@@ -72,9 +72,14 @@ stuff_to_write_end="""
 		];
 """
 
-def construct_node_information_array_compact(StateList):
+def construct_node_information_array_compact(ExperimentObject, StateList):
     result = """ ],
 		nodeInformationArray: [""";
+
+    last_action_successful = "false"
+    red_cube_placed = "false"
+    blue_handle_placed = "false"
+
     for s in StateList:
         # print s
         obj_in_hand = s[1]
@@ -100,6 +105,23 @@ def construct_node_information_array_compact(StateList):
         result += "Last Action successful: "+ last_action_successful +"<br>"
         result += "Red cube already placed: "+ red_cube_placed +"<br>"
         result += "Blue Handle already placed: "+ blue_handle_placed +"',"
+
+
+    # Add the node informationf or the task success/failure as 
+    # the last element
+    if ExperimentObject.overall_success:
+        result += "'Task outcome: Success. All Subgoals fulfilled.',"
+    else:
+        result += "'Task outcome: Failure. Causes: <br>"
+        if last_action_successful == "false":
+            result += " - The last executed action failed<br>"
+        if red_cube_placed == "false":
+            result += " - The red cube is not placed correctly<br>"
+        if blue_handle_placed == "false":
+            result += " - The blue handle is not placed correctly<br>"
+
+        result += "',"
+
     return result
 
 def construct_node_information_array(ExperimentObject):
@@ -130,6 +152,7 @@ def construct_node_information_array(ExperimentObject):
         result += "Last Action successful: "+ last_action_successful +"<br>"
         result += "Red cube already placed: "+ red_cube_placed +"<br>"
         result += "Blue Handle already placed: "+ blue_handle_placed +"',"
+
     return result
 
 def compact_js_representation_for_experiment(ExperimentObject):
@@ -232,7 +255,7 @@ def compact_js_representation_for_experiment(ExperimentObject):
 
 
 
-    result += construct_node_information_array_compact(new_states)
+    result += construct_node_information_array_compact(ExperimentObject, new_states)
     result += """ ],
                 edgeInformationHashTable: {"""
     # action_id = 1
@@ -378,14 +401,31 @@ def load_data():
         time.sleep(1)
         print "sleep done"
 
-        # Get the result for the given experiment
-        query = prolog.query("suturo_learning:get_robot_experiment_task_success('"+experiment+"')")
-        if query.solutions():
+        last_state_in_experiment = extracted_data.states[-1]
+        # Task is successful, if:
+        # the last action was successful, 
+        # the red cube is placed
+        # and the blue handle is placed
+        if (last_state_in_experiment[4] == "1" and 
+        last_state_in_experiment[7] == "1" and
+        last_state_in_experiment[10] == "1"):
             extracted_data.overall_success = True
-            # print "XXXX - True"
+            print "XXXX - True"
         else:
-            extracted_data.overall_success = True
-            # print "XXXX - False"
+            extracted_data.overall_success = False
+            print "XXXX - False"
+
+        # # Get the result for the given experiment
+        # query = prolog.query("suturo_learning:get_robot_experiment_task_success('"+experiment+"')")
+        # # for solution in query.solutions():
+        # #     print solution
+
+        # if query.next():
+        #     extracted_data.overall_success = True
+        #     print "XXXX - True"
+        # else:
+        #     extracted_data.overall_success = False
+        #     print "XXXX - False"
 
         query.finish()
         # if isinstance(prolog.once("suturo_learning:get_robot_experiment_task_success('"+experiment+"')"),dict):
