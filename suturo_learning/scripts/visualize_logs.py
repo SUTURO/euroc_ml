@@ -255,51 +255,51 @@ def js_representation_for_experiment(ExperimentObject):
     # WARNING
     # THIS CODE WILL NOT BE EXECUTED AND BE KEPT IN FOR DEBUGGING PURPOSES
     ###### 
-    """Recreate the js object from the given data, to write it to the visualization webpage sourcecode"""
-    result = """ { name: '"""+ExperimentObject.name+"""', 
-		nodesArray: [""";
-    
-    state_id = 1
-    for s in ExperimentObject.states:
-        # print s
-        result += "{id: " + str(state_id) + ", label: '" + str(s) + "'},"
-        state_id+=1
-
-    if ExperimentObject.overall_success:
-        result += "{id: 999, label: 'Success', shape: 'diamond', color: 'green'},"
-    else:
-        result += "{id: 998, label: 'Error',   shape: 'diamond', color: 'red'},"
-
-
-    result +=	"""], 
-		edgesArray : [""";
-
-    action_id = 1
-    for action_name in ExperimentObject.actions:
-        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', id: '" + str(action_id)+"-"+str(action_id+1) + "', font: {align: 'horizontal'}},"
-        action_id += 1
-
-    # Set overall task outcome from last action
-
-    outcome_node_id = 998 # No Success
-    if ExperimentObject.overall_success:
-        outcome_node_id = 999 # Success
-    
-    result += "{from: " + str(action_id) + ", to: " + str(outcome_node_id) + ", arrows:'to', label:'Outcome', id: '" + str(action_id)+"-"+str(outcome_node_id) + "', font: {align: 'horizontal'}},"
-
-    result += construct_node_information_array(ExperimentObject)
-    result += """ ],
-                edgeInformationHashTable: {"""
-    action_id = 1
-    for action_name in ExperimentObject.actions:
-        # action_name = a
-        result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
-        action_id += 1
-    result += """
-                 }
-		},
-                """;
-    return result;
+#    """Recreate the js object from the given data, to write it to the visualization webpage sourcecode"""
+#    result = """ { name: '"""+ExperimentObject.name+"""', 
+#		nodesArray: [""";
+#    
+#    state_id = 1
+#    for s in ExperimentObject.states:
+#        # print s
+#        result += "{id: " + str(state_id) + ", label: '" + str(s) + "'},"
+#        state_id+=1
+#
+#    if ExperimentObject.overall_success:
+#        result += "{id: 999, label: 'Success', shape: 'diamond', color: 'green'},"
+#    else:
+#        result += "{id: 998, label: 'Error',   shape: 'diamond', color: 'red'},"
+#
+#
+#    result +=	"""], 
+#		edgesArray : [""";
+#
+#    action_id = 1
+#    for action_name in ExperimentObject.actions:
+#        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', id: '" + str(action_id)+"-"+str(action_id+1) + "', font: {align: 'horizontal'}},"
+#        action_id += 1
+#
+#    # Set overall task outcome from last action
+#
+#    outcome_node_id = 998 # No Success
+#    if ExperimentObject.overall_success:
+#        outcome_node_id = 999 # Success
+#    
+#    result += "{from: " + str(action_id) + ", to: " + str(outcome_node_id) + ", arrows:'to', label:'Outcome', id: '" + str(action_id)+"-"+str(outcome_node_id) + "', font: {align: 'horizontal'}},"
+#
+#    result += construct_node_information_array(ExperimentObject)
+#    result += """ ],
+#                edgeInformationHashTable: {"""
+#    action_id = 1
+#    for action_name in ExperimentObject.actions:
+#        # action_name = a
+#        result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
+#        action_id += 1
+#    result += """
+#                 }
+#		},
+#                """;
+#    return result;
 
 class Experiment(object):
     """docstring for Experiment"""
@@ -439,7 +439,6 @@ def write_visualization(ExperimentObjects):
 
 if __name__ == '__main__':
     try:
-        print "hi"
         rospy.init_node('test_json_prolog')
         data = load_data()
         for experiment in data:
