@@ -258,11 +258,12 @@ def compact_js_representation_for_experiment(ExperimentObject):
     result += construct_node_information_array_compact(ExperimentObject, new_states)
     result += """ ],
                 edgeInformationHashTable: {"""
-    # action_id = 1
-    # for action_name in ExperimentObject.actions:
-    #     # action_name = a
-    #     result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
-    #     action_id += 1
+    action_id = 1
+    for edge in new_edges:
+        # edge[1] is the label
+        result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(edge[1]) +"',"
+        action_id += 1
+
     result += """
                  }
 		},
