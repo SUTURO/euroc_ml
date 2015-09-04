@@ -1,8 +1,9 @@
 <launch>
-  <!-- CRAM Logging -->
-  <node name="semrec_ros" pkg="semrec" type="semrec" />
+    <!-- CRAM Logging -->
+    <node name="semrec_ros" pkg="semrec" type="semrec" />
 
-  <!-- Topic logging -->
-  <node name="tf_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="/tf" />
-  <node name="designator_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="/logged_designators /tf /gazebo/contacts" />
+    <!-- Topic logging -->
+    <node name="tf_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="/tf" />
+    <node name="designator_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="/logged_designators" />
+    <node name="contact_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="/gazebo/contacts" />
 </launch>

@@ -137,7 +137,12 @@ Select Logfile:
 							alert("Can't find experiment data - Check the name attribute of your loaded data. Cancelling visualization");
 							return;
 						}
+            nodeInfoArraySize = experiments[experiment_idx]["nodeInformationArray"].length;
 						var nodeInformation = experiments[experiment_idx]["nodeInformationArray"][nodeId-1];
+            if(nodeId == 999 || nodeId == 998)
+            {
+						  nodeInformation = experiments[experiment_idx]["nodeInformationArray"][nodeInfoArraySize-1];
+            }
 				  	// document.getElementById('nodedetails').innerHTML = document.getElementById(nodeId).value;
 				  	document.getElementById('nodedetails').innerHTML = nodeInformation;
 					}

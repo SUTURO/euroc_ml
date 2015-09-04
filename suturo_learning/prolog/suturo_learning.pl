@@ -191,12 +191,6 @@ json_output_for_experiment(Experiment,Stream):-
   nl(Stream),
   write(Stream,'}').
 
-get_robot_experiment_task_success(X) :-
-  true.
-  % once(X\='foo').
-  % once().
-
-
 
   % % OVERALL JSON Layout:
   % {
@@ -291,3 +285,14 @@ get_learning_sequence(ActionStateSequence) :-
     l_get_robot_experiment(Exp),
     get_learning_sequence_w_exp(Exp,ActionStateSequence).
 
+get_robot_experiment_task_success(Experiment) :-
+    once((
+        get_learning_sequence_w_exp(Experiment, Plan),
+        member([_, _, StateAfter, _], Plan),
+        nth0(1, StateAfter, Success),
+        nth0(2, StateAfter, Placed),
+        nth0(3, StateAfter, Turned),
+        Success = '1.0',
+        Placed = '1.0',
+        Turned = '1.0'
+    )).

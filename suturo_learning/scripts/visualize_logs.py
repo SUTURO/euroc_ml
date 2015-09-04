@@ -72,9 +72,14 @@ stuff_to_write_end="""
 		];
 """
 
-def construct_node_information_array_compact(StateList):
+def construct_node_information_array_compact(ExperimentObject, StateList):
     result = """ ],
 		nodeInformationArray: [""";
+
+    last_action_successful = "false"
+    red_cube_placed = "false"
+    blue_handle_placed = "false"
+
     for s in StateList:
         # print s
         obj_in_hand = s[1]
@@ -100,6 +105,23 @@ def construct_node_information_array_compact(StateList):
         result += "Last Action successful: "+ last_action_successful +"<br>"
         result += "Red cube already placed: "+ red_cube_placed +"<br>"
         result += "Blue Handle already placed: "+ blue_handle_placed +"',"
+
+
+    # Add the node informationf or the task success/failure as 
+    # the last element
+    if ExperimentObject.overall_success:
+        result += "'Task outcome: Success. All Subgoals fulfilled.',"
+    else:
+        result += "'Task outcome: Failure. Causes: <br>"
+        if last_action_successful == "false":
+            result += " - The last executed action failed<br>"
+        if red_cube_placed == "false":
+            result += " - The red cube is not placed correctly<br>"
+        if blue_handle_placed == "false":
+            result += " - The blue handle is not placed correctly<br>"
+
+        result += "',"
+
     return result
 
 def construct_node_information_array(ExperimentObject):
@@ -130,6 +152,7 @@ def construct_node_information_array(ExperimentObject):
         result += "Last Action successful: "+ last_action_successful +"<br>"
         result += "Red cube already placed: "+ red_cube_placed +"<br>"
         result += "Blue Handle already placed: "+ blue_handle_placed +"',"
+
     return result
 
 def compact_js_representation_for_experiment(ExperimentObject):
@@ -232,14 +255,15 @@ def compact_js_representation_for_experiment(ExperimentObject):
 
 
 
-    result += construct_node_information_array_compact(new_states)
+    result += construct_node_information_array_compact(ExperimentObject, new_states)
     result += """ ],
                 edgeInformationHashTable: {"""
-    # action_id = 1
-    # for action_name in ExperimentObject.actions:
-    #     # action_name = a
-    #     result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
-    #     action_id += 1
+    action_id = 1
+    for edge in new_edges:
+        # edge[1] is the label
+        result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(edge[1]) +"',"
+        action_id += 1
+
     result += """
                  }
 		},
@@ -255,51 +279,51 @@ def js_representation_for_experiment(ExperimentObject):
     # WARNING
     # THIS CODE WILL NOT BE EXECUTED AND BE KEPT IN FOR DEBUGGING PURPOSES
     ###### 
-    """Recreate the js object from the given data, to write it to the visualization webpage sourcecode"""
-    result = """ { name: '"""+ExperimentObject.name+"""', 
-		nodesArray: [""";
-    
-    state_id = 1
-    for s in ExperimentObject.states:
-        # print s
-        result += "{id: " + str(state_id) + ", label: '" + str(s) + "'},"
-        state_id+=1
-
-    if ExperimentObject.overall_success:
-        result += "{id: 999, label: 'Success', shape: 'diamond', color: 'green'},"
-    else:
-        result += "{id: 998, label: 'Error',   shape: 'diamond', color: 'red'},"
-
-
-    result +=	"""], 
-		edgesArray : [""";
-
-    action_id = 1
-    for action_name in ExperimentObject.actions:
-        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', id: '" + str(action_id)+"-"+str(action_id+1) + "', font: {align: 'horizontal'}},"
-        action_id += 1
-
-    # Set overall task outcome from last action
-
-    outcome_node_id = 998 # No Success
-    if ExperimentObject.overall_success:
-        outcome_node_id = 999 # Success
-    
-    result += "{from: " + str(action_id) + ", to: " + str(outcome_node_id) + ", arrows:'to', label:'Outcome', id: '" + str(action_id)+"-"+str(outcome_node_id) + "', font: {align: 'horizontal'}},"
-
-    result += construct_node_information_array(ExperimentObject)
-    result += """ ],
-                edgeInformationHashTable: {"""
-    action_id = 1
-    for action_name in ExperimentObject.actions:
-        # action_name = a
-        result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
-        action_id += 1
-    result += """
-                 }
-		},
-                """;
-    return result;
+#    """Recreate the js object from the given data, to write it to the visualization webpage sourcecode"""
+#    result = """ { name: '"""+ExperimentObject.name+"""', 
+#		nodesArray: [""";
+#    
+#    state_id = 1
+#    for s in ExperimentObject.states:
+#        # print s
+#        result += "{id: " + str(state_id) + ", label: '" + str(s) + "'},"
+#        state_id+=1
+#
+#    if ExperimentObject.overall_success:
+#        result += "{id: 999, label: 'Success', shape: 'diamond', color: 'green'},"
+#    else:
+#        result += "{id: 998, label: 'Error',   shape: 'diamond', color: 'red'},"
+#
+#
+#    result +=	"""], 
+#		edgesArray : [""";
+#
+#    action_id = 1
+#    for action_name in ExperimentObject.actions:
+#        result += "{from: " + str(action_id) + ", to: " + str(action_id+1) + ", arrows:'to', label:'"+ str(action_name) +"', id: '" + str(action_id)+"-"+str(action_id+1) + "', font: {align: 'horizontal'}},"
+#        action_id += 1
+#
+#    # Set overall task outcome from last action
+#
+#    outcome_node_id = 998 # No Success
+#    if ExperimentObject.overall_success:
+#        outcome_node_id = 999 # Success
+#    
+#    result += "{from: " + str(action_id) + ", to: " + str(outcome_node_id) + ", arrows:'to', label:'Outcome', id: '" + str(action_id)+"-"+str(outcome_node_id) + "', font: {align: 'horizontal'}},"
+#
+#    result += construct_node_information_array(ExperimentObject)
+#    result += """ ],
+#                edgeInformationHashTable: {"""
+#    action_id = 1
+#    for action_name in ExperimentObject.actions:
+#        # action_name = a
+#        result += "'"+str(action_id)+"-"+str(action_id+1)+"' : '" + str(action_name) +"',"
+#        action_id += 1
+#    result += """
+#                 }
+#		},
+#                """;
+#    return result;
 
 class Experiment(object):
     """docstring for Experiment"""
@@ -378,14 +402,31 @@ def load_data():
         time.sleep(1)
         print "sleep done"
 
-        # Get the result for the given experiment
-        query = prolog.query("suturo_learning:get_robot_experiment_task_success('"+experiment+"')")
-        if query.solutions():
+        last_state_in_experiment = extracted_data.states[-1]
+        # Task is successful, if:
+        # the last action was successful, 
+        # the red cube is placed
+        # and the blue handle is placed
+        if (last_state_in_experiment[4] == "1" and 
+        last_state_in_experiment[7] == "1" and
+        last_state_in_experiment[10] == "1"):
             extracted_data.overall_success = True
-            # print "XXXX - True"
+            print "XXXX - True"
         else:
-            extracted_data.overall_success = True
-            # print "XXXX - False"
+            extracted_data.overall_success = False
+            print "XXXX - False"
+
+        # # Get the result for the given experiment
+        # query = prolog.query("suturo_learning:get_robot_experiment_task_success('"+experiment+"')")
+        # # for solution in query.solutions():
+        # #     print solution
+
+        # if query.next():
+        #     extracted_data.overall_success = True
+        #     print "XXXX - True"
+        # else:
+        #     extracted_data.overall_success = False
+        #     print "XXXX - False"
 
         query.finish()
         # if isinstance(prolog.once("suturo_learning:get_robot_experiment_task_success('"+experiment+"')"),dict):
@@ -439,7 +480,6 @@ def write_visualization(ExperimentObjects):
 
 if __name__ == '__main__':
     try:
-        print "hi"
         rospy.init_node('test_json_prolog')
         data = load_data()
         for experiment in data:
