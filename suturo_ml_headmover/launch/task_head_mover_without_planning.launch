@@ -34,9 +34,8 @@
   <rosparam command="load" file="$(find suturo_ml_headmover)/launch/$(arg task).yml" ns="/task_description" />
 
   <!-- Start logging -->
-  <include unless="$(arg disable_logging)" file="$(find suturo_ml_headmover)/launch/logging.launch" />
-
-  <node pkg="gazebo_publisher" name="gazebo_contact_publisher" type="gazebo_contact_publisher" output="screen" />  
+  <node pkg="gazebo_publisher" name="gazebo_contact_publisher" type="gazebo_contact_publisher" />  
   <node name="SuturoMlCollision_detector" pkg="gazebo_publisher" type="SuturoMlCollision_detector.py" />
+  <include unless="$(arg disable_logging)" file="$(find suturo_ml_headmover)/launch/logging.launch" />
 
 </launch>

@@ -1,11 +1,8 @@
 <launch>
-  <!-- Log specified topics -->
-  <arg name="logged_topics" default="/tf /logged_designators /gazebo/contacts" />
-
   <!-- CRAM Logging -->
   <node name="semrec_ros" pkg="semrec" type="semrec" />
 
   <!-- Topic logging -->
-  <node name="topic_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="$(arg logged_topics)" />
-
+  <node name="tf_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="/tf" />
+  <node name="designator_logging" pkg="suturo_ml_headmover" type="mongodb_log" args="/logged_designators /tf /gazebo/contacts" />
 </launch>
